@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -34,10 +35,9 @@ interface Event {
   };
 }
 
+const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
+
 function App() {
-  const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
@@ -49,32 +49,22 @@ function App() {
     setAuthDialogOpen(false)
   }
 
-  const getAuthHeaders = (): Record<string, string> => {
-    return authKey ? { 'x-myko-auth': authKey } : {}
-  }
-
-  const fetchEvents = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events', {
-        headers: getAuthHeaders()
-      })
+  const { data: events, error, refetch, isFetching } = useQuery<Event[]>({
+    queryKey: ['events', authKey],
+    queryFn: async () => {
+      const headers: Record<string, string> = authKey ? { 'x-myko-auth': authKey } : {}
+      const res = await fetch(EVENTS_URL, { headers })
       if (!res.ok) {
         const errorBody = await res.text()
         throw new Error(`HTTP ${res.status}: ${errorBody || res.statusText}`)
       }
       const data: Event[] = await res.json()
       const now = new Date()
-      const filtered = data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now)
-      setEvents(filtered)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      setError(`Failed to fetch events: ${message}`)
-    } finally {
-      setLoading(false)
-    }
-  }
+      return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now)
+    },
+    enabled: false,
+    placeholderData: keepPreviousData,
+  })
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -114,17 +104,17 @@ function App() {
           </DialogActions>
         </Dialog>
 
-        <Button variant="contained" onClick={fetchEvents} disabled={loading}>
-          {loading ? 'Loading...' : 'Fetch Events'}
+        <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
+          {isFetching ? 'Loading...' : 'Fetch Events'}
         </Button>
 
         {error && (
-          <Alert severity="error" sx={{ mt: 2, width: '100%' }} onClose={() => setError(null)}>
-            {error}
+          <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+            {`Failed to fetch events: ${error.message}`}
           </Alert>
         )}
         
-        {events.length > 0 && (
+        {events && events.length > 0 && (
           <div className="events-table">
             <div className="table-header">
               <div className="column">Title</div>
