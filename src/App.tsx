@@ -64,8 +64,10 @@ function App() {
         const errorBody = await res.text()
         throw new Error(`HTTP ${res.status}: ${errorBody || res.statusText}`)
       }
-      const data = await res.json()
-      setEvents(data)
+      const data: Event[] = await res.json()
+      const now = new Date()
+      const filtered = data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now)
+      setEvents(filtered)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(`Failed to fetch events: ${message}`)
