@@ -36,12 +36,42 @@ interface Event {
 }
 
 const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
+const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
+
+async function ensureCookieAuth(email: string, password: string): Promise<void> {
+  const meRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-me`, { credentials: 'include' })
+  if (meRes.ok) return
+  if (meRes.status !== 401) throw new Error(`Auth check failed: HTTP ${meRes.status}`)
+
+  const loginRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, password }),
+  })
+  if (!loginRes.ok) throw new Error(`Login failed: HTTP ${loginRes.status}`)
+
+  const refreshRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-refresh`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (!refreshRes.ok) throw new Error(`Refresh failed: HTTP ${refreshRes.status}`)
+
+  const finalCheck = await fetch(`${PROXY_BASE}.netlify/functions/auth-me`, { credentials: 'include' })
+  if (!finalCheck.ok) throw new Error(`Auth still failing after login+refresh: HTTP ${finalCheck.status}`)
+}
 
 function App() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [authDraft, setAuthDraft] = useState(authKey)
+  const [credEmail, setCredEmail] = useState(() => localStorage.getItem('myko-cred-email') ?? '')
+  const [credPassword, setCredPassword] = useState(() => localStorage.getItem('myko-cred-password') ?? '')
+  const [credDraftEmail, setCredDraftEmail] = useState(credEmail)
+  const [credDraftPassword, setCredDraftPassword] = useState(credPassword)
+  const [credDialogOpen, setCredDialogOpen] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   const saveAuthKey = () => {
     localStorage.setItem('myko-auth-key', authDraft)
@@ -49,11 +79,31 @@ function App() {
     setAuthDialogOpen(false)
   }
 
+  const saveCredentials = () => {
+    localStorage.setItem('myko-cred-email', credDraftEmail)
+    localStorage.setItem('myko-cred-password', credDraftPassword)
+    setCredEmail(credDraftEmail)
+    setCredPassword(credDraftPassword)
+    setCredDialogOpen(false)
+  }
+
+  const hasCredentials = credEmail !== '' && credPassword !== ''
+
   const { data: events, error, refetch, isFetching } = useQuery<Event[]>({
-    queryKey: ['events', authKey],
+    queryKey: ['events', authKey, credEmail],
     queryFn: async () => {
+      setAuthError(null)
+      try {
+        if (hasCredentials) {
+          await ensureCookieAuth(credEmail, credPassword)
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        setAuthError(msg)
+        throw new Error(`Cookie auth failed: ${msg}`)
+      }
       const headers: Record<string, string> = authKey ? { 'x-myko-auth': authKey } : {}
-      const res = await fetch(EVENTS_URL, { headers })
+      const res = await fetch(EVENTS_URL, { headers, credentials: 'include' })
       if (!res.ok) {
         const errorBody = await res.text()
         throw new Error(`HTTP ${res.status}: ${errorBody || res.statusText}`)
@@ -85,6 +135,9 @@ function App() {
           <Button variant="outlined" onClick={() => { setAuthDraft(authKey); setAuthDialogOpen(true) }}>
             {authKey ? 'Auth Key Set' : 'Set Auth Key'}
           </Button>
+          <Button variant="outlined" onClick={() => { setCredDraftEmail(credEmail); setCredDraftPassword(credPassword); setCredDialogOpen(true) }}>
+            {hasCredentials ? 'Credentials Set' : 'Set Credentials'}
+          </Button>
           <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? 'Loading...' : 'Fetch Events'}
           </Button>
@@ -108,6 +161,39 @@ function App() {
             <Button onClick={saveAuthKey}>Save</Button>
           </DialogActions>
         </Dialog>
+
+        <Dialog open={credDialogOpen} onClose={() => setCredDialogOpen(false)}>
+          <DialogTitle>Cookie Auth Credentials</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Email"
+              value={credDraftEmail}
+              onChange={(e) => setCredDraftEmail(e.target.value)}
+              variant="outlined"
+              sx={{ mb: 2, mt: 1 }}
+            />
+            <TextField
+              fullWidth
+              type="password"
+              label="Password"
+              value={credDraftPassword}
+              onChange={(e) => setCredDraftPassword(e.target.value)}
+              variant="outlined"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCredDialogOpen(false)}>Cancel</Button>
+            <Button onClick={saveCredentials}>Save</Button>
+          </DialogActions>
+        </Dialog>
+
+        {authError && (
+          <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+            {`Cookie auth failed: ${authError}`}
+          </Alert>
+        )}
 
         {error && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
