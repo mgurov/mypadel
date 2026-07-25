@@ -35,12 +35,6 @@ interface Event {
   };
 }
 
-function FillCell({ participants, maxParticipants }: { participants: number; maxParticipants: number }) {
-  if (maxParticipants <= 0) return <>{participants}</>
-  if (participants >= maxParticipants) return <>{maxParticipants} full</>
-  return <>{participants} ({maxParticipants})</>
-}
-
 const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
 
 function App() {
@@ -135,7 +129,7 @@ function App() {
                   <div className="column">{event.title}</div>
                   <div className="column">{formatDate(event.date)}</div>
                   <div className="column">
-                    <FillCell participants={event._count.participants} maxParticipants={event.maxParticipants} />
+                    <ParticipationCell participants={event._count.participants} maxParticipants={event.maxParticipants} />
                   </div>
                   <div className="column">
                     <Button 
@@ -158,5 +152,12 @@ function App() {
     </>
   )
 }
+
+function ParticipationCell({ participants, maxParticipants }: { participants: number; maxParticipants: number }) {
+  if (maxParticipants <= 0) return <>{participants}</>
+  if (participants >= maxParticipants) return <>{maxParticipants} full</>
+  return <>{participants} ({maxParticipants})</>
+}
+
 
 export default App
