@@ -78,7 +78,7 @@ function App() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-UK', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
