@@ -8,6 +8,21 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  createdAt: string;
+  role: string;
+  elo: number;
+  achievements: string[];
+  isPremium: boolean;
+}
 
 interface Event {
   id: string;
@@ -38,9 +53,9 @@ interface Event {
 const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
 const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
 
-async function ensureCookieAuth(email: string, password: string): Promise<void> {
+async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
   const meRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-me`, { credentials: 'include' })
-  if (meRes.ok) return
+  if (meRes.ok) return null
   if (meRes.status !== 401) throw new Error(`Auth check failed: HTTP ${meRes.status}`)
 
   const loginRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-login`, {
@@ -51,6 +66,8 @@ async function ensureCookieAuth(email: string, password: string): Promise<void> 
   })
   if (!loginRes.ok) throw new Error(`Login failed: HTTP ${loginRes.status}`)
 
+  const loginData: { user: User } = await loginRes.json()
+
   const refreshRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-refresh`, {
     method: 'POST',
     credentials: 'include',
@@ -59,6 +76,8 @@ async function ensureCookieAuth(email: string, password: string): Promise<void> 
 
   const finalCheck = await fetch(`${PROXY_BASE}.netlify/functions/auth-me`, { credentials: 'include' })
   if (!finalCheck.ok) throw new Error(`Auth still failing after login+refresh: HTTP ${finalCheck.status}`)
+
+  return loginData.user
 }
 
 function App() {
@@ -72,6 +91,7 @@ function App() {
   const [credDraftPassword, setCredDraftPassword] = useState(credPassword)
   const [credDialogOpen, setCredDialogOpen] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   const saveAuthKey = () => {
     localStorage.setItem('myko-auth-key', authDraft)
@@ -95,7 +115,8 @@ function App() {
       setAuthError(null)
       try {
         if (hasCredentials) {
-          await ensureCookieAuth(credEmail, credPassword)
+          const loggedUser = await ensureCookieAuth(credEmail, credPassword)
+          if (loggedUser) setUser(loggedUser)
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
@@ -128,6 +149,8 @@ function App() {
     })
   }
 
+  const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase()
+
   return (
     <>
       <section id="center">
@@ -141,6 +164,14 @@ function App() {
           <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? 'Loading...' : 'Fetch Events'}
           </Button>
+          {user && (
+            <Chip
+              avatar={<Avatar sx={{ width: 28, height: 28, fontSize: 12 }}>{getInitials(user)}</Avatar>}
+              label={`${user.elo}`}
+              size="small"
+              sx={{ ml: 1 }}
+            />
+          )}
         </div>
 
         <Dialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)}>
