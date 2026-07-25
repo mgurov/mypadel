@@ -64,6 +64,11 @@ export default {
       headers.set("cookie", cookie);
     }
 
+    const contentType = req.headers.get("content-type");
+    if (contentType) {
+      headers.set("content-type", contentType);
+    }
+
     const init: RequestInit = {
       method: req.method,
       headers,

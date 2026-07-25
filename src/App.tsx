@@ -54,23 +54,28 @@ interface Event {
 const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
 const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
 
-async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
-  const cookieAxios = axios.create({ withCredentials: true })
+const api = axios.create({ withCredentials: true })
+api.interceptors.request.use((config) => {
+  const key = localStorage.getItem('myko-auth-key')
+  if (key) config.headers.set('x-myko-auth', key)
+  return config
+})
 
+async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
   try {
-    await cookieAxios.get(`${PROXY_BASE}.netlify/functions/auth-me`)
+    await api.get(`${PROXY_BASE}.netlify/functions/auth-me`)
     return null
   } catch (e) {
     if (!axios.isAxiosError(e) || e.response?.status !== 401) throw new Error(`Auth check failed: HTTP ${e instanceof Error ? e.message : e}`)
   }
 
-  const { data: loginData } = await cookieAxios.post<{ user: User }>(
+  const { data: loginData } = await api.post<{ user: User }>(
     `${PROXY_BASE}.netlify/functions/auth-login`,
     { email, password },
   )
 
-  await cookieAxios.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
-  await cookieAxios.get(`${PROXY_BASE}.netlify/functions/auth-me`)
+  await api.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
+  await api.get(`${PROXY_BASE}.netlify/functions/auth-me`)
 
   return loginData.user
 }
@@ -118,8 +123,7 @@ function App() {
         setAuthError(msg)
         throw new Error(`Cookie auth failed: ${msg}`)
       }
-      const headers: Record<string, string> = authKey ? { 'x-myko-auth': authKey } : {}
-      const { data } = await axios.get<Event[]>(EVENTS_URL, { headers, withCredentials: true })
+      const { data } = await api.get<Event[]>(EVENTS_URL)
       const now = new Date()
       return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now)
     },
