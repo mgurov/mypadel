@@ -129,7 +129,7 @@ function App() {
                   <div className="column">{event.title}</div>
                   <div className="column">{formatDate(event.date)}</div>
                   <div className="column">
-                    <ParticipationCell participants={event._count.participants} maxParticipants={event.maxParticipants} />
+                    <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
                   </div>
                   <div className="column">
                     <Button 
@@ -153,9 +153,9 @@ function App() {
   )
 }
 
-function ParticipationCell({ participants, maxParticipants }: { participants: number; maxParticipants: number }) {
+function ParticipationCell({ participants, maxParticipants }: { participants: number | undefined; maxParticipants: number }) {
   if (maxParticipants <= 0) return <>{participants}</>
-  if (participants >= maxParticipants) return <>{maxParticipants} full</>
+  if (participants && participants >= maxParticipants) return <>full ({maxParticipants}) </>
   return <>{participants} ({maxParticipants})</>
 }
 
