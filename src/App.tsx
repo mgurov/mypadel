@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import axios from 'axios'
 import './App.css'
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -54,28 +55,22 @@ const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/
 const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
 
 async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
-  const meRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-me`, { credentials: 'include' })
-  if (meRes.ok) return null
-  if (meRes.status !== 401) throw new Error(`Auth check failed: HTTP ${meRes.status}`)
+  const cookieAxios = axios.create({ withCredentials: true })
 
-  const loginRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ email, password }),
-  })
-  if (!loginRes.ok) throw new Error(`Login failed: HTTP ${loginRes.status}`)
+  try {
+    await cookieAxios.get(`${PROXY_BASE}.netlify/functions/auth-me`)
+    return null
+  } catch (e) {
+    if (!axios.isAxiosError(e) || e.response?.status !== 401) throw new Error(`Auth check failed: HTTP ${e instanceof Error ? e.message : e}`)
+  }
 
-  const loginData: { user: User } = await loginRes.json()
+  const { data: loginData } = await cookieAxios.post<{ user: User }>(
+    `${PROXY_BASE}.netlify/functions/auth-login`,
+    { email, password },
+  )
 
-  const refreshRes = await fetch(`${PROXY_BASE}.netlify/functions/auth-refresh`, {
-    method: 'POST',
-    credentials: 'include',
-  })
-  if (!refreshRes.ok) throw new Error(`Refresh failed: HTTP ${refreshRes.status}`)
-
-  const finalCheck = await fetch(`${PROXY_BASE}.netlify/functions/auth-me`, { credentials: 'include' })
-  if (!finalCheck.ok) throw new Error(`Auth still failing after login+refresh: HTTP ${finalCheck.status}`)
+  await cookieAxios.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
+  await cookieAxios.get(`${PROXY_BASE}.netlify/functions/auth-me`)
 
   return loginData.user
 }
@@ -124,12 +119,7 @@ function App() {
         throw new Error(`Cookie auth failed: ${msg}`)
       }
       const headers: Record<string, string> = authKey ? { 'x-myko-auth': authKey } : {}
-      const res = await fetch(EVENTS_URL, { headers, credentials: 'include' })
-      if (!res.ok) {
-        const errorBody = await res.text()
-        throw new Error(`HTTP ${res.status}: ${errorBody || res.statusText}`)
-      }
-      const data: Event[] = await res.json()
+      const { data } = await axios.get<Event[]>(EVENTS_URL, { headers, withCredentials: true })
       const now = new Date()
       return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now)
     },
