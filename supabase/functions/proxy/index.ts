@@ -10,6 +10,7 @@ export default {
     cors: {
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
         'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, x-myko-auth',
       },
     },
