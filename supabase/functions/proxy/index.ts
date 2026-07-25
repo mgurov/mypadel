@@ -88,7 +88,8 @@ export default {
             /Path=(.*);/i,
             (_, path) => `Path=/functions/v1/proxy${path};`,
           );
-          respHeaders.append("set-cookie", rewritten);
+          const evenMoreRewritten = rewritten.replace('SameSite=Strict', 'SameSite=None')
+          respHeaders.append("set-cookie", evenMoreRewritten);
         }
       }
 
