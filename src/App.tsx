@@ -81,9 +81,14 @@ function App() {
   return (
     <>
       <section id="center">
-        <Button variant="outlined" onClick={() => { setAuthDraft(authKey); setAuthDialogOpen(true) }}>
-          {authKey ? 'Auth Key Set' : 'Set Auth Key'}
-        </Button>
+        <div className="button-row">
+          <Button variant="outlined" onClick={() => { setAuthDraft(authKey); setAuthDialogOpen(true) }}>
+            {authKey ? 'Auth Key Set' : 'Set Auth Key'}
+          </Button>
+          <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? 'Loading...' : 'Fetch Events'}
+          </Button>
+        </div>
 
         <Dialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)}>
           <DialogTitle>Auth Key</DialogTitle>
@@ -104,10 +109,6 @@ function App() {
           </DialogActions>
         </Dialog>
 
-        <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
-          {isFetching ? 'Loading...' : 'Fetch Events'}
-        </Button>
-
         {error && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
             {`Failed to fetch events: ${error.message}`}
@@ -116,13 +117,6 @@ function App() {
         
         {events && events.length > 0 && (
           <div className="events-table">
-            <div className="table-header">
-              <div className="column">Title</div>
-              <div className="column">Date</div>
-              <div className="column">Participation</div>
-              <div className="column">Actions</div>
-            </div>
-            
             {events.map((event) => (
               <div key={event.id} className="table-row-group">
                 <div className="table-row">
