@@ -82,12 +82,11 @@ export default {
       const resp = await fetch(targetUrl.toString(), init);
 
       const respHeaders = new Headers();
-      const cookiePath = url.pathname;
       for (const [key, value] of resp.headers) {
         if (key.toLowerCase() === "set-cookie") {
           const rewritten = value.replace(
-            /Path=\/\.netlify\/functions\/auth-refresh/i,
-            `Path=${cookiePath}`,
+            /Path=(\/\.netlify\/functions\/auth-refresh)/i,
+            (_, path) => `Path=/proxy${path}`,
           );
           respHeaders.append("set-cookie", rewritten);
         }
