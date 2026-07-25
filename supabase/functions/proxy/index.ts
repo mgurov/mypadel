@@ -85,8 +85,8 @@ export default {
       for (const [key, value] of resp.headers) {
         if (key.toLowerCase() === "set-cookie") {
           const rewritten = value.replace(
-            /Path=(\/\.netlify\/functions\/auth-refresh)/i,
-            (_, path) => `Path=/proxy${path}`,
+            /Path=(.*);/i,
+            (_, path) => `Path=/functions/v1/proxy${path};`,
           );
           respHeaders.append("set-cookie", rewritten);
         }
