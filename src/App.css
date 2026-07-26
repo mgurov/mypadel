@@ -58,23 +58,6 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
-.table-header {
-  display: flex;
-  padding: 8px 16px;
-  background-color: #f5f5f5;
-  font-weight: 600;
-  font-size: 13px;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-.table-header .column {
-  flex: 1;
-}
-
-.table-header .column:first-child {
-  flex: 2;
-}
-
 .dialog-json {
   font-size: 12px;
   white-space: pre-wrap;
@@ -96,4 +79,9 @@
 .loading-text {
   color: #999;
   font-size: 12px;
+}
+
+.payment-indicator {
+  color: #2e7d32;
+  font-weight: bold;
 }

@@ -68,6 +68,7 @@ interface Participant {
 
 interface EventDetail extends Event {
   participants: Participant[];
+  currentUserPayment: unknown;
 }
 
 const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
@@ -247,13 +248,6 @@ function App() {
         
         {events && events.length > 0 && (
           <div className="events-table">
-            <div className="table-header">
-              <div className="column">Event</div>
-              <div className="column">Date</div>
-              <div className="column">Spots</div>
-              <div className="column">Participating</div>
-              <div className="column">Details</div>
-            </div>
             {events.map((event) => (
               <div key={event.id} className="table-row-group">
                 <div className="table-row">
@@ -291,7 +285,7 @@ function EventDetailCell({ eventId, userId }: { eventId: string; userId: string 
       <div className="column">
         {detail ? (
           isParticipating
-            ? <span className="participating-yes">&#10003;</span>
+            ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
             : <span className="participating-no">&mdash;</span>
         ) : (
           <span className="loading-text">loading...</span>
