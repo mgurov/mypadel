@@ -12,6 +12,7 @@ import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 
+
 interface User {
   id: string;
   email: string;
@@ -51,7 +52,26 @@ interface Event {
   };
 }
 
+interface Participant {
+  id: string;
+  createdAt: string;
+  eventId: string;
+  userId: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    elo: number;
+    name: string;
+  };
+}
+
+interface EventDetail extends Event {
+  participants: Participant[];
+}
+
 const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
+const EVENT_DETAILS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/event-details'
 const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
 
 const api = axios.create({ withCredentials: true })
@@ -81,7 +101,6 @@ async function ensureCookieAuth(email: string, password: string): Promise<User |
 }
 
 function App() {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [authDraft, setAuthDraft] = useState(authKey)
@@ -228,6 +247,13 @@ function App() {
         
         {events && events.length > 0 && (
           <div className="events-table">
+            <div className="table-header">
+              <div className="column">Event</div>
+              <div className="column">Date</div>
+              <div className="column">Spots</div>
+              <div className="column">Participating</div>
+              <div className="column">Details</div>
+            </div>
             {events.map((event) => (
               <div key={event.id} className="table-row-group">
                 <div className="table-row">
@@ -236,24 +262,57 @@ function App() {
                   <div className="column">
                     <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
                   </div>
-                  <div className="column">
-                    <Button 
-                      variant="outlined" 
-                      size="small"
-                      onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
-                    >
-                      {expandedId === event.id ? 'Hide JSON' : 'Show JSON'}
-                    </Button>
-                  </div>
+                  <EventDetailCell eventId={event.id} userId={user?.id} />
                 </div>
-                {expandedId === event.id && (
-                  <pre className="inline-json">{JSON.stringify(event, null, 2)}</pre>
-                )}
               </div>
             ))}
           </div>
         )}
       </section>
+    </>
+  )
+}
+
+function EventDetailCell({ eventId, userId }: { eventId: string; userId: string | undefined }) {
+  const [jsonOpen, setJsonOpen] = useState(false)
+
+  const { data: detail } = useQuery<EventDetail>({
+    queryKey: ['eventDetail', eventId],
+    queryFn: async () => {
+      const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${eventId}`)
+      return data
+    },
+  })
+
+  const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
+
+  return (
+    <>
+      <div className="column">
+        {detail ? (
+          isParticipating
+            ? <span className="participating-yes">&#10003;</span>
+            : <span className="participating-no">&mdash;</span>
+        ) : (
+          <span className="loading-text">loading...</span>
+        )}
+      </div>
+      <div className="column">
+        {detail && (
+          <Button variant="outlined" size="small" onClick={() => setJsonOpen(true)}>
+            Show JSON
+          </Button>
+        )}
+      </div>
+      <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Event Details</DialogTitle>
+        <DialogContent>
+          <pre className="dialog-json">{detail ? JSON.stringify(detail, null, 2) : ''}</pre>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setJsonOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
