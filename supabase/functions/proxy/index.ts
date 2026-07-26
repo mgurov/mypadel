@@ -88,7 +88,7 @@ export default {
             /Path=(.*);/i,
             (_, path) => `Path=/functions/v1/proxy${path};`,
           );
-          const evenMoreRewritten = rewritten.replace('SameSite=Strict', 'SameSite=None; Secure')
+          const evenMoreRewritten = rewritten.replace('SameSite=Strict', 'SameSite=None; Secure; Domain=cpfgugbirflalcjuludp.supabase.co')
           respHeaders.append("set-cookie", evenMoreRewritten);
         }
       }
