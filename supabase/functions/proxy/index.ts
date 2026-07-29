@@ -9,7 +9,8 @@ function corsHeaders(origin: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, x-myko-auth',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, x-myko-auth, mykokie',
+    'Access-Control-Expose-Headers': 'mykokie',
   }
 }
 
@@ -59,9 +60,11 @@ export default {
     const targetUrl = new URL(subPath + url.search, targetBase);
 
     const headers = new Headers();
-    const cookie = req.headers.get("cookie");
-    if (cookie) {
-      headers.set("cookie", cookie);
+    for (const [key, value] of req.headers) {
+      if (key !== "mykokie") {
+        continue;
+      }
+      headers.append('cookie', value)
     }
 
     const contentType = req.headers.get("content-type");
@@ -84,13 +87,10 @@ export default {
       const respHeaders = new Headers();
       for (const [key, value] of resp.headers) {
         if (key.toLowerCase() === "set-cookie") {
-          const rewritten = value.replace(
-            /Path=(.*);/i,
-            (_, path) => `Path=/; SameSite=None; Secure; `, //Domain=supabase.co;
-          ).replace('SameSite=Strict;', '')
-          ;
-          //const evenMoreRewritten = rewritten.replace('SameSite=Strict', 'SameSite=None; Secure; Domain=supabase.co')
-          respHeaders.append("set-cookie", rewritten);
+          const cookieValue = value.split(';')[0];
+          respHeaders.append("mykokie", cookieValue);
+        } else {
+          respHeaders.append(key, value);
         }
       }
 

@@ -79,7 +79,17 @@ const api = axios.create({ withCredentials: true })
 api.interceptors.request.use((config) => {
   const key = localStorage.getItem('myko-auth-key')
   if (key) config.headers.set('x-myko-auth', key)
+  const cookie = localStorage.getItem('myko-cookie')
+  if (cookie) config.headers.set('mykokie', cookie)
   return config
+})
+api.interceptors.response.use((response) => {
+  response.headers
+  const mykokie = response.headers['mykokie']
+  if (mykokie) {
+    localStorage.setItem('myko-cookie', mykokie)
+  }
+  return response
 })
 
 async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
