@@ -86,10 +86,11 @@ export default {
         if (key.toLowerCase() === "set-cookie") {
           const rewritten = value.replace(
             /Path=(.*);/i,
-            (_, path) => `Path=/functions/v1/proxy${path};`,
-          );
-          const evenMoreRewritten = rewritten.replace('SameSite=Strict', 'SameSite=None; Secure; Domain=cpfgugbirflalcjuludp.supabase.co')
-          respHeaders.append("set-cookie", evenMoreRewritten);
+            (_, path) => `Path=/; SameSite=None; Secure; `, //Domain=supabase.co;
+          ).replace('SameSite=Strict;', '')
+          ;
+          //const evenMoreRewritten = rewritten.replace('SameSite=Strict', 'SameSite=None; Secure; Domain=supabase.co')
+          respHeaders.append("set-cookie", rewritten);
         }
       }
 
