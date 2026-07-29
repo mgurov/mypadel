@@ -84,12 +84,12 @@ export default {
     try {
       const resp = await fetch(targetUrl.toString(), init);
 
-      const respHeaders = new Headers();
+      const respHeaders = new Array<[string, string]>();
       for (const [key, value] of resp.headers) {
         if (key.toLowerCase() === "set-cookie") {
-          respHeaders.append("mykokie", value);
+          respHeaders.push(["mykokie", value]);
         } else {
-          respHeaders.append(key, value);
+          respHeaders.push([key, value]);
         }
       }
 
