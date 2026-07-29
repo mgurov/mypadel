@@ -87,8 +87,7 @@ export default {
       const respHeaders = new Headers();
       for (const [key, value] of resp.headers) {
         if (key.toLowerCase() === "set-cookie") {
-          const cookieValue = value.split(';')[0];
-          respHeaders.append("mykokie", cookieValue);
+          respHeaders.append("mykokie", value);
         } else {
           respHeaders.append(key, value);
         }
