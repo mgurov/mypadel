@@ -9,8 +9,8 @@ function corsHeaders(origin: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, x-myko-auth, mykokie',
-    'Access-Control-Expose-Headers': 'mykokie',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, x-myko-auth, m_access_token, m_refresh_token',
+    'Access-Control-Expose-Headers': 'm_access_token, m_refresh_token',
   }
 }
 
@@ -61,7 +61,7 @@ export default {
 
     const headers = new Headers();
     for (const [key, value] of req.headers) {
-      if (key !== "mykokie") {
+      if (key !== "m_access_token") {
         continue;
       }
       headers.append('cookie', value)
@@ -87,7 +87,11 @@ export default {
       const respHeaders = new Array<[string, string]>();
       for (const [key, value] of resp.headers) {
         if (key.toLowerCase() === "set-cookie") {
-          respHeaders.push(["mykokie", value]);
+          if (value.startsWith("access_token=")) {
+            respHeaders.push(["m_access_token", value]);
+          } else if (value.startsWith("refresh_token=")) {
+            respHeaders.push(["m_refresh_token", value]);
+          }
         } else {
           respHeaders.push([key, value]);
         }
@@ -106,3 +110,4 @@ export default {
     }
   }),
 };
+

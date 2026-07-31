@@ -75,19 +75,34 @@ const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/
 const EVENT_DETAILS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/event-details'
 const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
 
+function extractCookie(name: string): string | undefined {
+  const stored = localStorage.getItem(name)
+  if (!stored) {
+    return undefined
+  }
+  return stored.split(";")[0]
+}
+
 const api = axios.create({ withCredentials: true })
 api.interceptors.request.use((config) => {
+  console.log(config.url)
+  const cookie = extractCookie(
+    (config.url!!.indexOf('auth-refresh') > -1) ? 'm_refresh_token' : 'm_access_token'
+  )
+  if (cookie) {
+    config.headers.set('m_access_token', cookie)
+  }
+  console.log(config.headers['m_access_token'])
   const key = localStorage.getItem('myko-auth-key')
   if (key) config.headers.set('x-myko-auth', key)
-  const cookie = localStorage.getItem('myko-cookie')
-  if (cookie) config.headers.set('mykokie', cookie)
   return config
 })
 api.interceptors.response.use((response) => {
-  response.headers
-  const mykokie = response.headers['mykokie']
-  if (mykokie) {
-    localStorage.setItem('myko-cookie', mykokie)
+  if (response.headers['m_access_token']) {
+    localStorage.setItem('m_access_token', response.headers['m_access_token'])
+  }
+  if (response.headers['m_refresh_token']) {
+    localStorage.setItem('m_refresh_token', response.headers['m_refresh_token'])
   }
   return response
 })
