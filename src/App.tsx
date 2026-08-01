@@ -324,6 +324,9 @@ function EventDetailCell({ eventId, userId }: { eventId: string; userId: string 
             Show JSON
           </Button>
         )}
+        <div>
+          <a href={`https://sunsetpadel.at/events/${eventId}`} target="_blank" rel="noopener noreferrer">Open Event</a>
+        </div>
       </div>
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>
