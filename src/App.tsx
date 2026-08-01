@@ -85,14 +85,12 @@ function extractCookie(name: string): string | undefined {
 
 const api = axios.create({ withCredentials: true })
 api.interceptors.request.use((config) => {
-  console.log(config.url)
   const cookie = extractCookie(
     (config.url!!.indexOf('auth-refresh') > -1) ? 'm_refresh_token' : 'm_access_token'
   )
   if (cookie) {
     config.headers.set('m_access_token', cookie)
   }
-  console.log(config.headers['m_access_token'])
   const key = localStorage.getItem('myko-auth-key')
   if (key) config.headers.set('x-myko-auth', key)
   return config
