@@ -171,7 +171,7 @@ function App() {
       }
       const { data } = await api.get<Event[]>(EVENTS_URL)
       const now = new Date()
-      return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now)
+      return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= now && e.status != "ARCHIVED")
     },
     enabled: false,
     placeholderData: keepPreviousData,
