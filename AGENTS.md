@@ -8,6 +8,7 @@ Padel tennis event management SPA + Supabase Edge Functions backend proxy.
 - **Backend:** Supabase Edge Functions (Deno), proxying to `sunsetpadel.at` (Netlify)
 - **Linter:** Oxlint (not ESLint)
 - **Build:** `tsc -b && vite build`
+- **E2E tests:** Playwright (`@playwright/test`), Chromium only
 - **No router, no state management library, no data-fetching library (no React Query/SWR)**
 
 ## Directory Structure
@@ -21,6 +22,8 @@ mypadel/
 ├── tsconfig.app.json           # App code (ES2023, React JSX)
 ├── tsconfig.node.json          # Node tooling
 ├── .oxlintrc.json              # Oxlint rules (react + typescript plugins)
+├── playwright.config.ts        # Playwright config, auto-starts vite dev server
+├── e2e/                        # Playwright e2e tests (API mocked via page.route)
 ├── public/
 │   ├── favicon.svg
 │   └── icons.svg
@@ -61,6 +64,8 @@ mypadel/
 - `build` — `tsc -b && vite build`
 - `lint` — `oxlint`
 - `preview` — `vite preview`
+- `test:e2e` — `playwright test`
+- `test:e2e:ui` — `playwright test --ui`
 
 ## No typecheck script
 
