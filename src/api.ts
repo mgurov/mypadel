@@ -1,0 +1,112 @@
+import axios from 'axios'
+
+export interface User {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone: string | null
+  createdAt: string
+  role: string
+  elo: number
+  achievements: string[]
+  isPremium: boolean
+}
+
+export interface Event {
+  id: string
+  title: string
+  description: string
+  date: string
+  endDate: string
+  location: string
+  status: string
+  publishAt: string | null
+  reminderSentAt: string | null
+  maxParticipants: number
+  price: string
+  disclaimer: string
+  createdAt: string
+  competitionId: string | null
+  formatId: string | null
+  formatConfig: string | null
+  matchTableStatus: string
+  matchTableMode: string
+  matchTableGeneratedAt: string | null
+  matchTableConfirmedAt: string | null
+  _count: {
+    participants: number
+  }
+}
+
+export interface Participant {
+  id: string
+  createdAt: string
+  eventId: string
+  userId: string
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    elo: number
+    name: string
+  }
+}
+
+export interface EventDetail extends Event {
+  participants: Participant[]
+  currentUserPayment: unknown
+}
+
+const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/dev-proxy/' : 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/')
+export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
+export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
+
+function extractCookie(name: string): string | undefined {
+  const stored = localStorage.getItem(name)
+  if (!stored) {
+    return undefined
+  }
+  return stored.split(';')[0]
+}
+
+export const api = axios.create({ withCredentials: true })
+api.interceptors.request.use((config) => {
+  const isRefresh = config.url != null && config.url.indexOf('auth-refresh') > -1
+  const cookie = extractCookie(isRefresh ? 'm_refresh_token' : 'm_access_token')
+  if (cookie) {
+    config.headers.set('m_access_token', cookie)
+  }
+  const key = localStorage.getItem('myko-auth-key')
+  if (key) config.headers.set('x-myko-auth', key)
+  return config
+})
+api.interceptors.response.use((response) => {
+  if (response.headers['m_access_token']) {
+    localStorage.setItem('m_access_token', response.headers['m_access_token'])
+  }
+  if (response.headers['m_refresh_token']) {
+    localStorage.setItem('m_refresh_token', response.headers['m_refresh_token'])
+  }
+  return response
+})
+
+export async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
+  try {
+    await api.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
+    const { data: me } = await api.get<{ user: User }>(`${PROXY_BASE}.netlify/functions/auth-me`)
+    return me.user
+  } catch (e) {
+    if (!axios.isAxiosError(e) || e.response?.status !== 401) throw new Error(`Auth refresh failed: HTTP ${e instanceof Error ? e.message : e}`)
+  }
+
+  const { data: loginData } = await api.post<{ user: User }>(
+    `${PROXY_BASE}.netlify/functions/auth-login`,
+    { email, password },
+  )
+
+  await api.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
+  await api.get(`${PROXY_BASE}.netlify/functions/auth-me`)
+
+  return loginData.user
+}

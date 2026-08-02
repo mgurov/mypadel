@@ -29,7 +29,13 @@ mypadel/
 │   └── icons.svg
 ├── src/                        # Frontend source
 │   ├── main.tsx                # Entry: renders <App /> into #root
-│   ├── App.tsx                 # THE ONLY component (~160 lines)
+│   ├── App.tsx                 # Top-level component: state + wiring (~90 lines)
+│   ├── api.ts                  # axios instance, proxy URLs, ensureCookieAuth, types
+│   ├── components/             # Extracted UI components
+│   │   ├── CredentialsButton.tsx  # Credentials button + 3-field dialog
+│   │   ├── EventsTable.tsx        # Events table rendering
+│   │   ├── EventDetailCell.tsx    # Per-event participation + JSON dialog
+│   │   └── ParticipationCell.tsx  # participants/max formatting
 │   ├── App.css                 # Events table styles
 │   ├── index.css               # Global styles, CSS variables, dark mode
 │   └── assets/
@@ -44,11 +50,11 @@ mypadel/
 
 ## Key Details
 
-### Frontend (src/App.tsx)
+### Frontend (src/)
 
-- **Entire UI is a single component** — no component decomposition, no hooks/, no services/ dirs.
+- **`App.tsx` holds state + wiring; UI is split into `src/components/`.** Credentials (auth key + email + password) are saved via the single `CredentialsButton` dialog; localStorage keys: `myko-auth-key`, `myko-cred-email`, `myko-cred-password`.
 - **One fetch call** in the app: `fetchEvents()` hits the Supabase Edge Function proxy.
-- **Proxy base:** `PROXY_BASE` in `src/App.tsx` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy in `vite.config.ts`), `https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/` for deployment builds; overridable via `VITE_PROXY_BASE`.
+- **Proxy base:** `PROXY_BASE` in `src/api.ts` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy in `vite.config.ts`), `https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/` for deployment builds; overridable via `VITE_PROXY_BASE`.
 - **Auth:** `x-myko-auth` header, key stored in `localStorage` under `myko-auth-key`.
 - **Fetch is triggered manually** by button click — no auto-loading, no polling, no caching.
 - **Event model** has ~20 fields, but the table only renders title, date, and status.

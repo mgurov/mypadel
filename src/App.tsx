@@ -1,129 +1,13 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import axios from 'axios'
 import './App.css'
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
-
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  createdAt: string;
-  role: string;
-  elo: number;
-  achievements: string[];
-  isPremium: boolean;
-}
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  endDate: string;
-  location: string;
-  status: string;
-  publishAt: string | null;
-  reminderSentAt: string | null;
-  maxParticipants: number;
-  price: string;
-  disclaimer: string;
-  createdAt: string;
-  competitionId: string | null;
-  formatId: string | null;
-  formatConfig: string | null;
-  matchTableStatus: string;
-  matchTableMode: string;
-  matchTableGeneratedAt: string | null;
-  matchTableConfirmedAt: string | null;
-  _count: {
-    participants: number;
-  };
-}
-
-interface Participant {
-  id: string;
-  createdAt: string;
-  eventId: string;
-  userId: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    elo: number;
-    name: string;
-  };
-}
-
-interface EventDetail extends Event {
-  participants: Participant[];
-  currentUserPayment: unknown;
-}
-
-const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/dev-proxy/' : 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/')
-const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
-const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
-
-function extractCookie(name: string): string | undefined {
-  const stored = localStorage.getItem(name)
-  if (!stored) {
-    return undefined
-  }
-  return stored.split(";")[0]
-}
-
-const api = axios.create({ withCredentials: true })
-api.interceptors.request.use((config) => {
-  const cookie = extractCookie(
-    (config.url!!.indexOf('auth-refresh') > -1) ? 'm_refresh_token' : 'm_access_token'
-  )
-  if (cookie) {
-    config.headers.set('m_access_token', cookie)
-  }
-  const key = localStorage.getItem('myko-auth-key')
-  if (key) config.headers.set('x-myko-auth', key)
-  return config
-})
-api.interceptors.response.use((response) => {
-  if (response.headers['m_access_token']) {
-    localStorage.setItem('m_access_token', response.headers['m_access_token'])
-  }
-  if (response.headers['m_refresh_token']) {
-    localStorage.setItem('m_refresh_token', response.headers['m_refresh_token'])
-  }
-  return response
-})
-
-async function ensureCookieAuth(email: string, password: string): Promise<User | null> {
-  try {
-    await api.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
-    const { data: me } = await api.get<{ user: User }>(`${PROXY_BASE}.netlify/functions/auth-me`)
-    return me.user
-  } catch (e) {
-    if (!axios.isAxiosError(e) || e.response?.status !== 401) throw new Error(`Auth refresh failed: HTTP ${e instanceof Error ? e.message : e}`)
-  }
-
-  const { data: loginData } = await api.post<{ user: User }>(
-    `${PROXY_BASE}.netlify/functions/auth-login`,
-    { email, password },
-  )
-
-  await api.post(`${PROXY_BASE}.netlify/functions/auth-refresh`)
-  await api.get(`${PROXY_BASE}.netlify/functions/auth-me`)
-
-  return loginData.user
-}
+import { api, EVENTS_URL, ensureCookieAuth, type Event, type User } from './api'
+import { CredentialsButton, type Credentials } from './components/CredentialsButton'
+import { EventsTable } from './components/EventsTable'
 
 function App() {
   const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
@@ -166,18 +50,6 @@ function App() {
     placeholderData: keepPreviousData,
   })
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-UK', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
   const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase()
 
   return (
@@ -198,7 +70,6 @@ function App() {
           )}
         </div>
 
-
         {authError && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
             {`Cookie auth failed: ${authError}`}
@@ -210,164 +81,13 @@ function App() {
             {`Failed to fetch events: ${error.message}`}
           </Alert>
         )}
-        
+
         {events && events.length > 0 && (
-          <div className="events-table">
-            {events.map((event) => (
-              <div key={event.id} className="table-row-group">
-                <div className="table-row">
-                  <div className="column">{event.title}</div>
-                  <div className="column">{formatDate(event.date)}</div>
-                  <div className="column">
-                    <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
-                  </div>
-                  <EventDetailCell eventId={event.id} userId={user?.id} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <EventsTable events={events} userId={user?.id} />
         )}
       </section>
     </>
   )
 }
-
-interface Credentials {
-  authKey: string
-  email: string
-  password: string
-}
-
-interface CredentialsButtonProps {
-  authKey: string
-  email: string
-  password: string
-  onSave: (credentials: Credentials) => void
-}
-
-function CredentialsButton({ authKey, email, password, onSave }: CredentialsButtonProps) {
-  const [open, setOpen] = useState(false)
-  const [draftAuthKey, setDraftAuthKey] = useState(authKey)
-  const [draftEmail, setDraftEmail] = useState(email)
-  const [draftPassword, setDraftPassword] = useState(password)
-
-  const missing: string[] = []
-  if (authKey === '') missing.push('auth key')
-  if (email === '') missing.push('email')
-  if (password === '') missing.push('password')
-  const complete = missing.length === 0
-
-  const openDialog = () => {
-    setDraftAuthKey(authKey)
-    setDraftEmail(email)
-    setDraftPassword(password)
-    setOpen(true)
-  }
-
-  const save = () => {
-    onSave({ authKey: draftAuthKey, email: draftEmail, password: draftPassword })
-    setOpen(false)
-  }
-
-  return (
-    <>
-      <Button
-        variant="outlined"
-        onClick={openDialog}
-        title={complete ? 'All credentials set' : `Missing: ${missing.join(', ')}`}
-      >
-        {complete ? 'Credentials Set' : 'Set Credentials'}
-      </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Credentials</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            type="password"
-            label="x-myko-auth"
-            value={draftAuthKey}
-            onChange={(e) => setDraftAuthKey(e.target.value)}
-            variant="outlined"
-          />
-          <TextField
-            fullWidth
-            label="Email"
-            value={draftEmail}
-            onChange={(e) => setDraftEmail(e.target.value)}
-            variant="outlined"
-            sx={{ mt: 2, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            type="password"
-            label="Password"
-            value={draftPassword}
-            onChange={(e) => setDraftPassword(e.target.value)}
-            variant="outlined"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={save}>Save</Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  )
-}
-
-function EventDetailCell({ eventId, userId }: { eventId: string; userId: string | undefined }) {
-  const [jsonOpen, setJsonOpen] = useState(false)
-
-  const { data: detail } = useQuery<EventDetail>({
-    queryKey: ['eventDetail', eventId],
-    queryFn: async () => {
-      const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${eventId}`)
-      return data
-    },
-  })
-
-  const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
-
-  return (
-    <>
-      <div className="column">
-        {detail ? (
-          isParticipating
-            ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
-            : <span className="participating-no">&mdash;</span>
-        ) : (
-          <span className="loading-text">loading...</span>
-        )}
-      </div>
-      <div className="column">
-        {detail && (
-          <Button variant="outlined" size="small" onClick={() => setJsonOpen(true)}>
-            Show JSON
-          </Button>
-        )}
-        <div>
-          <a href={`https://sunsetpadel.at/events/${eventId}`} target="_blank" rel="noopener noreferrer">Open Event</a>
-        </div>
-      </div>
-      <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Event Details</DialogTitle>
-        <DialogContent>
-          <pre className="dialog-json">{detail ? JSON.stringify(detail, null, 2) : ''}</pre>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setJsonOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  )
-}
-
-function ParticipationCell({ participants, maxParticipants }: { participants: number | undefined; maxParticipants: number }) {
-  if (maxParticipants <= 0) return <>{participants}</>
-  if (participants && participants >= maxParticipants) return <>full ({maxParticipants}) </>
-  return <>{participants} ({maxParticipants})</>
-}
-
 
 export default App
