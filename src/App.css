@@ -66,6 +66,14 @@
   flex: none;
 }
 
+.width-28 {
+  width: 28px;
+}
+
+.width-56 {
+  width: 56px;
+}
+
 
 .table-row-group:last-child .table-row {
   border-bottom: none;
