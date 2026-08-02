@@ -209,3 +209,11 @@ test('shows error alert when fetch fails', async ({ page }) => {
 
   await expect(page.getByRole('alert')).toContainText('Failed to fetch events')
 })
+
+test('page background stays light even in dark color scheme', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.goto('/')
+
+  const bg = await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+  expect(bg).toBe('rgb(255, 255, 255)')
+})
