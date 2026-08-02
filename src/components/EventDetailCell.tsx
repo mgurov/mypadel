@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Dialog from '@mui/material/Dialog'
@@ -35,7 +36,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
             ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
             : <span className="participating-no">&mdash;</span>
         ) : (
-          <span className="loading-text">loading...</span>
+          <CircularProgress size={16} />
         )}
       </div>
       <div className="column no-grow">
