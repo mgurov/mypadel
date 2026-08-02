@@ -53,11 +53,6 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
           open={Boolean(menuAnchor)}
           onClose={closeMenu}
         >
-          {detail && (
-            <MenuItem onClick={() => { setJsonOpen(true); closeMenu() }}>
-              Show JSON
-            </MenuItem>
-          )}
           <MenuItem onClick={() => { downloadEventIcs(event); closeMenu() }}>
             Add to Calendar
           </MenuItem>
@@ -70,6 +65,11 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
           >
             Open Event
           </MenuItem>
+          {detail && (
+            <MenuItem onClick={() => { setJsonOpen(true); closeMenu() }}>
+              Show JSON
+            </MenuItem>
+          )}
         </Menu>
       </div>
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
