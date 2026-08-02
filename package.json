@@ -10,7 +10,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:app": "playwright test",
-    "deploy": "npm run build && netlify deploy --dir=./dist --alias=preview"
+    "deploy": "npm run build && netlify deploy --dir=./dist --alias=preview",
+    "deploy:prod": "npm run build && netlify deploy --dir=./dist --prod"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
