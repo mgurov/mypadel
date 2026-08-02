@@ -6,7 +6,6 @@ function formatDate(dateString: string): string {
   const date = new Date(dateString)
   return date.toLocaleDateString('en-UK', {
     weekday: 'short',
-    year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
