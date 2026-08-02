@@ -32,6 +32,7 @@ function foldLine(line: string): string {
 export function buildEventIcs(event: Event): string {
   const start = icsDateTime(event.date)
   const end = event.endDate ? icsDateTime(event.endDate) : ''
+  //TODO: remove the disclaimer as not important.
   const details = [event.description, event.price ? `Price: ${event.price}` : '', event.disclaimer]
     .filter(Boolean)
     .join('\n')
