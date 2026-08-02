@@ -23,7 +23,7 @@ mypadel/
 ├── tsconfig.node.json          # Node tooling
 ├── .oxlintrc.json              # Oxlint rules (react + typescript plugins)
 ├── playwright.config.ts        # Playwright config, auto-starts vite dev server
-├── e2e/                        # Playwright e2e tests (API mocked via page.route)
+├── tests/app/                  # Playwright e2e tests (API mocked via ./setup/worldTest.ts)
 ├── public/
 │   ├── favicon.svg
 │   └── icons.svg
@@ -70,3 +70,7 @@ mypadel/
 ## No typecheck script
 
 Run `tsc -b` directly or use `npm run build` to type-check.
+
+## Git workflow
+
+Commit all changes progressively at all times. Keep commit messages simple.
