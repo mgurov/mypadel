@@ -10,7 +10,7 @@ export const wordlyTest = test.extend<{world: World}>({
         return route.fulfill({
             status: 505,
             json: {
-                message: `Route ${request.method} ${request.url} isn't implemented`
+                message: `the route ${request.method()} ${request.url()} isn't routed`
             }
         })
     })
@@ -28,7 +28,7 @@ export const wordlyTest = test.extend<{world: World}>({
         return route.fulfill({
             status: 505,
             json: {
-                message: `Route ${request.method} ${request.url} isn't implemented`
+                message: `the route ${request.method()} ${request.url()} isn't routed`
             }
         })
     }
