@@ -199,6 +199,38 @@ test('fetches and displays events after setting credentials', async ({ page }) =
   await expectVariant(fetchButton(page), 'contained')
 })
 
+test('actions menu offers show json, calendar, and open event', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
+  await page.getByRole('button', { name: 'Fetch Events' }).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Actions' }).first().click()
+
+  await expect(page.getByRole('menuitem', { name: 'Show JSON' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Add to Calendar' })).toBeVisible()
+  const openEvent = page.getByRole('menuitem', { name: 'Open Event' })
+  await expect(openEvent).toBeVisible()
+  await expect(openEvent).toHaveAttribute('href', 'https://sunsetpadel.at/events/evt-1')
+  await expect(openEvent).toHaveAttribute('target', '_blank')
+})
+
+test('show json action opens event details dialog', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
+  await page.getByRole('button', { name: 'Fetch Events' }).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByRole('menuitem', { name: 'Show JSON' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('"participants": []')).toBeVisible()
+})
+
 test('shows error alert when fetch fails', async ({ page }) => {
   await page.route('**/.netlify/functions/events', (route) =>
     route.fulfill({ status: 401, json: { error: 'unauthorized' } }),

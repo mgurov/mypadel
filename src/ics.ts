@@ -65,3 +65,13 @@ export function eventIcsFilename(event: Event): string {
   const safe = event.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
   return `${safe || 'event'}.ics`
 }
+
+export function downloadEventIcs(event: Event): void {
+  const blob = new Blob([buildEventIcs(event)], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = eventIcsFilename(event)
+  a.click()
+  URL.revokeObjectURL(url)
+}

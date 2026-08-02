@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Button from '@mui/material/Button'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import { api, EVENT_DETAILS_URL, type Event, type EventDetail } from '../api'
-import { AddToCalendarButton } from './AddToCalendarButton'
+import { downloadEventIcs } from '../ics'
 
 export function EventDetailCell({ event, userId }: { event: Event; userId: string | undefined }) {
   const [jsonOpen, setJsonOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const { id: eventId } = event
 
   const { data: detail } = useQuery<EventDetail>({
@@ -21,6 +24,8 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
   })
 
   const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
+
+  const closeMenu = () => setMenuAnchor(null)
 
   return (
     <>
@@ -34,17 +39,38 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
         )}
       </div>
       <div className="column">
-        {detail && (
-          <Button variant="outlined" size="small" onClick={() => setJsonOpen(true)}>
-            Show JSON
-          </Button>
-        )}
-        <div>
-          <AddToCalendarButton event={event} />
-        </div>
-        <div>
-          <a href={`https://sunsetpadel.at/events/${eventId}`} target="_blank" rel="noopener noreferrer">Open Event</a>
-        </div>
+        <Button
+          variant="outlined"
+          size="small"
+          aria-haspopup="true"
+          aria-expanded={Boolean(menuAnchor)}
+          onClick={(e) => setMenuAnchor(e.currentTarget)}
+        >
+          Actions
+        </Button>
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={closeMenu}
+        >
+          {detail && (
+            <MenuItem onClick={() => { setJsonOpen(true); closeMenu() }}>
+              Show JSON
+            </MenuItem>
+          )}
+          <MenuItem onClick={() => { downloadEventIcs(event); closeMenu() }}>
+            Add to Calendar
+          </MenuItem>
+          <MenuItem
+            component="a"
+            href={`https://sunsetpadel.at/events/${eventId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeMenu}
+          >
+            Open Event
+          </MenuItem>
+        </Menu>
       </div>
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>

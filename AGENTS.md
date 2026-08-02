@@ -33,12 +33,11 @@ mypadel/
 │   ├── main.tsx                # Entry: renders <App /> into #root
 │   ├── App.tsx                 # Top-level component: state + wiring (~90 lines)
 │   ├── api.ts                  # axios instance, proxy URLs, ensureCookieAuth, types
-│   ├── ics.ts                  # iCalendar (.ics) generation + filenames
+│   ├── ics.ts                  # iCalendar (.ics) generation + filenames + download helper
 │   ├── components/             # Extracted UI components
 │   │   ├── CredentialsButton.tsx  # Credentials button + 3-field dialog
 │   │   ├── EventsTable.tsx        # Events table rendering
-│   │   ├── EventDetailCell.tsx    # Per-event participation + JSON dialog
-│   │   ├── AddToCalendarButton.tsx # Downloads an .ics calendar entry
+│   │   ├── EventDetailCell.tsx    # Per-event participation + Actions dropdown (Show JSON, Add to Calendar, Open Event)
 │   │   └── ParticipationCell.tsx  # participants/max formatting
 │   ├── App.css                 # Events table styles
 │   ├── index.css               # Global styles, CSS variables, dark mode

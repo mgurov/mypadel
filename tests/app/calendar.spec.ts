@@ -62,13 +62,19 @@ async function loadEvents(page: Page) {
 
 const icsTime = (iso: string) => iso.slice(0, 19).replace(/[-:]/g, '') + 'Z'
 
+async function downloadCalendar(page: Page, index = 0) {
+  await page.getByRole('button', { name: 'Actions' }).nth(index).click()
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('menuitem', { name: 'Add to Calendar' }).click(),
+  ])
+  return download
+}
+
 test('downloads an ics file for the first event', async ({ page }) => {
   await loadEvents(page)
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Add to Calendar' }).first().click(),
-  ])
+  const download = await downloadCalendar(page)
 
   expect(download.suggestedFilename()).toBe('Morning-Padel.ics')
   const content = fs.readFileSync((await download.path())!, 'utf8')
@@ -94,10 +100,7 @@ test('each event downloads its own ics file', async ({ page }) => {
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Evening Padel')).toBeVisible()
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Add to Calendar' }).nth(1).click(),
-  ])
+  const download = await downloadCalendar(page, 1)
 
   expect(download.suggestedFilename()).toBe('Evening-Padel.ics')
   const content = fs.readFileSync((await download.path())!, 'utf8')
@@ -123,10 +126,7 @@ test('keeps the UTC timezone designation on dates', async ({ page }) => {
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Add to Calendar' }).click(),
-  ])
+  const download = await downloadCalendar(page)
 
   const content = fs.readFileSync((await download.path())!, 'utf8')
   expect(content).toContain('DTSTART:20260806T160000Z')
@@ -145,10 +145,7 @@ test('escapes special characters in ics text fields', async ({ page }) => {
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Team A, B; C')).toBeVisible()
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Add to Calendar' }).click(),
-  ])
+  const download = await downloadCalendar(page)
 
   expect(download.suggestedFilename()).toBe('Team-A-B-C.ics')
   const content = fs.readFileSync((await download.path())!, 'utf8')
