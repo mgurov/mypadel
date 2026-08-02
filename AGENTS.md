@@ -2,6 +2,8 @@
 
 Padel tennis event management SPA + Supabase Edge Functions backend proxy.
 
+**Primary users access the app from a mobile browser (iPhone 12).** UI is designed and tested mobile-first.
+
 ## Tech Stack
 
 - **Frontend:** React 19, TypeScript 6, Vite 8, MUI 9 (Material UI)
@@ -52,6 +54,7 @@ mypadel/
 
 ### Frontend (src/)
 
+- **Mobile-first:** the main audience uses a phone browser — iPhone 12 viewport (375×812, Safari). Keep layouts usable and readable at small widths.
 - **`App.tsx` holds state + wiring; UI is split into `src/components/`.** Credentials (auth key + email + password) are saved via the single `CredentialsButton` dialog; localStorage keys: `myko-auth-key`, `myko-cred-email`, `myko-cred-password`.
 - **One fetch call** in the app: `fetchEvents()` hits the Supabase Edge Function proxy.
 - **Proxy base:** `PROXY_BASE` in `src/api.ts` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy in `vite.config.ts`), `https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/` for deployment builds; overridable via `VITE_PROXY_BASE`.
