@@ -25,7 +25,7 @@ export function EventsTable({ events, userId }: { events: Event[]; userId: strin
             <div className="column">
               <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
             </div>
-            <EventDetailCell eventId={event.id} userId={userId} />
+            <EventDetailCell event={event} userId={userId} />
           </div>
         </div>
       ))}

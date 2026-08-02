@@ -5,10 +5,12 @@ import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import { api, EVENT_DETAILS_URL, type EventDetail } from '../api'
+import { api, EVENT_DETAILS_URL, type Event, type EventDetail } from '../api'
+import { AddToCalendarButton } from './AddToCalendarButton'
 
-export function EventDetailCell({ eventId, userId }: { eventId: string; userId: string | undefined }) {
+export function EventDetailCell({ event, userId }: { event: Event; userId: string | undefined }) {
   const [jsonOpen, setJsonOpen] = useState(false)
+  const { id: eventId } = event
 
   const { data: detail } = useQuery<EventDetail>({
     queryKey: ['eventDetail', eventId],
@@ -37,6 +39,9 @@ export function EventDetailCell({ eventId, userId }: { eventId: string; userId: 
             Show JSON
           </Button>
         )}
+        <div>
+          <AddToCalendarButton event={event} />
+        </div>
         <div>
           <a href={`https://sunsetpadel.at/events/${eventId}`} target="_blank" rel="noopener noreferrer">Open Event</a>
         </div>
