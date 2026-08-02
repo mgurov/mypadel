@@ -45,6 +45,10 @@
   flex: 2;
 }
 
+.participants {
+  text-align: right;
+}
+
 .table-row-group:last-child .table-row {
   border-bottom: none;
 }
