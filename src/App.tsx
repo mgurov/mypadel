@@ -26,6 +26,7 @@ function App() {
   }
 
   const hasCredentials = credEmail !== '' && credPassword !== ''
+  const credentialsComplete = authKey !== '' && credEmail !== '' && credPassword !== ''
 
   const { data: events, error, refetch, isFetching } = useQuery<Event[]>({
     queryKey: ['events', authKey, credEmail],
@@ -57,7 +58,7 @@ function App() {
       <section id="center">
         <div className="button-row">
           <CredentialsButton authKey={authKey} email={credEmail} password={credPassword} onSave={saveCredentials} />
-          <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
+          <Button variant={credentialsComplete ? 'contained' : 'outlined'} onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? 'Loading...' : 'Fetch Events'}
           </Button>
           {user && (

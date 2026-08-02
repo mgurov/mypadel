@@ -25,11 +25,7 @@ export function CredentialsButton({ authKey, email, password, onSave }: Credenti
   const [draftEmail, setDraftEmail] = useState(email)
   const [draftPassword, setDraftPassword] = useState(password)
 
-  const missing: string[] = []
-  if (authKey === '') missing.push('auth key')
-  if (email === '') missing.push('email')
-  if (password === '') missing.push('password')
-  const complete = missing.length === 0
+  const complete = authKey !== '' && email !== '' && password !== ''
 
   const openDialog = () => {
     setDraftAuthKey(authKey)
@@ -46,9 +42,8 @@ export function CredentialsButton({ authKey, email, password, onSave }: Credenti
   return (
     <>
       <Button
-        variant="outlined"
+        variant={complete ? 'outlined' : 'contained'}
         onClick={openDialog}
-        title={complete ? 'All credentials set' : `Missing: ${missing.join(', ')}`}
       >
         {complete ? 'Credentials Set' : 'Set Credentials'}
       </Button>

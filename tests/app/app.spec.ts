@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { test } from './setup/ourTest'
 
 function futureDate(daysAhead: number, hour: number): string {
@@ -72,6 +72,10 @@ function mockApi(page: Page) {
 
 const credentialsButton = (page: Page) => page.getByRole('button', { name: 'Set Credentials' })
 const credentialsSetButton = (page: Page) => page.getByRole('button', { name: 'Credentials Set' })
+const fetchButton = (page: Page) => page.getByRole('button', { name: 'Fetch Events' })
+
+const expectVariant = (button: Locator, variant: 'contained' | 'outlined') =>
+  expect(button).toHaveClass(new RegExp(`MuiButton-${variant}`))
 
 async function fillCredentials(page: Page, authKey: string, email: string, password: string) {
   await credentialsButton(page).click()
@@ -101,7 +105,8 @@ test('credentials dialog contains all three fields', async ({ page }) => {
 
 test('button indicates all three pieces missing by default', async ({ page }) => {
   await page.goto('/')
-  await expect(credentialsButton(page)).toHaveAttribute('title', 'Missing: auth key, email, password')
+  await expectVariant(credentialsButton(page), 'contained')
+  await expectVariant(fetchButton(page), 'outlined')
 })
 
 test('button indicates missing email and password when only auth key is set', async ({ page }) => {
@@ -109,7 +114,8 @@ test('button indicates missing email and password when only auth key is set', as
     localStorage.setItem('myko-auth-key', 'test-secret-key')
   })
   await page.goto('/')
-  await expect(credentialsButton(page)).toHaveAttribute('title', 'Missing: email, password')
+  await expectVariant(credentialsButton(page), 'contained')
+  await expectVariant(fetchButton(page), 'outlined')
 })
 
 test('button indicates missing auth key when only credentials are set', async ({ page }) => {
@@ -118,7 +124,8 @@ test('button indicates missing auth key when only credentials are set', async ({
     localStorage.setItem('myko-cred-password', 'hunter2')
   })
   await page.goto('/')
-  await expect(credentialsButton(page)).toHaveAttribute('title', 'Missing: auth key')
+  await expectVariant(credentialsButton(page), 'contained')
+  await expectVariant(fetchButton(page), 'outlined')
 })
 
 test('saving all three credentials sets button and localStorage', async ({ page }) => {
@@ -126,7 +133,8 @@ test('saving all three credentials sets button and localStorage', async ({ page 
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
   await expect(credentialsSetButton(page)).toBeVisible()
-  await expect(credentialsSetButton(page)).toHaveAttribute('title', 'All credentials set')
+  await expectVariant(credentialsSetButton(page), 'outlined')
+  await expectVariant(fetchButton(page), 'contained')
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBe('test-secret-key')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBe('player@example.com')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('hunter2')
@@ -141,7 +149,8 @@ test('saving a partial set still indicates what is missing', async ({ page }) =>
   await dialog.getByRole('button', { name: 'Save' }).click()
 
   await expect(credentialsButton(page)).toBeVisible()
-  await expect(credentialsButton(page)).toHaveAttribute('title', 'Missing: password')
+  await expectVariant(credentialsButton(page), 'contained')
+  await expectVariant(fetchButton(page), 'outlined')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('')
 })
 
@@ -186,6 +195,8 @@ test('fetches and displays events after setting credentials', async ({ page }) =
   await expect(page.getByText('Evening Padel')).toBeVisible()
   await expect(page.getByText('3 (8)').first()).toBeVisible()
   await expect(page.getByText('1500')).toBeVisible()
+  await expectVariant(credentialsSetButton(page), 'outlined')
+  await expectVariant(fetchButton(page), 'contained')
 })
 
 test('shows error alert when fetch fails', async ({ page }) => {
