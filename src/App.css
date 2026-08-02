@@ -54,6 +54,10 @@
   text-align: right;
 }
 
+.no-grow {
+  flex: none;
+}
+
 
 .table-row-group:last-child .table-row {
   border-bottom: none;
