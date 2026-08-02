@@ -9,4 +9,13 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
+  server: {
+    proxy: {
+      '/xxx/dev-proxy': {
+        target: 'https://cpfgugbirflalcjuludp.supabase.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/dev-proxy/, '/functions/v1/proxy'),
+      },
+    },
+  },
 })

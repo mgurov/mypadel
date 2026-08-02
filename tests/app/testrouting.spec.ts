@@ -5,7 +5,7 @@ test('unmocked proxy calls fail loudly with 505', async ({ page }) => {
   await page.goto('/')
 
   const responsePromise = page.waitForResponse((res) =>
-    res.url().includes('/functions/v1/proxy/'),
+    res.url().includes('/dev-proxy/'),
   )
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   const response = await responsePromise

@@ -48,7 +48,7 @@ mypadel/
 
 - **Entire UI is a single component** — no component decomposition, no hooks/, no services/ dirs.
 - **One fetch call** in the app: `fetchEvents()` hits the Supabase Edge Function proxy.
-- **Hardcoded Supabase URL:** `https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events`
+- **Proxy base:** `PROXY_BASE` in `src/App.tsx` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy in `vite.config.ts`), `https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/` for deployment builds; overridable via `VITE_PROXY_BASE`.
 - **Auth:** `x-myko-auth` header, key stored in `localStorage` under `myko-auth-key`.
 - **Fetch is triggered manually** by button click — no auto-loading, no polling, no caching.
 - **Event model** has ~20 fields, but the table only renders title, date, and status.

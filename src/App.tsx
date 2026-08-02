@@ -71,9 +71,9 @@ interface EventDetail extends Event {
   currentUserPayment: unknown;
 }
 
-const EVENTS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/events'
-const EVENT_DETAILS_URL = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/.netlify/functions/event-details'
-const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/'
+const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/dev-proxy/' : 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/')
+const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
+const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
 
 function extractCookie(name: string): string | undefined {
   const stored = localStorage.getItem(name)
