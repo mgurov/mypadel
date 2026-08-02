@@ -29,7 +29,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
 
   return (
     <>
-      <div className="column margin-left-16 no-grow">
+      <div className="column margin-left-16 margin-right-16 no-grow">
         {detail ? (
           isParticipating
             ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
