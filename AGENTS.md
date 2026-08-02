@@ -57,7 +57,8 @@ mypadel/
 - **Mobile-first:** the main audience uses a phone browser — iPhone 12 viewport (375×812, Safari). Keep layouts usable and readable at small widths.
 - **`App.tsx` holds state + wiring; UI is split into `src/components/`.** Credentials (auth key + email + password) are saved via the single `CredentialsButton` dialog; localStorage keys: `myko-auth-key`, `myko-cred-email`, `myko-cred-password`.
 - **One fetch call** in the app: `fetchEvents()` hits the Supabase Edge Function proxy.
-- **Proxy base:** `PROXY_BASE` in `src/api.ts` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy in `vite.config.ts`), `https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/` for deployment builds; overridable via `VITE_PROXY_BASE`.
+- **Proxy base:** `PROXY_BASE` in `src/api.ts` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy)
+- **Dev server** the default dev server port (5173) should be always be used by agents. Under no circumstances should the agent try accessing other ports, especially pointing browser to 9999. Agent should not try to start the dev server itself and should ask the user to do so if needed.
 - **Auth:** `x-myko-auth` header, key stored in `localStorage` under `myko-auth-key`.
 - **Fetch is triggered manually** by button click — no auto-loading, no polling, no caching.
 - **Event model** has ~20 fields, but the table only renders title, date, and status.
@@ -69,10 +70,10 @@ mypadel/
 
 ## NPM Scripts
 
-- `dev` — `vite`
+- `dev` — `vite` (no proxy; used by Playwright; should not be used by the agents)
 - `build` — `tsc -b && vite build`
 - `lint` — `oxlint`
-- `preview` — `vite preview`
+- `preview` — `vite preview` (should not be used by the agents)
 - `test:e2e` — `playwright test`
 - `test:e2e:ui` — `playwright test --ui`
 
