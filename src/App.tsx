@@ -127,28 +127,18 @@ async function ensureCookieAuth(email: string, password: string): Promise<User |
 
 function App() {
   const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
-  const [authDialogOpen, setAuthDialogOpen] = useState(false)
-  const [authDraft, setAuthDraft] = useState(authKey)
   const [credEmail, setCredEmail] = useState(() => localStorage.getItem('myko-cred-email') ?? '')
   const [credPassword, setCredPassword] = useState(() => localStorage.getItem('myko-cred-password') ?? '')
-  const [credDraftEmail, setCredDraftEmail] = useState(credEmail)
-  const [credDraftPassword, setCredDraftPassword] = useState(credPassword)
-  const [credDialogOpen, setCredDialogOpen] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
 
-  const saveAuthKey = () => {
-    localStorage.setItem('myko-auth-key', authDraft)
-    setAuthKey(authDraft)
-    setAuthDialogOpen(false)
-  }
-
-  const saveCredentials = () => {
-    localStorage.setItem('myko-cred-email', credDraftEmail)
-    localStorage.setItem('myko-cred-password', credDraftPassword)
-    setCredEmail(credDraftEmail)
-    setCredPassword(credDraftPassword)
-    setCredDialogOpen(false)
+  const saveCredentials = (creds: Credentials) => {
+    localStorage.setItem('myko-auth-key', creds.authKey)
+    localStorage.setItem('myko-cred-email', creds.email)
+    localStorage.setItem('myko-cred-password', creds.password)
+    setAuthKey(creds.authKey)
+    setCredEmail(creds.email)
+    setCredPassword(creds.password)
   }
 
   const hasCredentials = credEmail !== '' && credPassword !== ''
@@ -194,12 +184,7 @@ function App() {
     <>
       <section id="center">
         <div className="button-row">
-          <Button variant="outlined" onClick={() => { setAuthDraft(authKey); setAuthDialogOpen(true) }}>
-            {authKey ? 'Auth Key Set' : 'Set Auth Key'}
-          </Button>
-          <Button variant="outlined" onClick={() => { setCredDraftEmail(credEmail); setCredDraftPassword(credPassword); setCredDialogOpen(true) }}>
-            {hasCredentials ? 'Credentials Set' : 'Set Credentials'}
-          </Button>
+          <CredentialsButton authKey={authKey} email={credEmail} password={credPassword} onSave={saveCredentials} />
           <Button variant="contained" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? 'Loading...' : 'Fetch Events'}
           </Button>
@@ -213,51 +198,6 @@ function App() {
           )}
         </div>
 
-        <Dialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)}>
-          <DialogTitle>Auth Key</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              fullWidth
-              type="password"
-              label="x-myko-auth"
-              value={authDraft}
-              onChange={(e) => setAuthDraft(e.target.value)}
-              variant="outlined"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAuthDialogOpen(false)}>Cancel</Button>
-            <Button onClick={saveAuthKey}>Save</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={credDialogOpen} onClose={() => setCredDialogOpen(false)}>
-          <DialogTitle>Cookie Auth Credentials</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              fullWidth
-              label="Email"
-              value={credDraftEmail}
-              onChange={(e) => setCredDraftEmail(e.target.value)}
-              variant="outlined"
-              sx={{ mb: 2, mt: 1 }}
-            />
-            <TextField
-              fullWidth
-              type="password"
-              label="Password"
-              value={credDraftPassword}
-              onChange={(e) => setCredDraftPassword(e.target.value)}
-              variant="outlined"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCredDialogOpen(false)}>Cancel</Button>
-            <Button onClick={saveCredentials}>Save</Button>
-          </DialogActions>
-        </Dialog>
 
         {authError && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
@@ -288,6 +228,90 @@ function App() {
           </div>
         )}
       </section>
+    </>
+  )
+}
+
+interface Credentials {
+  authKey: string
+  email: string
+  password: string
+}
+
+interface CredentialsButtonProps {
+  authKey: string
+  email: string
+  password: string
+  onSave: (credentials: Credentials) => void
+}
+
+function CredentialsButton({ authKey, email, password, onSave }: CredentialsButtonProps) {
+  const [open, setOpen] = useState(false)
+  const [draftAuthKey, setDraftAuthKey] = useState(authKey)
+  const [draftEmail, setDraftEmail] = useState(email)
+  const [draftPassword, setDraftPassword] = useState(password)
+
+  const missing: string[] = []
+  if (authKey === '') missing.push('auth key')
+  if (email === '') missing.push('email')
+  if (password === '') missing.push('password')
+  const complete = missing.length === 0
+
+  const openDialog = () => {
+    setDraftAuthKey(authKey)
+    setDraftEmail(email)
+    setDraftPassword(password)
+    setOpen(true)
+  }
+
+  const save = () => {
+    onSave({ authKey: draftAuthKey, email: draftEmail, password: draftPassword })
+    setOpen(false)
+  }
+
+  return (
+    <>
+      <Button
+        variant="outlined"
+        onClick={openDialog}
+        title={complete ? 'All credentials set' : `Missing: ${missing.join(', ')}`}
+      >
+        {complete ? 'Credentials Set' : 'Set Credentials'}
+      </Button>
+      <Dialog open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>Credentials</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            type="password"
+            label="x-myko-auth"
+            value={draftAuthKey}
+            onChange={(e) => setDraftAuthKey(e.target.value)}
+            variant="outlined"
+          />
+          <TextField
+            fullWidth
+            label="Email"
+            value={draftEmail}
+            onChange={(e) => setDraftEmail(e.target.value)}
+            variant="outlined"
+            sx={{ mt: 2, mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            type="password"
+            label="Password"
+            value={draftPassword}
+            onChange={(e) => setDraftPassword(e.target.value)}
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={save}>Save</Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
