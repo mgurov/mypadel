@@ -20,7 +20,7 @@ export function EventsTable({ events, userId }: { events: Event[]; userId: strin
         <div key={event.id} className="table-row-group">
           <div className="table-row">
             <div className="column">{event.title}</div>
-            <div className="column">{formatDate(event.date)}</div>
+            <div className="column text-align-right margin-right-16">{formatDate(event.date)}</div>
             <div className="column text-align-right no-grow">
               <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
             </div>
