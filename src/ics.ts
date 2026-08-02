@@ -35,7 +35,7 @@ export function buildEventIcs(event: Event): string {
   const start = dayjs(event.date)
   const end = event.endDate ? dayjs(event.endDate) : null
   const hasEnd = end !== null && end.valueOf() > start.valueOf()
-  const details = [event.description, event.price ? `Price: ${event.price}` : '', event.disclaimer]
+  const details = [event.description, event.price ? `Price: ${event.price}` : '']
     .filter(Boolean)
     .join('\n')
 
