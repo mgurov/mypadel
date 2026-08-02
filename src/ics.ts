@@ -1,4 +1,8 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import type { Event } from './api'
+
+dayjs.extend(utc)
 
 function escapeText(value: string): string {
   return value
@@ -8,14 +12,12 @@ function escapeText(value: string): string {
     .replace(/\r?\n/g, '\\n')
 }
 
-function icsDateTime(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(iso)
-  if (!m) return ''
-  return `${m[1]}${m[2]}${m[3]}T${m[4]}${m[5]}${m[6] ?? '00'}`
+function icsUtcDateTime(iso: string): string {
+  return dayjs(iso).utc().format('YYYYMMDDTHHmmss[Z]')
 }
 
-function icsUtcTimestamp(date = new Date()): string {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')
+function icsUtcTimestamp(): string {
+  return dayjs().utc().format('YYYYMMDDTHHmmss[Z]')
 }
 
 function foldLine(line: string): string {
@@ -30,9 +32,9 @@ function foldLine(line: string): string {
 }
 
 export function buildEventIcs(event: Event): string {
-  const start = icsDateTime(event.date)
-  const end = event.endDate ? icsDateTime(event.endDate) : ''
-  //TODO: remove the disclaimer as not important.
+  const start = dayjs(event.date)
+  const end = event.endDate ? dayjs(event.endDate) : null
+  const hasEnd = end !== null && end.valueOf() > start.valueOf()
   const details = [event.description, event.price ? `Price: ${event.price}` : '', event.disclaimer]
     .filter(Boolean)
     .join('\n')
@@ -46,8 +48,8 @@ export function buildEventIcs(event: Event): string {
     'BEGIN:VEVENT',
     `UID:${event.id}@mypadel`,
     `DTSTAMP:${icsUtcTimestamp()}`,
-    `DTSTART:${start}`,
-    ...(end && end > start ? [`DTEND:${end}`] : []),
+    `DTSTART:${icsUtcDateTime(event.date)}`,
+    ...(hasEnd ? [`DTEND:${icsUtcDateTime(event.endDate!)}`] : []),
     `SUMMARY:${escapeText(event.title)}`,
     ...(event.location ? [`LOCATION:${escapeText(event.location)}`] : []),
     ...(details ? [`DESCRIPTION:${escapeText(details)}`] : []),

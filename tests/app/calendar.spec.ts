@@ -60,7 +60,7 @@ async function loadEvents(page: Page) {
   await expect(page.getByText('Morning Padel')).toBeVisible()
 }
 
-const icsTime = (iso: string) => iso.slice(0, 19).replace(/[-:]/g, '')
+const icsTime = (iso: string) => iso.slice(0, 19).replace(/[-:]/g, '') + 'Z'
 
 test('downloads an ics file for the first event', async ({ page }) => {
   await loadEvents(page)
@@ -104,6 +104,33 @@ test('each event downloads its own ics file', async ({ page }) => {
   expect(content).toContain('SUMMARY:Evening Padel')
   expect(content).toContain('UID:evt-2@mypadel')
   expect(content).toContain(`DTSTART:${icsTime(evening.date)}`)
+})
+
+test('keeps the UTC timezone designation on dates', async ({ page }) => {
+  await mockApi(page)
+  await page.route('**/.netlify/functions/events', (route) =>
+    route.fulfill({
+      json: [
+        mockEvent({
+          date: '2026-08-06T16:00:00.000Z',
+          endDate: '2026-08-06T18:00:00.000Z',
+        }),
+      ],
+    }),
+  )
+  await page.addInitScript(() => localStorage.setItem('myko-auth-key', 'test-secret-key'))
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Fetch Events' }).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Add to Calendar' }).click(),
+  ])
+
+  const content = fs.readFileSync((await download.path())!, 'utf8')
+  expect(content).toContain('DTSTART:20260806T160000Z')
+  expect(content).toContain('DTEND:20260806T180000Z')
 })
 
 test('escapes special characters in ics text fields', async ({ page }) => {
