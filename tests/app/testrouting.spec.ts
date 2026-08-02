@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { test } from './setup/ourTest'
 
 test('unmocked proxy calls fail loudly with 505', async ({ page }) => {
   await page.goto('/')

@@ -1,6 +1,5 @@
 import { test, Route, Request } from "@playwright/test";
 
-
 const PROXY_BASE = 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/**'
 
 export const wordlyTest = test.extend<{world: World}>({
