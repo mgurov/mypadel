@@ -85,3 +85,7 @@ Run `tsc -b` directly or use `npm run build` to type-check.
 ## Git workflow
 
 Commit all changes progressively at all times. Keep commit messages simple.
+
+## File access
+
+Don't access any files outside the working (repo) directory. If need to create a temporary file, use a local `./tmp` rather than `/tmp`. 
