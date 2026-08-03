@@ -74,6 +74,19 @@
   width: 56px;
 }
 
+@media (max-width: 500px) {
+  .table-row {
+    flex-wrap: wrap;
+  }
+
+  .table-row > .column:last-child {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+}
+
 
 .table-row-group:last-child .table-row {
   border-bottom: none;

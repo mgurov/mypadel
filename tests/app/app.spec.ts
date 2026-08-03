@@ -249,3 +249,25 @@ test('page background stays light even in dark color scheme', async ({ page }) =
   const bg = await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
   expect(bg).toBe('rgb(255, 255, 255)')
 })
+
+test('actions button wraps below participants on narrow screens', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
+  await page.getByRole('button', { name: 'Fetch Events' }).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  const participants = page.locator('.width-56').first()
+  const actions = page.getByRole('button', { name: 'Actions' }).first()
+
+  const overlap = async () => {
+    const [a, p] = await Promise.all([actions.boundingBox(), participants.boundingBox()])
+    return a && p && a.y < p.y + p.height && a.y + a.height > p.y
+  }
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await expect.poll(overlap).toBe(false)
+
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await expect.poll(overlap).toBe(true)
+})
