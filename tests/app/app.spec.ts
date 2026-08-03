@@ -427,5 +427,6 @@ test('shows the waitlist position for a waiting user', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Fetch Events' }).click()
 
-  await expect(page.locator('.width-28').first()).toContainText('#3')
+  await expect(page.locator('.width-28').first()).toContainText('⏳')
+  await expect(page.locator('.width-28').first()).toContainText('3')
 })
