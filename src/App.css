@@ -79,6 +79,10 @@
     flex-wrap: wrap;
   }
 
+  .table-row > .column:nth-child(2) {
+    flex-basis: 100%;
+  }
+
   .table-row > .column:last-child {
     flex-basis: 100%;
     display: flex;

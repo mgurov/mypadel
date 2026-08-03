@@ -272,6 +272,33 @@ test('actions button wraps below participants on narrow screens', async ({ page 
   await expect.poll(overlap).toBe(true)
 })
 
+test('date cell moves below title on narrow screens', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/')
+  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
+  await page.getByRole('button', { name: 'Fetch Events' }).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  const row = page.locator('.table-row').first()
+  const title = row.locator('> .column').nth(0)
+  const date = row.locator('> .column').nth(1)
+
+  const dateBelowTitle = async () => {
+    const [d, t] = await Promise.all([date.boundingBox(), title.boundingBox()])
+    return d && t && d.y > t.y
+  }
+  const dateSameRowAsTitle = async () => {
+    const [d, t] = await Promise.all([date.boundingBox(), title.boundingBox()])
+    return d && t && d.y === t.y
+  }
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await expect.poll(dateBelowTitle).toBe(true)
+
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await expect.poll(dateSameRowAsTitle).toBe(true)
+})
+
 test('fetch events refreshes event details', async ({ page }) => {
   let detail: Record<string, unknown> = { ...mockEvent(), participants: [], currentUserPayment: null }
   await page.route('**/.netlify/functions/events', (route) =>
