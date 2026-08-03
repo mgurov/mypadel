@@ -37,7 +37,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
           isParticipating
             ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
             : isWaiting
-              ? <span className="participating-waitlist">#{waitlistPosition}</span>
+              ? <span className="participating-waitlist">⌛️{waitlistPosition}</span>
               : <span className="participating-no">&mdash;</span>
         ) : (
           <CircularProgress size={16} />
