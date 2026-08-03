@@ -16,7 +16,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const { id: eventId } = event
 
-  const { data: detail } = useQuery<EventDetail>({
+  const { data: detail, isFetching } = useQuery<EventDetail>({
     queryKey: ['eventDetail', eventId],
     queryFn: async () => {
       const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${eventId}`)
@@ -31,7 +31,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
   return (
     <>
       <div className="column margin-left-16 no-grow width-28">
-        {detail ? (
+        {detail && !isFetching ? (
           isParticipating
             ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
             : <span className="participating-no">&mdash;</span>

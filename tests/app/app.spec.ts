@@ -317,3 +317,46 @@ test('fetch events refreshes event details', async ({ page }) => {
   await fetchButton.click()
   await expect(participation).toContainText('✓')
 })
+
+test('shows a spinner while event details are refetching', async ({ page }) => {
+  await page.route('**/.netlify/functions/events', (route) =>
+    route.fulfill({ json: [mockEvent()] }),
+  )
+  await page.route('**/.netlify/functions/event-details**', async (route) => {
+    await new Promise((r) => setTimeout(r, 150))
+    route.fulfill({ json: { ...mockEvent(), participants: [], currentUserPayment: null } })
+  })
+  await page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} }))
+  await page.route('**/.netlify/functions/auth-me', (route) =>
+    route.fulfill({
+      json: {
+        user: {
+          id: 'user-1',
+          email: 'player@example.com',
+          firstName: 'Player',
+          lastName: 'One',
+          phone: null,
+          createdAt: '2026-01-01T00:00:00Z',
+          role: 'USER',
+          elo: 1500,
+          achievements: [],
+          isPremium: false,
+        },
+      },
+    }),
+  )
+  await page.goto('/')
+  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
+
+  const fetchButton = page.getByRole('button', { name: 'Fetch Events' })
+  const participation = page.locator('.width-28').first()
+  const spinner = page.locator('.MuiCircularProgress-root')
+
+  await fetchButton.click()
+  await expect(participation).toContainText('—')
+  await expect(spinner).toHaveCount(0)
+
+  await fetchButton.click()
+  await expect(spinner).toHaveCount(1)
+  await expect(participation).toContainText('—')
+})
