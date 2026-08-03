@@ -318,13 +318,14 @@ test('fetch events refreshes event details', async ({ page }) => {
   await expect(participation).toContainText('✓')
 })
 
-test('shows a spinner while event details are refetching', async ({ page }) => {
+test('keeps previous event details visible while refetching', async ({ page }) => {
+  let detail: Record<string, unknown> = { ...mockEvent(), participants: [], currentUserPayment: null }
   await page.route('**/.netlify/functions/events', (route) =>
     route.fulfill({ json: [mockEvent()] }),
   )
   await page.route('**/.netlify/functions/event-details**', async (route) => {
-    await new Promise((r) => setTimeout(r, 150))
-    route.fulfill({ json: { ...mockEvent(), participants: [], currentUserPayment: null } })
+    await new Promise((r) => setTimeout(r, 300))
+    route.fulfill({ json: detail })
   })
   await page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} }))
   await page.route('**/.netlify/functions/auth-me', (route) =>
@@ -356,7 +357,12 @@ test('shows a spinner while event details are refetching', async ({ page }) => {
   await expect(participation).toContainText('—')
   await expect(spinner).toHaveCount(0)
 
+  detail = { ...mockEvent(), participants: [{ userId: 'user-1' }], currentUserPayment: null }
   await fetchButton.click()
+
   await expect(spinner).toHaveCount(1)
   await expect(participation).toContainText('—')
+
+  await expect(spinner).toHaveCount(0)
+  await expect(participation).toContainText('✓')
 })

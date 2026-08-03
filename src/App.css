@@ -123,3 +123,13 @@
   color: #2e7d32;
   font-weight: bold;
 }
+
+.participation-cell {
+  position: relative;
+}
+
+.refetch-spinner {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+}
