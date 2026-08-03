@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -15,6 +15,13 @@ function App() {
   const [credPassword, setCredPassword] = useState(() => localStorage.getItem('myko-cred-password') ?? '')
   const [authError, setAuthError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
+
+  const queryClient = useQueryClient()
+
+  const handleFetch = () => {
+    queryClient.refetchQueries({ queryKey: ['eventDetail'] })
+    refetch()
+  }
 
   const saveCredentials = (creds: Credentials) => {
     localStorage.setItem('myko-auth-key', creds.authKey)
@@ -58,7 +65,7 @@ function App() {
       <section id="center">
         <div className="button-row">
           <CredentialsButton authKey={authKey} email={credEmail} password={credPassword} onSave={saveCredentials} />
-          <Button variant={credentialsComplete ? 'contained' : 'outlined'} onClick={() => refetch()} disabled={isFetching}>
+          <Button variant={credentialsComplete ? 'contained' : 'outlined'} onClick={handleFetch} disabled={isFetching}>
             {isFetching ? 'Loading...' : 'Fetch Events'}
           </Button>
           {user && (

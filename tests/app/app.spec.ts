@@ -271,3 +271,49 @@ test('actions button wraps below participants on narrow screens', async ({ page 
   await page.setViewportSize({ width: 1280, height: 720 })
   await expect.poll(overlap).toBe(true)
 })
+
+test('fetch events refreshes event details', async ({ page }) => {
+  let detail: Record<string, unknown> = { ...mockEvent(), participants: [], currentUserPayment: null }
+  await page.route('**/.netlify/functions/events', (route) =>
+    route.fulfill({
+      json: [
+        mockEvent(),
+        mockEvent({ id: 'evt-2', title: 'Evening Padel', date: futureDate(2, 18) }),
+      ],
+    }),
+  )
+  await page.route('**/.netlify/functions/event-details**', (route) =>
+    route.fulfill({ json: detail }),
+  )
+  await page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} }))
+  await page.route('**/.netlify/functions/auth-me', (route) =>
+    route.fulfill({
+      json: {
+        user: {
+          id: 'user-1',
+          email: 'player@example.com',
+          firstName: 'Player',
+          lastName: 'One',
+          phone: null,
+          createdAt: '2026-01-01T00:00:00Z',
+          role: 'USER',
+          elo: 1500,
+          achievements: [],
+          isPremium: false,
+        },
+      },
+    }),
+  )
+  await page.goto('/')
+  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
+
+  const fetchButton = page.getByRole('button', { name: 'Fetch Events' })
+  const participation = page.locator('.width-28').first()
+
+  await fetchButton.click()
+  await expect(participation).toContainText('—')
+
+  detail = { ...mockEvent(), participants: [{ userId: 'user-1' }], currentUserPayment: null }
+  await fetchButton.click()
+  await expect(participation).toContainText('✓')
+})
