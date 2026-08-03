@@ -25,6 +25,8 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
   })
 
   const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
+  const waitlistPosition = detail?.currentUserWaitlistPosition
+  const isWaiting = !isParticipating && waitlistPosition != null && waitlistPosition > 0
 
   const closeMenu = () => setMenuAnchor(null)
 
@@ -34,7 +36,9 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
         {detail ? (
           isParticipating
             ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
-            : <span className="participating-no">&mdash;</span>
+            : isWaiting
+              ? <span className="participating-waitlist">#{waitlistPosition}</span>
+              : <span className="participating-no">&mdash;</span>
         ) : (
           <CircularProgress size={16} />
         )}

@@ -56,6 +56,7 @@ export interface Participant {
 export interface EventDetail extends Event {
   participants: Participant[]
   currentUserPayment: unknown
+  currentUserWaitlistPosition: number | null
 }
 
 const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/dev-proxy/' : 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/')

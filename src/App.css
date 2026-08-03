@@ -123,6 +123,12 @@
   font-size: 18px;
 }
 
+.participating-waitlist {
+  color: #b26a00;
+  font-weight: bold;
+  font-size: 14px;
+}
+
 .payment-indicator {
   color: #2e7d32;
   font-weight: bold;
