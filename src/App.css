@@ -124,18 +124,18 @@
 }
 
 .participating-waitlist {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
+  /* display: inline-flex; */
+  /* align-items: center; */
+  /* height: 18px; */
   color: #b26a00;
   font-weight: bold;
   font-size: 14px;
-  line-height: 1;
+  /* line-height: 1; */
 }
 
 .waitlist-icon {
   font-size: 16px;
-  line-height: 1;
+  /* line-height: 1; */
 }
 
 .payment-indicator {
