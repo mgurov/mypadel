@@ -19,8 +19,8 @@ function App() {
   const queryClient = useQueryClient()
 
   const handleFetch = () => {
-    queryClient.refetchQueries({ queryKey: ['eventDetail'] })
-    refetch()
+    void queryClient.refetchQueries({ queryKey: ['eventDetail'] })
+    void refetch()
   }
 
   const saveCredentials = (creds: Credentials) => {

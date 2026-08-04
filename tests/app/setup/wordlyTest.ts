@@ -114,7 +114,7 @@ class World {
 
   constructor(page: Page) {
     this.page = page
-    page.route(PROXY_BASE + "/**", (route) => this.handleProxy(route))
+    void page.route(PROXY_BASE + "/**", (route) => this.handleProxy(route))
   }
 
   private handleProxy = async (route: Route) => {
