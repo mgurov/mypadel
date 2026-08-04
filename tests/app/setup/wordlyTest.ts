@@ -128,8 +128,6 @@ export interface WorldAuth {
   refreshToken: string
 }
 
-const EXPIRED_ACCESS_TOKEN = 'access-token-expired'
-
 class World {
   private page: Page
   private tokenNonce = 1
@@ -157,7 +155,9 @@ class World {
       if (detail) {
         const delay = eventId ? this.state.eventDetailDelays.get(eventId) : undefined
         if (delay) await new Promise(r => setTimeout(r, delay))
-        await route.fulfill({ json: detail })
+        const presented = route.request().headers()['m_access_token']
+        const body = presented === this.state.auth.accessToken ? detail : this.withoutUserInfo(detail)
+        await route.fulfill({ json: body })
       } else {
         await route.fulfill({ status: 404, json: { error: 'not found' } })
       }
@@ -202,6 +202,10 @@ class World {
       return event
     })
     return this.state.events
+  }
+
+  private withoutUserInfo(detail: WorldEventDetail): WorldEventDetail {
+    return { ...detail, currentUserPayment: null, currentUserWaitlistPosition: null }
   }
 
   private rotateTokens(): Record<string, string> {
