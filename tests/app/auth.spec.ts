@@ -51,6 +51,29 @@ test('event-details strips user-specific info when the access token expired', as
   expect(res.body.currentUserWaitlistPosition).toBeNull()
 })
 
+test('second fetch after access token expiry keeps user-specific details', async ({ page, world, appPage }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }], currentUserPayment: { id: 'pay-1' } },
+    { id: 'evt-2', title: 'Evening Padel', currentUserWaitlistPosition: 2 },
+  ])
+  await appPage.goto()
+  await appPage.fetchEvents()
+  const payment = page.locator('.width-28').first()
+  const waitlist = page.locator('.width-28').nth(1)
+  await expect(payment).toContainText('✓')
+  await expect(payment).toContainText('$')
+  await expect(waitlist).toContainText('⏳')
+  await expect(waitlist).toContainText('2')
+
+  world.givenAccessTokenExpired()
+  world.givenRefreshDelay(300)
+  await appPage.fetchAndWaitFor('.netlify/functions/events')
+  await expect(payment).toContainText('✓')
+  await expect(payment).toContainText('$')
+  await expect(waitlist).toContainText('⏳')
+  await expect(waitlist).toContainText('2')
+})
+
 test('refreshes an expired access token without re-login', async ({ world, appPage }) => {
   world.givenAccessTokenExpired()
   await appPage.goto()

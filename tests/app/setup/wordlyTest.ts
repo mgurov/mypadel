@@ -137,6 +137,7 @@ class World {
     eventDetailDelays: new Map<string, number>(),
     user: defaultUser,
     auth: { ...defaultAuth },
+    refreshDelay: 0,
   }
 
   constructor(page: Page) {
@@ -169,6 +170,7 @@ class World {
       }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-refresh')) {
       if (this.presentedToken(route) === this.state.auth.refreshToken) {
+        if (this.state.refreshDelay > 0) await new Promise(r => setTimeout(r, this.state.refreshDelay))
         await route.fulfill({ status: 200, headers: this.rotateTokens(), json: {} })
       } else {
         await route.fulfill({ status: 401, json: { error: 'invalid refresh token' } })
@@ -224,6 +226,10 @@ class World {
   givenAccessTokenExpired() {
     this.tokenNonce += 1
     this.state.auth = { ...this.state.auth, accessToken: `access-token-${this.tokenNonce}` }
+  }
+
+  givenRefreshDelay(ms: number) {
+    this.state.refreshDelay = ms
   }
 
   givenAuth(auth: Partial<WorldAuth>) {
