@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { test } from './setup/ourTest'
+import { AnnotationNoCredPrefill } from './setup/credentialsFixture'
 
 const credentialsButton = (page: Page) => page.getByRole('button', { name: 'Set Credentials' })
 const credentialsSetButton = (page: Page) => page.getByRole('button', { name: 'Credentials Set' })
@@ -17,13 +18,13 @@ async function fillCredentials(page: Page, authKey: string, email: string, passw
   await dialog.getByRole('button', { name: 'Save' }).click()
 }
 
-test('shows main controls', async ({ page }) => {
+test('shows main controls', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await expect(credentialsButton(page)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Fetch Events' })).toBeVisible()
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('credentials dialog contains all three fields', async ({ page }) => {
+test('credentials dialog contains all three fields', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await credentialsButton(page).click()
 
@@ -32,24 +33,24 @@ test('credentials dialog contains all three fields', async ({ page }) => {
   await expect(dialog.getByLabel('x-myko-auth')).toBeVisible()
   await expect(dialog.getByLabel('Email')).toBeVisible()
   await expect(dialog.getByLabel('Password')).toBeVisible()
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('button indicates all three pieces missing by default', async ({ page }) => {
+test('button indicates all three pieces missing by default', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('button indicates missing email and password when only auth key is set', async ({ page }) => {
+test('button indicates missing email and password when only auth key is set', AnnotationNoCredPrefill, async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('myko-auth-key', 'test-secret-key')
   })
   await page.goto('/')
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('button indicates missing auth key when only credentials are set', async ({ page }) => {
+test('button indicates missing auth key when only credentials are set', AnnotationNoCredPrefill, async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('myko-cred-email', 'player@example.com')
     localStorage.setItem('myko-cred-password', 'hunter2')
@@ -57,9 +58,9 @@ test('button indicates missing auth key when only credentials are set', async ({
   await page.goto('/')
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('saving all three credentials sets button and localStorage', async ({ page }) => {
+test('saving all three credentials sets button and localStorage', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
@@ -69,9 +70,9 @@ test('saving all three credentials sets button and localStorage', async ({ page 
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBe('test-secret-key')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBe('player@example.com')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('hunter2')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('saving a partial set still indicates what is missing', async ({ page }) => {
+test('saving a partial set still indicates what is missing', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await credentialsButton(page).click()
   const dialog = page.getByRole('dialog')
@@ -83,9 +84,9 @@ test('saving a partial set still indicates what is missing', async ({ page }) =>
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('dialog prefills saved values on reopen', async ({ page }) => {
+test('dialog prefills saved values on reopen', AnnotationNoCredPrefill, async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('myko-auth-key', 'saved-key')
     localStorage.setItem('myko-cred-email', 'saved@example.com')
@@ -98,9 +99,9 @@ test('dialog prefills saved values on reopen', async ({ page }) => {
   await expect(dialog.getByLabel('x-myko-auth')).toHaveValue('saved-key')
   await expect(dialog.getByLabel('Email')).toHaveValue('saved@example.com')
   await expect(dialog.getByLabel('Password')).toHaveValue('saved-pass')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('cancel does not save credentials', async ({ page }) => {
+test('cancel does not save credentials', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await credentialsButton(page).click()
   const dialog = page.getByRole('dialog')
@@ -113,7 +114,7 @@ test('cancel does not save credentials', async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBeNull()
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBeNull()
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBeNull()
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
 test('fetches and displays events after setting credentials', async ({ page, world }) => {
   world.givenEvents([

@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 import { test } from './setup/ourTest'
+import { AnnotationNoCredPrefill } from './setup/credentialsFixture'
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 
@@ -25,20 +26,20 @@ const field = (page: Page, label: string) => page.getByRole('dialog').getByLabel
 const copyButton = (page: Page) => page.getByRole('button', { name: 'Copy' })
 const pasteButton = (page: Page) => page.getByRole('button', { name: 'Paste' })
 
-test('copy is disabled and paste enabled when no values are set', async ({ page }) => {
+test('copy is disabled and paste enabled when no values are set', AnnotationNoCredPrefill, async ({ page }) => {
   await openDialog(page)
   await expect(copyButton(page)).toBeDisabled()
   await expect(pasteButton(page)).toBeEnabled()
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('copy is enabled once any value is set', async ({ page }) => {
+test('copy is enabled once any value is set', AnnotationNoCredPrefill, async ({ page }) => {
   await openDialog(page)
   await expect(copyButton(page)).toBeDisabled()
   await field(page, 'Email').fill('player@example.com')
   await expect(copyButton(page)).toBeEnabled()
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('copy writes full credentials JSON to the clipboard', async ({ page }) => {
+test('copy writes full credentials JSON to the clipboard', AnnotationNoCredPrefill, async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('myko-auth-key', 'secret-key')
     localStorage.setItem('myko-cred-email', 'player@example.com')
@@ -54,9 +55,9 @@ test('copy writes full credentials JSON to the clipboard', async ({ page }) => {
     email: 'player@example.com',
     password: 'hunter2',
   })
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste fills all fields from full JSON', async ({ page }) => {
+test('paste fills all fields from full JSON', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, JSON.stringify({ authKey: 'key-1', email: 'a@b.c', password: 'pass-1' }))
 
   await pasteButton(page).click()
@@ -64,9 +65,9 @@ test('paste fills all fields from full JSON', async ({ page }) => {
   await expect(field(page, 'x-myko-auth')).toHaveValue('key-1')
   await expect(field(page, 'Email')).toHaveValue('a@b.c')
   await expect(field(page, 'Password')).toHaveValue('pass-1')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste keeps previous values for missing fields and warns', async ({ page }) => {
+test('paste keeps previous values for missing fields and warns', AnnotationNoCredPrefill, async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('myko-auth-key', 'old-key')
     localStorage.setItem('myko-cred-password', 'old-pass')
@@ -79,9 +80,9 @@ test('paste keeps previous values for missing fields and warns', async ({ page }
   await expect(field(page, 'x-myko-auth')).toHaveValue('old-key')
   await expect(field(page, 'Password')).toHaveValue('old-pass')
   await expect(page.getByRole('alert')).toContainText('Missing credential fields: x-myko-auth, password. Previous values kept.')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste with empty values keeps previous values and warns', async ({ page }) => {
+test('paste with empty values keeps previous values and warns', AnnotationNoCredPrefill, async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('myko-auth-key', 'old-key')
     localStorage.setItem('myko-cred-email', 'old@example.com')
@@ -95,25 +96,25 @@ test('paste with empty values keeps previous values and warns', async ({ page })
   await expect(field(page, 'Email')).toHaveValue('old@example.com')
   await expect(field(page, 'Password')).toHaveValue('old-pass')
   await expect(page.getByRole('alert')).toContainText('Missing credential fields: email, password. Previous values kept.')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste shows error for non-json clipboard', async ({ page }) => {
+test('paste shows error for non-json clipboard', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, 'this is not json')
 
   await pasteButton(page).click()
 
   await expect(page.getByRole('alert')).toContainText('Clipboard does not contain valid JSON.')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste shows error for json without credential fields', async ({ page }) => {
+test('paste shows error for json without credential fields', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, JSON.stringify({ foo: 'bar' }))
 
   await pasteButton(page).click()
 
   await expect(page.getByRole('alert')).toContainText('Clipboard JSON does not contain any credential fields.')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste ignores unknown fields and warns about the missing ones', async ({ page }) => {
+test('paste ignores unknown fields and warns about the missing ones', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, JSON.stringify({ authKey: 'key-1', foo: 'bar' }))
 
   await pasteButton(page).click()
@@ -121,9 +122,9 @@ test('paste ignores unknown fields and warns about the missing ones', async ({ p
   await expect(field(page, 'x-myko-auth')).toHaveValue('key-1')
   await expect(page.getByRole('alert')).toContainText('Missing credential fields: email, password.')
   await expect(page.getByRole('alert')).not.toContainText('foo')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste then save persists credentials', async ({ page }) => {
+test('paste then save persists credentials', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, JSON.stringify({ authKey: 'key-1', email: 'a@b.c', password: 'pass-1' }))
 
   await pasteButton(page).click()
@@ -133,17 +134,17 @@ test('paste then save persists credentials', async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBe('key-1')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBe('a@b.c')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('pass-1')
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('paste into an empty dialog enables the copy button', async ({ page }) => {
+test('paste into an empty dialog enables the copy button', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, JSON.stringify({ authKey: 'key-1' }))
 
   await expect(copyButton(page)).toBeDisabled()
   await pasteButton(page).click()
   await expect(copyButton(page)).toBeEnabled()
-}, { annotations: [{ type: 'no-prefill' }] })
+})
 
-test('error message clears when the dialog is reopened', async ({ page }) => {
+test('error message clears when the dialog is reopened', AnnotationNoCredPrefill, async ({ page }) => {
   await setClipboardAndOpenDialog(page, 'this is not json')
 
   await pasteButton(page).click()
@@ -153,4 +154,4 @@ test('error message clears when the dialog is reopened', async ({ page }) => {
   await page.getByRole('button', { name: DIALOG_OPENER }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expect(page.getByRole('alert')).toHaveCount(0)
-}, { annotations: [{ type: 'no-prefill' }] })
+})

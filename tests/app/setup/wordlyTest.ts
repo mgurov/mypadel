@@ -96,7 +96,7 @@ const defaultUser: WorldUser = {
   isPremium: false,
 }
 
-export const wordlyTest = test.extend<{ world: World; prefillCredentials: void }>({
+export const wordlyTest = test.extend<{ world: World }>({
   world: [async ({ page }, use) => {
     await page.route(PROXY_BASE + "/**", (route, request) =>
       route.fulfill({
@@ -107,17 +107,6 @@ export const wordlyTest = test.extend<{ world: World; prefillCredentials: void }
 
     const world = new World(page);
     await use(world);
-  }, { auto: true }],
-
-  prefillCredentials: [async ({ page }, use, testInfo) => {
-    if (!testInfo.annotations.some(a => a.type === 'no-prefill')) {
-      await page.addInitScript(() => {
-        localStorage.setItem('myko-auth-key', 'test-secret-key')
-        localStorage.setItem('myko-cred-email', 'player@example.com')
-        localStorage.setItem('myko-cred-password', 'hunter2')
-      })
-    }
-    await use()
   }, { auto: true }],
 });
 
