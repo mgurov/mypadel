@@ -5,13 +5,13 @@ import { defaultAuth } from './setup/wordlyTest'
 
 const PROXY_BASE = '/dev-proxy/.netlify/functions'
 
-async function fetchEventDetail(page: Page, token: string) {
-  return page.evaluate(async ({ url, token }) => {
-    const response = await fetch(`${url}/event-details?id=evt-1`, {
+async function fetchEventDetail(page: Page, eventId: string, token: string) {
+  return page.evaluate(async ({ url, eventId, token }) => {
+    const response = await fetch(`${url}/event-details?id=${eventId}`, {
       headers: { m_access_token: token },
     })
     return { status: response.status, body: await response.json() }
-  }, { url: PROXY_BASE, token })
+  }, { url: PROXY_BASE, eventId, token })
 }
 
 test('auth-me returns 200 on the happy path with valid tokens', async ({ appPage }) => {
@@ -35,7 +35,7 @@ test('auth-me returns 401 when the access token expired', async ({ page, world, 
 test('event-details returns user-specific info with a valid access token', async ({ page, world, appPage }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', currentUserPayment: { id: 'pay-1' }, currentUserWaitlistPosition: 3 }])
   await appPage.goto()
-  const res = await fetchEventDetail(page, defaultAuth.accessToken)
+  const res = await fetchEventDetail(page, 'evt-1', defaultAuth.accessToken)
   expect(res.status).toBe(200)
   expect(res.body.currentUserPayment).toEqual({ id: 'pay-1' })
   expect(res.body.currentUserWaitlistPosition).toBe(3)
@@ -45,7 +45,7 @@ test('event-details strips user-specific info when the access token expired', as
   world.givenAccessTokenExpired()
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', currentUserPayment: { id: 'pay-1' }, currentUserWaitlistPosition: 3 }])
   await appPage.goto()
-  const res = await fetchEventDetail(page, defaultAuth.accessToken)
+  const res = await fetchEventDetail(page, 'evt-1', defaultAuth.accessToken)
   expect(res.status).toBe(200)
   expect(res.body.currentUserPayment).toBeNull()
   expect(res.body.currentUserWaitlistPosition).toBeNull()

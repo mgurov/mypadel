@@ -155,8 +155,7 @@ class World {
       if (detail) {
         const delay = eventId ? this.state.eventDetailDelays.get(eventId) : undefined
         if (delay) await new Promise(r => setTimeout(r, delay))
-        const presented = route.request().headers()['m_access_token']
-        const body = presented === this.state.auth.accessToken ? detail : this.withoutUserInfo(detail)
+        const body = this.hasValidAccessToken(route) ? detail : this.withoutUserInfo(detail)
         await route.fulfill({ json: body })
       } else {
         await route.fulfill({ status: 404, json: { error: 'not found' } })
@@ -169,15 +168,13 @@ class World {
         await route.fulfill({ status: 401, json: { error: 'invalid credentials' } })
       }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-refresh')) {
-      const presented = route.request().headers()['m_access_token']
-      if (presented === this.state.auth.refreshToken) {
+      if (this.presentedToken(route) === this.state.auth.refreshToken) {
         await route.fulfill({ status: 200, headers: this.rotateTokens(), json: {} })
       } else {
         await route.fulfill({ status: 401, json: { error: 'invalid refresh token' } })
       }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-me')) {
-      const presented = route.request().headers()['m_access_token']
-      if (presented !== this.state.auth.accessToken) {
+      if (!this.hasValidAccessToken(route)) {
         await route.fulfill({ status: 401, json: { error: 'unauthorized' } })
       } else {
         await route.fulfill({ json: { user: this.state.user } })
@@ -202,6 +199,14 @@ class World {
       return event
     })
     return this.state.events
+  }
+
+  private presentedToken(route: Route): string | undefined {
+    return route.request().headers()['m_access_token']
+  }
+
+  private hasValidAccessToken(route: Route): boolean {
+    return this.presentedToken(route) === this.state.auth.accessToken
   }
 
   private withoutUserInfo(detail: WorldEventDetail): WorldEventDetail {
