@@ -33,21 +33,26 @@ test('logs in again when the access token expired and credentials are valid', as
 
 test('shows an error when login credentials are wrong', async ({ page, world }) => {
   world.givenAccessTokenExpired()
-  await page.addInitScript(() => {
-    localStorage.setItem('myko-cred-email', defaultAuth.email)
-    localStorage.setItem('myko-cred-password', 'wrong-password')
-  })
+  await page.addInitScript((creds) => {
+    localStorage.setItem('myko-cred-email', creds.email)
+    localStorage.setItem('myko-cred-password', creds.password)
+  }, { email: defaultAuth.email, password: 'wrong-password' })
   await page.goto('/')
   await fetchButton(page).click()
-  await expect(page.getByRole('alert')).toContainText('Cookie auth failed')
+  await expect(page.getByRole('alert').filter({ hasText: /^Cookie auth failed/ })).toContainText('Request failed with status code 401')
 })
 
 test('rejects a wrong refresh token', AnnotationNoCredPrefill, async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('myko-auth-key', 'test-secret-key')
-    localStorage.setItem('myko-cred-email', defaultAuth.email)
-    localStorage.setItem('myko-cred-password', defaultAuth.password)
-    localStorage.setItem('m_refresh_token', 'wrong-refresh-token')
+  await page.addInitScript((defaults) => {
+    localStorage.setItem('myko-auth-key', defaults.authKey)
+    localStorage.setItem('myko-cred-email', defaults.email)
+    localStorage.setItem('myko-cred-password', defaults.password)
+    localStorage.setItem('m_refresh_token', defaults.refreshToken)
+  }, {
+    authKey: 'test-secret-key',
+    email: defaultAuth.email,
+    password: defaultAuth.password,
+    refreshToken: 'wrong-refresh-token',
   })
   await page.goto('/')
   const refresh = await responseByUrl(page, 'auth-refresh')
