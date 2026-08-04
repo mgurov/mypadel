@@ -3,8 +3,10 @@ import { test } from './setup/ourTest'
 import { AnnotationNoCredPrefill } from './setup/credentialsFixture'
 import { defaultAuth } from './setup/wordlyTest'
 
+//TODO: introduce page objects.
 const fetchButton = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Fetch Events' })
 
+//TODO: introduce page objects.
 async function responseByUrl(page: import('@playwright/test').Page, urlPart: string) {
   const response = page.waitForResponse(r => r.url().includes(urlPart))
   await fetchButton(page).click()
@@ -28,6 +30,7 @@ test('logs in again when the access token expired and credentials are valid', as
   world.givenAccessTokenExpired()
   await page.goto('/')
   await fetchButton(page).click()
+  //TODO: move check to the page object and make a bit more explicit by adding some identifiers on ELO element
   await expect(page.getByText('1500')).toBeVisible()
 })
 

@@ -133,7 +133,7 @@ class World {
     eventDetailDelays: new Map<string, number>(),
     user: defaultUser,
     auth: { ...defaultAuth },
-    accessTokenExpired: false,
+    accessTokenExpired: false, // TODO: remove this and rotate the acces token in the auth instead.
   }
 
   constructor(page: Page) {
