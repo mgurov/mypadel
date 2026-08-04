@@ -116,22 +116,24 @@ class World {
     page.route(PROXY_BASE + "/**", (route) => this.handleProxy(route))
   }
 
-  private async handleProxy(route: Route) {
+  private handleProxy = async (route: Route) => {
     const url = new URL(route.request().url())
 
     if (url.pathname.endsWith('/.netlify/functions/events')) {
       await route.fulfill({ json: this.state.events })
+      // if (this.state.events.length === 0) {
+      //   await route.fallback()
+      // } else {
+        
+      // }
     } else if (url.pathname.includes('/.netlify/functions/event-details')) {
       const eventId = url.searchParams.get('eventId')
       const detail = eventId ? this.state.eventDetails.get(eventId) : undefined
-      await route.fulfill({
-        json: detail ?? {
-          ...defaultEvent(),
-          participants: [],
-          currentUserPayment: null,
-          currentUserWaitlistPosition: null,
-        },
-      })
+      if (detail) {
+        await route.fulfill({ json: detail })
+      } else {
+        await route.fallback() //TODO: return 404
+      }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-refresh')) {
       await route.fulfill({ status: 200, json: {} })
     } else if (url.pathname.endsWith('/.netlify/functions/auth-me')) {
