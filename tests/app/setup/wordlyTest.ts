@@ -213,7 +213,8 @@ class World {
   }
 
   givenAccessTokenExpired() {
-    this.state.auth = { ...this.state.auth, accessToken: EXPIRED_ACCESS_TOKEN }
+    this.tokenNonce += 1
+    this.state.auth = { ...this.state.auth, accessToken: `access-token-${this.tokenNonce}` }
   }
 
   givenAuth(auth: Partial<WorldAuth>) {
