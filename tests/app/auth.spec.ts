@@ -3,49 +3,53 @@ import { test } from './setup/ourTest'
 import { AnnotationNoCredPrefill } from './setup/credentialsFixture'
 import { defaultAuth } from './setup/wordlyTest'
 
-//TODO: introduce page objects.
-const fetchButton = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Fetch Events' })
+const PROXY_BASE = '/dev-proxy/.netlify/functions'
 
-//TODO: introduce page objects.
-async function responseByUrl(page: import('@playwright/test').Page, urlPart: string) {
-  const response = page.waitForResponse(r => r.url().includes(urlPart))
-  await fetchButton(page).click()
-  return response
-}
-
-test('auth-me returns 200 on the happy path with valid tokens', async ({ page }) => {
-  await page.goto('/')
-  const me = await responseByUrl(page, 'auth-me')
+test('auth-me returns 200 on the happy path with valid tokens', async ({ appPage }) => {
+  await appPage.goto()
+  const me = await appPage.fetchAndWaitFor('auth-me')
   expect(me.status()).toBe(200)
 })
 
-test('auth-me returns 401 when the access token expired', async ({ page, world }) => {
+test('auth-me returns 401 when the access token expired', async ({ page, world, appPage }) => {
   world.givenAccessTokenExpired()
-  await page.goto('/')
-  const me = await responseByUrl(page, 'auth-me')
-  expect(me.status()).toBe(401)
+  await appPage.goto()
+  const status = await page.evaluate(async (token) => {
+    const res = await fetch(`${PROXY_BASE}/auth-me`, {
+      headers: { m_access_token: token },
+    })
+    return res.status
+  }, defaultAuth.accessToken)
+  expect(status).toBe(401)
 })
 
-test('logs in again when the access token expired and credentials are valid', async ({ page, world }) => {
+test('refreshes an expired access token without re-login', async ({ world, appPage }) => {
   world.givenAccessTokenExpired()
-  await page.goto('/')
-  await fetchButton(page).click()
-  //TODO: move check to the page object and make a bit more explicit by adding some identifiers on ELO element
-  await expect(page.getByText('1500')).toBeVisible()
+  await appPage.goto()
+  const refresh = await appPage.fetchAndWaitFor('auth-refresh')
+  expect(refresh.status()).toBe(200)
+  await appPage.expectElo('1500')
 })
 
-test('shows an error when login credentials are wrong', async ({ page, world }) => {
-  world.givenAccessTokenExpired()
+test('logs in again when the refresh token expired and credentials are valid', async ({ world, appPage }) => {
+  world.givenAuth({ refreshToken: 'refresh-token-expired' })
+  await appPage.goto()
+  await appPage.fetchEvents()
+  await appPage.expectElo('1500')
+})
+
+test('shows an error when login credentials are wrong', async ({ page, world, appPage }) => {
+  world.givenAuth({ refreshToken: 'refresh-token-expired' })
   await page.addInitScript((creds) => {
     localStorage.setItem('myko-cred-email', creds.email)
     localStorage.setItem('myko-cred-password', creds.password)
   }, { email: defaultAuth.email, password: 'wrong-password' })
-  await page.goto('/')
-  await fetchButton(page).click()
-  await expect(page.getByRole('alert').filter({ hasText: /^Cookie auth failed/ })).toContainText('Request failed with status code 401')
+  await appPage.goto()
+  await appPage.fetchEvents()
+  await expect(appPage.authError).toContainText('Request failed with status code 401')
 })
 
-test('rejects a wrong refresh token', AnnotationNoCredPrefill, async ({ page }) => {
+test('rejects a wrong refresh token', AnnotationNoCredPrefill, async ({ page, appPage }) => {
   await page.addInitScript((defaults) => {
     localStorage.setItem('myko-auth-key', defaults.authKey)
     localStorage.setItem('myko-cred-email', defaults.email)
@@ -57,15 +61,15 @@ test('rejects a wrong refresh token', AnnotationNoCredPrefill, async ({ page }) 
     password: defaultAuth.password,
     refreshToken: 'wrong-refresh-token',
   })
-  await page.goto('/')
-  const refresh = await responseByUrl(page, 'auth-refresh')
+  await appPage.goto()
+  const refresh = await appPage.fetchAndWaitFor('auth-refresh')
   expect(refresh.status()).toBe(401)
 })
 
-test('auth-refresh issues a new access token for the correct refresh token', async ({ page }) => {
-  await page.goto('/')
-  const refresh = await responseByUrl(page, 'auth-refresh')
+test('auth-refresh issues a new access token for the correct refresh token', async ({ appPage }) => {
+  await appPage.goto()
+  const refresh = await appPage.fetchAndWaitFor('auth-refresh')
   expect(refresh.status()).toBe(200)
   expect(refresh.headers()['m_access_token']).not.toBe(defaultAuth.accessToken)
-  await expect(page.getByText('1500')).toBeVisible()
+  await appPage.expectElo('1500')
 })

@@ -70,6 +70,7 @@ function App() {
           </Button>
           {user && (
             <Chip
+              data-testid="user-elo-chip"
               avatar={<Avatar sx={{ width: 28, height: 28, fontSize: 12 }}>{getInitials(user)}</Avatar>}
               label={`${user.elo}`}
               size="small"

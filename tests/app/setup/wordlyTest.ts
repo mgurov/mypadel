@@ -1,4 +1,5 @@
 import { test, type Page, type Route } from "@playwright/test";
+import { AppPage } from "./appPage";
 
 const PROXY_BASE = '**/dev-proxy'
 
@@ -103,7 +104,10 @@ const defaultUser: WorldUser = {
   isPremium: false,
 }
 
-export const wordlyTest = test.extend<{ world: World }>({
+export const wordlyTest = test.extend<{ world: World; appPage: AppPage }>({
+  appPage: async ({ page }, use) => {
+    await use(new AppPage(page))
+  },
   world: [async ({ page }, use) => {
     await page.route(PROXY_BASE + "/**", (route, request) =>
       route.fulfill({
@@ -124,6 +128,8 @@ export interface WorldAuth {
   refreshToken: string
 }
 
+const EXPIRED_ACCESS_TOKEN = 'access-token-expired'
+
 class World {
   private page: Page
   private tokenNonce = 1
@@ -133,7 +139,6 @@ class World {
     eventDetailDelays: new Map<string, number>(),
     user: defaultUser,
     auth: { ...defaultAuth },
-    accessTokenExpired: false, // TODO: remove this and rotate the acces token in the auth instead.
   }
 
   constructor(page: Page) {
@@ -159,7 +164,6 @@ class World {
     } else if (url.pathname.endsWith('/.netlify/functions/auth-login')) {
       const body = route.request().postDataJSON() as { email?: string; password?: string } | null
       if (body?.email === this.state.auth.email && body?.password === this.state.auth.password) {
-        this.state.accessTokenExpired = false
         await route.fulfill({ status: 200, headers: this.rotateTokens(), json: { user: this.state.user } })
       } else {
         await route.fulfill({ status: 401, json: { error: 'invalid credentials' } })
@@ -173,7 +177,7 @@ class World {
       }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-me')) {
       const presented = route.request().headers()['m_access_token']
-      if (this.state.accessTokenExpired || presented !== this.state.auth.accessToken) {
+      if (presented !== this.state.auth.accessToken) {
         await route.fulfill({ status: 401, json: { error: 'unauthorized' } })
       } else {
         await route.fulfill({ json: { user: this.state.user } })
@@ -209,7 +213,7 @@ class World {
   }
 
   givenAccessTokenExpired() {
-    this.state.accessTokenExpired = true
+    this.state.auth = { ...this.state.auth, accessToken: EXPIRED_ACCESS_TOKEN }
   }
 
   givenAuth(auth: Partial<WorldAuth>) {
