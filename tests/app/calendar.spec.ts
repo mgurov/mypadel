@@ -7,7 +7,6 @@ const icsTime = (iso: string) => iso.slice(0, 19).replace(/[-:]/g, '') + 'Z'
 
 async function loadEvents(world: World, events: WorldEventInput[], page: import('@playwright/test').Page) {
   const resolved = world.givenEvents(events)
-  await page.addInitScript(() => localStorage.setItem('myko-auth-key', 'test-secret-key'))
   await page.goto('/')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText(resolved[0].title)).toBeVisible()

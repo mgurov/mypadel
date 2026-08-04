@@ -21,7 +21,7 @@ test('shows main controls', async ({ page }) => {
   await page.goto('/')
   await expect(credentialsButton(page)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Fetch Events' })).toBeVisible()
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('credentials dialog contains all three fields', async ({ page }) => {
   await page.goto('/')
@@ -32,13 +32,13 @@ test('credentials dialog contains all three fields', async ({ page }) => {
   await expect(dialog.getByLabel('x-myko-auth')).toBeVisible()
   await expect(dialog.getByLabel('Email')).toBeVisible()
   await expect(dialog.getByLabel('Password')).toBeVisible()
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('button indicates all three pieces missing by default', async ({ page }) => {
   await page.goto('/')
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('button indicates missing email and password when only auth key is set', async ({ page }) => {
   await page.addInitScript(() => {
@@ -47,7 +47,7 @@ test('button indicates missing email and password when only auth key is set', as
   await page.goto('/')
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('button indicates missing auth key when only credentials are set', async ({ page }) => {
   await page.addInitScript(() => {
@@ -57,7 +57,7 @@ test('button indicates missing auth key when only credentials are set', async ({
   await page.goto('/')
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('saving all three credentials sets button and localStorage', async ({ page }) => {
   await page.goto('/')
@@ -69,7 +69,7 @@ test('saving all three credentials sets button and localStorage', async ({ page 
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBe('test-secret-key')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBe('player@example.com')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('hunter2')
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('saving a partial set still indicates what is missing', async ({ page }) => {
   await page.goto('/')
@@ -83,7 +83,7 @@ test('saving a partial set still indicates what is missing', async ({ page }) =>
   await expectVariant(credentialsButton(page), 'contained')
   await expectVariant(fetchButton(page), 'outlined')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('')
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('dialog prefills saved values on reopen', async ({ page }) => {
   await page.addInitScript(() => {
@@ -98,7 +98,7 @@ test('dialog prefills saved values on reopen', async ({ page }) => {
   await expect(dialog.getByLabel('x-myko-auth')).toHaveValue('saved-key')
   await expect(dialog.getByLabel('Email')).toHaveValue('saved@example.com')
   await expect(dialog.getByLabel('Password')).toHaveValue('saved-pass')
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('cancel does not save credentials', async ({ page }) => {
   await page.goto('/')
@@ -113,7 +113,7 @@ test('cancel does not save credentials', async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBeNull()
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBeNull()
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBeNull()
-})
+}, { annotations: [{ type: 'no-prefill' }] })
 
 test('fetches and displays events after setting credentials', async ({ page, world }) => {
   world.givenEvents([
@@ -121,7 +121,6 @@ test('fetches and displays events after setting credentials', async ({ page, wor
     { id: 'evt-2', title: 'Evening Padel' },
   ])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
   await page.getByRole('button', { name: 'Fetch Events' }).click()
 
@@ -136,7 +135,6 @@ test('fetches and displays events after setting credentials', async ({ page, wor
 test('actions menu offers show json, calendar, and open event', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
@@ -153,7 +151,6 @@ test('actions menu offers show json, calendar, and open event', async ({ page, w
 test('show json action opens event details dialog', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
@@ -187,7 +184,6 @@ test('page background stays light even in dark color scheme', async ({ page }) =
 test('actions button wraps below participants on narrow screens', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
@@ -209,7 +205,6 @@ test('actions button wraps below participants on narrow screens', async ({ page,
 test('date cell moves below title on narrow screens', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
@@ -239,7 +234,6 @@ test('fetch events refreshes event details', async ({ page, world }) => {
     { id: 'evt-2', title: 'Evening Padel' },
   ])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
   const fetchBtn = page.getByRole('button', { name: 'Fetch Events' })
   const participation = page.locator('.width-28').first()
@@ -258,7 +252,6 @@ test('fetch events refreshes event details', async ({ page, world }) => {
 test('keeps previous event details visible while refetching', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
   const fetchBtn = page.getByRole('button', { name: 'Fetch Events' })
   const participation = page.locator('.width-28').first()
@@ -281,7 +274,6 @@ test('keeps previous event details visible while refetching', async ({ page, wor
 test('shows the waitlist position for a waiting user', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', currentUserWaitlistPosition: 3 }])
   await page.goto('/')
-  await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
   await page.getByRole('button', { name: 'Fetch Events' }).click()
 
