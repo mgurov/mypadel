@@ -105,9 +105,9 @@ const defaultUser: WorldUser = {
 }
 
 export const wordlyTest = test.extend<{ world: World; appPage: AppPage }>({
-  appPage: async ({ page }, use) => {
+  appPage: [async ({ page }, use) => {
     await use(new AppPage(page))
-  },
+  }, {}],
   world: [async ({ page }, use) => {
     await page.route(PROXY_BASE + "/**", (route, request) =>
       route.fulfill({
