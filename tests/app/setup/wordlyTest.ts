@@ -221,5 +221,5 @@ class World {
   }
 }
 
-export { World, defaultUser, defaultAuth }
+export { World, defaultUser }
 export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth }
