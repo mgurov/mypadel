@@ -1,4 +1,5 @@
 import { test, type TestDetailsAnnotation } from "@playwright/test";
+import { defaultAuth } from "./wordlyTest";
 
 const noCredPrefillAnnotation: TestDetailsAnnotation = {
   type: "no-cred-prefill",
@@ -10,10 +11,18 @@ export const AnnotationNoCredPrefill = { annotation: noCredPrefillAnnotation };
 export const credentialsTest = test.extend<{ prefillCredentials: void }>({
   prefillCredentials: [async ({ page }, use, testInfo) => {
     if (!testInfo.annotations.some(a => a.type === 'no-cred-prefill')) {
-      await page.addInitScript(() => {
-        localStorage.setItem('myko-auth-key', 'test-secret-key')
-        localStorage.setItem('myko-cred-email', 'player@example.com')
-        localStorage.setItem('myko-cred-password', 'hunter2')
+      await page.addInitScript((defaults) => {
+        localStorage.setItem('myko-auth-key', defaults.authKey)
+        localStorage.setItem('myko-cred-email', defaults.email)
+        localStorage.setItem('myko-cred-password', defaults.password)
+        localStorage.setItem('m_access_token', defaults.accessToken)
+        localStorage.setItem('m_refresh_token', defaults.refreshToken)
+      }, {
+        authKey: 'test-secret-key',
+        email: defaultAuth.email,
+        password: defaultAuth.password,
+        accessToken: defaultAuth.accessToken,
+        refreshToken: defaultAuth.refreshToken,
       })
     }
     await use()

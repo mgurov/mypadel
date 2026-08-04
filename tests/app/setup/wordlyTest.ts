@@ -83,9 +83,16 @@ const defaultEvent = (): WorldEvent => ({
   _count: { participants: 3 },
 })
 
+export const defaultAuth = {
+  email: 'player@example.com',
+  password: 'hunter2',
+  accessToken: 'access-token-1',
+  refreshToken: 'refresh-token-1',
+}
+
 const defaultUser: WorldUser = {
   id: 'user-1',
-  email: 'player@example.com',
+  email: defaultAuth.email,
   firstName: 'Player',
   lastName: 'One',
   phone: null,
@@ -110,13 +117,23 @@ export const wordlyTest = test.extend<{ world: World }>({
   }, { auto: true }],
 });
 
+export interface WorldAuth {
+  email: string
+  password: string
+  accessToken: string
+  refreshToken: string
+}
+
 class World {
   private page: Page
+  private tokenNonce = 1
   private state = {
     events: [] as WorldEvent[],
     eventDetails: new Map<string, WorldEventDetail>(),
     eventDetailDelays: new Map<string, number>(),
     user: defaultUser,
+    auth: { ...defaultAuth },
+    accessTokenExpired: false,
   }
 
   constructor(page: Page) {
@@ -139,10 +156,28 @@ class World {
       } else {
         await route.fulfill({ status: 404, json: { error: 'not found' } })
       }
+    } else if (url.pathname.endsWith('/.netlify/functions/auth-login')) {
+      const body = route.request().postDataJSON() as { email?: string; password?: string } | null
+      if (body?.email === this.state.auth.email && body?.password === this.state.auth.password) {
+        this.state.accessTokenExpired = false
+        await route.fulfill({ status: 200, headers: this.rotateTokens(), json: { user: this.state.user } })
+      } else {
+        await route.fulfill({ status: 401, json: { error: 'invalid credentials' } })
+      }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-refresh')) {
-      await route.fulfill({ status: 200, json: {} })
+      const presented = route.request().headers()['m_access_token']
+      if (presented === this.state.auth.refreshToken) {
+        await route.fulfill({ status: 200, headers: this.rotateTokens(), json: {} })
+      } else {
+        await route.fulfill({ status: 401, json: { error: 'invalid refresh token' } })
+      }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-me')) {
-      await route.fulfill({ json: { user: this.state.user } })
+      const presented = route.request().headers()['m_access_token']
+      if (this.state.accessTokenExpired || presented !== this.state.auth.accessToken) {
+        await route.fulfill({ status: 401, json: { error: 'unauthorized' } })
+      } else {
+        await route.fulfill({ json: { user: this.state.user } })
+      }
     } else {
       await route.fallback()
     }
@@ -165,10 +200,26 @@ class World {
     return this.state.events
   }
 
+  private rotateTokens(): Record<string, string> {
+    this.tokenNonce += 1
+    const accessToken = `access-token-${this.tokenNonce}`
+    const refreshToken = `refresh-token-${this.tokenNonce}`
+    this.state.auth = { ...this.state.auth, accessToken, refreshToken }
+    return { m_access_token: accessToken, m_refresh_token: refreshToken }
+  }
+
+  givenAccessTokenExpired() {
+    this.state.accessTokenExpired = true
+  }
+
+  givenAuth(auth: Partial<WorldAuth>) {
+    this.state.auth = { ...this.state.auth, ...auth }
+  }
+
   givenCurrentUser(user: Partial<WorldUser>) {
     this.state.user = { ...defaultUser, ...user }
   }
 }
 
-export { World, defaultUser }
-export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser }
+export { World, defaultUser, defaultAuth }
+export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth }
