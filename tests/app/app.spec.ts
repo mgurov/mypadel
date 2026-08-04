@@ -269,7 +269,7 @@ test('keeps previous event details visible while refetching', async ({ page, wor
 
   await world.givenEventDetails('evt-1', {
     participants: [{ userId: 'user-1' }],
-  })
+  }, { delayMs: 300 })
   await fetchBtn.click()
 
   await expect(spinner).toHaveCount(1)

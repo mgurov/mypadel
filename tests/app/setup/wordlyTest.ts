@@ -108,6 +108,7 @@ class World {
   private state = {
     events: [] as WorldEvent[],
     eventDetails: new Map<string, WorldEventDetail>(),
+    eventDetailDelays: new Map<string, number>(),
     user: defaultUser,
   }
 
@@ -122,12 +123,14 @@ class World {
     if (url.pathname.endsWith('/.netlify/functions/events')) {
       await route.fulfill({ json: this.state.events })
     } else if (url.pathname.includes('/.netlify/functions/event-details')) {
-      const eventId = url.searchParams.get('eventId')
+      const eventId = url.searchParams.get('id')
       const detail = eventId ? this.state.eventDetails.get(eventId) : undefined
       if (detail) {
+        const delay = eventId ? this.state.eventDetailDelays.get(eventId) : undefined
+        if (delay) await new Promise(r => setTimeout(r, delay))
         await route.fulfill({ json: detail })
       } else {
-        await route.fallback() //TODO: return 404
+        await route.fulfill({ status: 404, json: { error: 'not found' } })
       }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-refresh')) {
       await route.fulfill({ status: 200, json: {} })
@@ -153,7 +156,7 @@ class World {
     return this.state.events
   }
 
-  async givenEventDetails(eventId: string, detail: Partial<WorldEventDetail>) {
+  async givenEventDetails(eventId: string, detail: Partial<WorldEventDetail>, opts?: { delayMs?: number }) {
     const base = this.state.eventDetails.get(eventId) ?? {
       ...defaultEvent(),
       id: eventId,
@@ -162,6 +165,9 @@ class World {
       currentUserWaitlistPosition: null,
     }
     this.state.eventDetails.set(eventId, { ...base, ...detail })
+    if (opts?.delayMs != null) {
+      this.state.eventDetailDelays.set(eventId, opts.delayMs)
+    }
   }
 
   async givenCurrentUser(user: Partial<WorldUser>) {
