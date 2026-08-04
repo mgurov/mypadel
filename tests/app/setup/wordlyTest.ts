@@ -121,11 +121,6 @@ class World {
 
     if (url.pathname.endsWith('/.netlify/functions/events')) {
       await route.fulfill({ json: this.state.events })
-      // if (this.state.events.length === 0) {
-      //   await route.fallback()
-      // } else {
-        
-      // }
     } else if (url.pathname.includes('/.netlify/functions/event-details')) {
       const eventId = url.searchParams.get('eventId')
       const detail = eventId ? this.state.eventDetails.get(eventId) : undefined
