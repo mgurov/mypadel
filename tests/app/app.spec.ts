@@ -116,7 +116,7 @@ test('cancel does not save credentials', async ({ page }) => {
 })
 
 test('fetches and displays events after setting credentials', async ({ page, world }) => {
-  await world.givenEvents([
+  world.givenEvents([
     { id: 'evt-1', title: 'Morning Padel' },
     { id: 'evt-2', title: 'Evening Padel' },
   ])
@@ -134,7 +134,7 @@ test('fetches and displays events after setting credentials', async ({ page, wor
 })
 
 test('actions menu offers show json, calendar, and open event', async ({ page, world }) => {
-  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -151,7 +151,7 @@ test('actions menu offers show json, calendar, and open event', async ({ page, w
 })
 
 test('show json action opens event details dialog', async ({ page, world }) => {
-  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -185,7 +185,7 @@ test('page background stays light even in dark color scheme', async ({ page }) =
 })
 
 test('actions button wraps below participants on narrow screens', async ({ page, world }) => {
-  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -207,7 +207,7 @@ test('actions button wraps below participants on narrow screens', async ({ page,
 })
 
 test('date cell moves below title on narrow screens', async ({ page, world }) => {
-  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -234,7 +234,7 @@ test('date cell moves below title on narrow screens', async ({ page, world }) =>
 })
 
 test('fetch events refreshes event details', async ({ page, world }) => {
-  await world.givenEvents([
+  world.givenEvents([
     { id: 'evt-1', title: 'Morning Padel' },
     { id: 'evt-2', title: 'Evening Padel' },
   ])
@@ -247,7 +247,7 @@ test('fetch events refreshes event details', async ({ page, world }) => {
   await fetchBtn.click()
   await expect(participation).toContainText('—')
 
-  await world.givenEventDetails('evt-1', {
+  world.givenEventDetails('evt-1', {
     participants: [{ userId: 'user-1' }],
   })
   await fetchBtn.click()
@@ -255,7 +255,7 @@ test('fetch events refreshes event details', async ({ page, world }) => {
 })
 
 test('keeps previous event details visible while refetching', async ({ page, world }) => {
-  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
@@ -267,7 +267,7 @@ test('keeps previous event details visible while refetching', async ({ page, wor
   await expect(participation).toContainText('—')
   await expect(spinner).toHaveCount(0)
 
-  await world.givenEventDetails('evt-1', {
+  world.givenEventDetails('evt-1', {
     participants: [{ userId: 'user-1' }],
   }, { delayMs: 300 })
   await fetchBtn.click()
@@ -280,8 +280,8 @@ test('keeps previous event details visible while refetching', async ({ page, wor
 })
 
 test('shows the waitlist position for a waiting user', async ({ page, world }) => {
-  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
-  await world.givenEventDetails('evt-1', { currentUserWaitlistPosition: 3 })
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEventDetails('evt-1', { currentUserWaitlistPosition: 3 })
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 

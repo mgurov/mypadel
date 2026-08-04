@@ -141,7 +141,7 @@ class World {
     }
   }
 
-  async givenEvents(overrides: Partial<WorldEvent>[]): Promise<WorldEvent[]> {
+  givenEvents(overrides: Partial<WorldEvent>[]): WorldEvent[] {
     this.state.events = overrides.map(o => ({ ...defaultEvent(), ...o }))
     for (const event of this.state.events) {
       if (!this.state.eventDetails.has(event.id)) {
@@ -156,7 +156,7 @@ class World {
     return this.state.events
   }
 
-  async givenEventDetails(eventId: string, detail: Partial<WorldEventDetail>, opts?: { delayMs?: number }) {
+  givenEventDetails(eventId: string, detail: Partial<WorldEventDetail>, opts?: { delayMs?: number }) {
     const base = this.state.eventDetails.get(eventId) ?? {
       ...defaultEvent(),
       id: eventId,
@@ -170,7 +170,7 @@ class World {
     }
   }
 
-  async givenCurrentUser(user: Partial<WorldUser>) {
+  givenCurrentUser(user: Partial<WorldUser>) {
     this.state.user = { ...defaultUser, ...user }
   }
 }
