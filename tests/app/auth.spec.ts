@@ -14,12 +14,12 @@ test('auth-me returns 200 on the happy path with valid tokens', async ({ appPage
 test('auth-me returns 401 when the access token expired', async ({ page, world, appPage }) => {
   world.givenAccessTokenExpired()
   await appPage.goto()
-  const status = await page.evaluate(async (token) => {
-    const res = await fetch(`${PROXY_BASE}/auth-me`, {
+  const status = await page.evaluate(async ({ url, token }) => {
+    const res = await fetch(`${url}/auth-me`, {
       headers: { m_access_token: token },
     })
     return res.status
-  }, defaultAuth.accessToken)
+  }, { url: PROXY_BASE, token: defaultAuth.accessToken })
   expect(status).toBe(401)
 })
 
