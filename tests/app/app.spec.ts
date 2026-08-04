@@ -1,75 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { test } from './setup/ourTest'
 
-function futureDate(daysAhead: number, hour: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + daysAhead)
-  d.setHours(hour, 0, 0, 0)
-  return d.toISOString()
-}
-
-function mockEvent(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 'evt-1',
-    title: 'Morning Padel',
-    description: '',
-    date: futureDate(1, 10),
-    endDate: futureDate(1, 12),
-    location: 'Court 1',
-    status: 'PUBLISHED',
-    publishAt: null,
-    reminderSentAt: null,
-    maxParticipants: 8,
-    price: '10',
-    disclaimer: '',
-    createdAt: futureDate(-1, 9),
-    competitionId: null,
-    formatId: null,
-    formatConfig: null,
-    matchTableStatus: 'NONE',
-    matchTableMode: 'MANUAL',
-    matchTableGeneratedAt: null,
-    matchTableConfirmedAt: null,
-    _count: { participants: 3 },
-    ...overrides,
-  }
-}
-
-function mockApi(page: Page) {
-  return Promise.all([
-    page.route('**/.netlify/functions/events', (route) =>
-      route.fulfill({
-        json: [
-          mockEvent(),
-          mockEvent({ id: 'evt-2', title: 'Evening Padel', date: futureDate(2, 18) }),
-        ],
-      }),
-    ),
-    page.route('**/.netlify/functions/event-details**', (route) =>
-      route.fulfill({ json: { ...mockEvent(), participants: [], currentUserPayment: null } }),
-    ),
-    page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} })),
-    page.route('**/.netlify/functions/auth-me', (route) =>
-      route.fulfill({
-        json: {
-          user: {
-            id: 'user-1',
-            email: 'player@example.com',
-            firstName: 'Player',
-            lastName: 'One',
-            phone: null,
-            createdAt: '2026-01-01T00:00:00Z',
-            role: 'USER',
-            elo: 1500,
-            achievements: [],
-            isPremium: false,
-          },
-        },
-      }),
-    ),
-  ])
-}
-
 const credentialsButton = (page: Page) => page.getByRole('button', { name: 'Set Credentials' })
 const credentialsSetButton = (page: Page) => page.getByRole('button', { name: 'Credentials Set' })
 const fetchButton = (page: Page) => page.getByRole('button', { name: 'Fetch Events' })
@@ -184,8 +115,11 @@ test('cancel does not save credentials', async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBeNull()
 })
 
-test('fetches and displays events after setting credentials', async ({ page }) => {
-  await mockApi(page)
+test('fetches and displays events after setting credentials', async ({ page, world }) => {
+  await world.givenEvents([
+    { id: 'evt-1', title: 'Morning Padel' },
+    { id: 'evt-2', title: 'Evening Padel' },
+  ])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
@@ -199,8 +133,8 @@ test('fetches and displays events after setting credentials', async ({ page }) =
   await expectVariant(fetchButton(page), 'contained')
 })
 
-test('actions menu offers show json, calendar, and open event', async ({ page }) => {
-  await mockApi(page)
+test('actions menu offers show json, calendar, and open event', async ({ page, world }) => {
+  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -216,8 +150,8 @@ test('actions menu offers show json, calendar, and open event', async ({ page })
   await expect(openEvent).toHaveAttribute('target', '_blank')
 })
 
-test('show json action opens event details dialog', async ({ page }) => {
-  await mockApi(page)
+test('show json action opens event details dialog', async ({ page, world }) => {
+  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -250,8 +184,8 @@ test('page background stays light even in dark color scheme', async ({ page }) =
   expect(bg).toBe('rgb(255, 255, 255)')
 })
 
-test('actions button wraps below participants on narrow screens', async ({ page }) => {
-  await mockApi(page)
+test('actions button wraps below participants on narrow screens', async ({ page, world }) => {
+  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -272,8 +206,8 @@ test('actions button wraps below participants on narrow screens', async ({ page 
   await expect.poll(overlap).toBe(true)
 })
 
-test('date cell moves below title on narrow screens', async ({ page }) => {
-  await mockApi(page)
+test('date cell moves below title on narrow screens', async ({ page, world }) => {
+  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
   await page.getByRole('button', { name: 'Fetch Events' }).click()
@@ -299,93 +233,44 @@ test('date cell moves below title on narrow screens', async ({ page }) => {
   await expect.poll(dateSameRowAsTitle).toBe(true)
 })
 
-test('fetch events refreshes event details', async ({ page }) => {
-  let detail: Record<string, unknown> = { ...mockEvent(), participants: [], currentUserPayment: null }
-  await page.route('**/.netlify/functions/events', (route) =>
-    route.fulfill({
-      json: [
-        mockEvent(),
-        mockEvent({ id: 'evt-2', title: 'Evening Padel', date: futureDate(2, 18) }),
-      ],
-    }),
-  )
-  await page.route('**/.netlify/functions/event-details**', (route) =>
-    route.fulfill({ json: detail }),
-  )
-  await page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} }))
-  await page.route('**/.netlify/functions/auth-me', (route) =>
-    route.fulfill({
-      json: {
-        user: {
-          id: 'user-1',
-          email: 'player@example.com',
-          firstName: 'Player',
-          lastName: 'One',
-          phone: null,
-          createdAt: '2026-01-01T00:00:00Z',
-          role: 'USER',
-          elo: 1500,
-          achievements: [],
-          isPremium: false,
-        },
-      },
-    }),
-  )
+test('fetch events refreshes event details', async ({ page, world }) => {
+  await world.givenEvents([
+    { id: 'evt-1', title: 'Morning Padel' },
+    { id: 'evt-2', title: 'Evening Padel' },
+  ])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
-  const fetchButton = page.getByRole('button', { name: 'Fetch Events' })
+  const fetchBtn = page.getByRole('button', { name: 'Fetch Events' })
   const participation = page.locator('.width-28').first()
 
-  await fetchButton.click()
+  await fetchBtn.click()
   await expect(participation).toContainText('—')
 
-  detail = { ...mockEvent(), participants: [{ userId: 'user-1' }], currentUserPayment: null }
-  await fetchButton.click()
+  await world.givenEventDetails('evt-1', {
+    participants: [{ userId: 'user-1' }],
+  })
+  await fetchBtn.click()
   await expect(participation).toContainText('✓')
 })
 
-test('keeps previous event details visible while refetching', async ({ page }) => {
-  let detail: Record<string, unknown> = { ...mockEvent(), participants: [], currentUserPayment: null }
-  await page.route('**/.netlify/functions/events', (route) =>
-    route.fulfill({ json: [mockEvent()] }),
-  )
-  await page.route('**/.netlify/functions/event-details**', async (route) => {
-    await new Promise((r) => setTimeout(r, 300))
-    route.fulfill({ json: detail })
-  })
-  await page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} }))
-  await page.route('**/.netlify/functions/auth-me', (route) =>
-    route.fulfill({
-      json: {
-        user: {
-          id: 'user-1',
-          email: 'player@example.com',
-          firstName: 'Player',
-          lastName: 'One',
-          phone: null,
-          createdAt: '2026-01-01T00:00:00Z',
-          role: 'USER',
-          elo: 1500,
-          achievements: [],
-          isPremium: false,
-        },
-      },
-    }),
-  )
+test('keeps previous event details visible while refetching', async ({ page, world }) => {
+  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
-  const fetchButton = page.getByRole('button', { name: 'Fetch Events' })
+  const fetchBtn = page.getByRole('button', { name: 'Fetch Events' })
   const participation = page.locator('.width-28').first()
   const spinner = page.locator('.MuiCircularProgress-root')
 
-  await fetchButton.click()
+  await fetchBtn.click()
   await expect(participation).toContainText('—')
   await expect(spinner).toHaveCount(0)
 
-  detail = { ...mockEvent(), participants: [{ userId: 'user-1' }], currentUserPayment: null }
-  await fetchButton.click()
+  await world.givenEventDetails('evt-1', {
+    participants: [{ userId: 'user-1' }],
+  })
+  await fetchBtn.click()
 
   await expect(spinner).toHaveCount(1)
   await expect(participation).toContainText('—')
@@ -394,34 +279,9 @@ test('keeps previous event details visible while refetching', async ({ page }) =
   await expect(participation).toContainText('✓')
 })
 
-test('shows the waitlist position for a waiting user', async ({ page }) => {
-  await page.route('**/.netlify/functions/events', (route) =>
-    route.fulfill({ json: [mockEvent()] }),
-  )
-  await page.route('**/.netlify/functions/event-details**', (route) =>
-    route.fulfill({
-      json: { ...mockEvent(), participants: [], currentUserPayment: null, currentUserWaitlistPosition: 3 },
-    }),
-  )
-  await page.route('**/.netlify/functions/auth-refresh', (route) => route.fulfill({ status: 200, json: {} }))
-  await page.route('**/.netlify/functions/auth-me', (route) =>
-    route.fulfill({
-      json: {
-        user: {
-          id: 'user-1',
-          email: 'player@example.com',
-          firstName: 'Player',
-          lastName: 'One',
-          phone: null,
-          createdAt: '2026-01-01T00:00:00Z',
-          role: 'USER',
-          elo: 1500,
-          achievements: [],
-          isPremium: false,
-        },
-      },
-    }),
-  )
+test('shows the waitlist position for a waiting user', async ({ page, world }) => {
+  await world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  await world.givenEventDetails('evt-1', { currentUserWaitlistPosition: 3 })
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 
