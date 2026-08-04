@@ -1,12 +1,12 @@
 import { expect } from '@playwright/test'
 import fs from 'node:fs'
 import { test } from './setup/ourTest'
-import type { World, WorldEvent } from './setup/wordlyTest'
+import type { World, WorldEventInput } from './setup/wordlyTest'
 
 const icsTime = (iso: string) => iso.slice(0, 19).replace(/[-:]/g, '') + 'Z'
 
-async function loadEvents(world: World, events: Partial<WorldEvent>[], page: import('@playwright/test').Page) {
-  const resolved = await world.givenEvents(events)
+async function loadEvents(world: World, events: WorldEventInput[], page: import('@playwright/test').Page) {
+  const resolved = world.givenEvents(events)
   await page.addInitScript(() => localStorage.setItem('myko-auth-key', 'test-secret-key'))
   await page.goto('/')
   await page.getByRole('button', { name: 'Fetch Events' }).click()

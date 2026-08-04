@@ -247,9 +247,10 @@ test('fetch events refreshes event details', async ({ page, world }) => {
   await fetchBtn.click()
   await expect(participation).toContainText('—')
 
-  world.givenEventDetails('evt-1', {
-    participants: [{ userId: 'user-1' }],
-  })
+  world.givenEvents([
+    { id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }] },
+    { id: 'evt-2', title: 'Evening Padel' },
+  ])
   await fetchBtn.click()
   await expect(participation).toContainText('✓')
 })
@@ -267,9 +268,7 @@ test('keeps previous event details visible while refetching', async ({ page, wor
   await expect(participation).toContainText('—')
   await expect(spinner).toHaveCount(0)
 
-  world.givenEventDetails('evt-1', {
-    participants: [{ userId: 'user-1' }],
-  }, { delayMs: 300 })
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }], _detailDelay: 300 }])
   await fetchBtn.click()
 
   await expect(spinner).toHaveCount(1)
@@ -280,8 +279,7 @@ test('keeps previous event details visible while refetching', async ({ page, wor
 })
 
 test('shows the waitlist position for a waiting user', async ({ page, world }) => {
-  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
-  world.givenEventDetails('evt-1', { currentUserWaitlistPosition: 3 })
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', currentUserWaitlistPosition: 3 }])
   await page.goto('/')
   await fillCredentials(page, 'test-secret-key', 'player@example.com', 'hunter2')
 

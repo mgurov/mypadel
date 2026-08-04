@@ -39,6 +39,13 @@ interface WorldEventDetail extends WorldEvent {
   currentUserWaitlistPosition: number | null
 }
 
+type WorldEventInput = Partial<WorldEvent> & {
+  participants?: unknown[]
+  currentUserPayment?: unknown
+  currentUserWaitlistPosition?: number | null
+  _detailDelay?: number
+}
+
 interface WorldUser {
   id: string
   email: string
@@ -141,33 +148,21 @@ class World {
     }
   }
 
-  givenEvents(overrides: Partial<WorldEvent>[]): WorldEvent[] {
-    this.state.events = overrides.map(o => ({ ...defaultEvent(), ...o }))
-    for (const event of this.state.events) {
-      if (!this.state.eventDetails.has(event.id)) {
-        this.state.eventDetails.set(event.id, {
-          ...event,
-          participants: [],
-          currentUserPayment: null,
-          currentUserWaitlistPosition: null,
-        })
+  givenEvents(inputs: WorldEventInput[]): WorldEvent[] {
+    this.state.events = inputs.map(({ participants, currentUserPayment, currentUserWaitlistPosition, _detailDelay, ...eventFields }) => {
+      const event = { ...defaultEvent(), ...eventFields }
+      this.state.eventDetails.set(event.id, {
+        ...event,
+        participants: participants ?? [],
+        currentUserPayment: currentUserPayment ?? null,
+        currentUserWaitlistPosition: currentUserWaitlistPosition ?? null,
+      })
+      if (_detailDelay != null) {
+        this.state.eventDetailDelays.set(event.id, _detailDelay)
       }
-    }
+      return event
+    })
     return this.state.events
-  }
-
-  givenEventDetails(eventId: string, detail: Partial<WorldEventDetail>, opts?: { delayMs?: number }) {
-    const base = this.state.eventDetails.get(eventId) ?? {
-      ...defaultEvent(),
-      id: eventId,
-      participants: [],
-      currentUserPayment: null,
-      currentUserWaitlistPosition: null,
-    }
-    this.state.eventDetails.set(eventId, { ...base, ...detail })
-    if (opts?.delayMs != null) {
-      this.state.eventDetailDelays.set(eventId, opts.delayMs)
-    }
   }
 
   givenCurrentUser(user: Partial<WorldUser>) {
@@ -176,4 +171,4 @@ class World {
 }
 
 export { World, defaultUser }
-export type { WorldEvent, WorldEventDetail, WorldUser }
+export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser }
