@@ -84,7 +84,7 @@ Run `tsc -b` directly or use `npm run build` to type-check.
 
 ## Git workflow
 
-Commit all changes progressively at all times. Keep commit messages simple.
+Commit all changes progressively at all times, importantly - also before running lints and verifications. Keep commit messages simple.
 
 ## File access
 
