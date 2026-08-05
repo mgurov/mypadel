@@ -262,11 +262,21 @@ test('keeps previous event details visible while refetching', async ({ page, wor
   await expect(participation).toContainText('—')
   await expect(spinner).toHaveCount(0)
 
-  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }], _detailDelay: 300 }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }] }])
+
+  let release!: () => void
+  const held = new Promise<void>((r) => { release = r })
+  await page.route('**/event-details*', async (route) => {
+    await held
+    await route.fallback()
+  })
+
   await fetchBtn.click()
 
   await expect(spinner).toHaveCount(1)
   await expect(participation).toContainText('—')
+
+  release()
 
   await expect(spinner).toHaveCount(0)
   await expect(participation).toContainText('✓')

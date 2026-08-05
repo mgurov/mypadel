@@ -66,7 +66,6 @@ test('second fetch after access token expiry keeps user-specific details', async
   await expect(waitlist).toContainText('2')
 
   world.givenAccessTokenExpired()
-  world.givenRefreshDelay(300)
   await appPage.fetchAndWaitFor('.netlify/functions/events')
   await expect(payment).toContainText('✓')
   await expect(payment).toContainText('$')

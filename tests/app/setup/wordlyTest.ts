@@ -44,7 +44,6 @@ type WorldEventInput = Partial<WorldEvent> & {
   participants?: unknown[]
   currentUserPayment?: unknown
   currentUserWaitlistPosition?: number | null
-  _detailDelay?: number
 }
 
 interface WorldUser {
@@ -134,10 +133,8 @@ class World {
   private state = {
     events: [] as WorldEvent[],
     eventDetails: new Map<string, WorldEventDetail>(),
-    eventDetailDelays: new Map<string, number>(),
     user: defaultUser,
     auth: { ...defaultAuth },
-    refreshDelay: 0,
   }
 
   constructor(page: Page) {
@@ -154,8 +151,6 @@ class World {
       const eventId = url.searchParams.get('id')
       const detail = eventId ? this.state.eventDetails.get(eventId) : undefined
       if (detail) {
-        const delay = eventId ? this.state.eventDetailDelays.get(eventId) : undefined
-        if (delay) await new Promise(r => setTimeout(r, delay))
         const body = this.hasValidAccessToken(route) ? detail : this.withoutUserInfo(detail)
         await route.fulfill({ json: body })
       } else {
@@ -170,7 +165,6 @@ class World {
       }
     } else if (url.pathname.endsWith('/.netlify/functions/auth-refresh')) {
       if (this.presentedToken(route) === this.state.auth.refreshToken) {
-        if (this.state.refreshDelay > 0) await new Promise(r => setTimeout(r, this.state.refreshDelay))
         await route.fulfill({ status: 200, headers: this.rotateTokens(), json: {} })
       } else {
         await route.fulfill({ status: 401, json: { error: 'invalid refresh token' } })
@@ -187,7 +181,7 @@ class World {
   }
 
   givenEvents(inputs: WorldEventInput[]): WorldEvent[] {
-    this.state.events = inputs.map(({ participants, currentUserPayment, currentUserWaitlistPosition, _detailDelay, ...eventFields }) => {
+    this.state.events = inputs.map(({ participants, currentUserPayment, currentUserWaitlistPosition, ...eventFields }) => {
       const event = { ...defaultEvent(), ...eventFields }
       this.state.eventDetails.set(event.id, {
         ...event,
@@ -195,9 +189,6 @@ class World {
         currentUserPayment: currentUserPayment ?? null,
         currentUserWaitlistPosition: currentUserWaitlistPosition ?? null,
       })
-      if (_detailDelay != null) {
-        this.state.eventDetailDelays.set(event.id, _detailDelay)
-      }
       return event
     })
     return this.state.events
@@ -226,10 +217,6 @@ class World {
   givenAccessTokenExpired() {
     this.tokenNonce += 1
     this.state.auth = { ...this.state.auth, accessToken: `access-token-${this.tokenNonce}` }
-  }
-
-  givenRefreshDelay(ms: number) {
-    this.state.refreshDelay = ms
   }
 
   givenAuth(auth: Partial<WorldAuth>) {
