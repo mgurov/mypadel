@@ -53,9 +53,14 @@ export interface Participant {
   }
 }
 
+export interface Payment {
+  id: string
+  status: string
+}
+
 export interface EventDetail extends Event {
   participants: Participant[]
-  currentUserPayment: unknown
+  currentUserPayment: Payment | null
   currentUserWaitlistPosition: number | null
 }
 

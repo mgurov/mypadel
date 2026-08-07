@@ -27,15 +27,31 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
   const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
   const waitlistPosition = detail?.currentUserWaitlistPosition
   const isWaiting = !isParticipating && waitlistPosition != null && waitlistPosition > 0
+  const payment = detail?.currentUserPayment
+  const isPaid = payment?.status === 'PAID'
+  const isPaymentPending = payment != null && !isPaid
 
   const closeMenu = () => setMenuAnchor(null)
 
   return (
     <>
-      <div className="column margin-left-16 no-grow width-28 participation-cell">
+      <div className={`column margin-left-16 no-grow ${isPaymentPending ? 'width-auto' : 'width-28'} participation-cell`}>
         {detail ? (
           isParticipating
-            ? <span className="participating-yes">&#10003;{detail.currentUserPayment != null && <span className="payment-indicator"> $</span>}</span>
+            ? (
+              <span className="participating-yes">
+                &#10003;
+                {isPaid && <span className="payment-indicator">$</span>}
+                {isPaymentPending && (
+                  <span
+                    className="payment-indicator payment-indicator-pending"
+                    title={`Payment status: ${payment?.status ?? 'unknown'}`}
+                  >
+                    {payment?.status ?? '?'}
+                  </span>
+                )}
+              </span>
+            )
             : isWaiting
               ? <span className="participating-waitlist"><span className="waitlist-icon">&#9203;</span>{waitlistPosition}</span>
               : <span className="participating-no">&mdash;</span>
