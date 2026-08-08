@@ -8,21 +8,25 @@ import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
+import Tooltip from '@mui/material/Tooltip'
 import { api, EVENT_DETAILS_URL, type Event, type EventDetail } from '../api'
 import { downloadEventIcs } from '../ics'
 
 export function EventDetailCell({ event, userId }: { event: Event; userId: string | undefined }) {
   const [jsonOpen, setJsonOpen] = useState(false)
+  const [errorOpen, setErrorOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const { id: eventId } = event
 
-  const { data: detail, isFetching } = useQuery<EventDetail>({
+  const { data: detail, error, isFetching } = useQuery<EventDetail>({
     queryKey: ['eventDetail', eventId],
     queryFn: async () => {
       const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${eventId}`)
       return data
     },
   })
+
+  const errorMessage = error instanceof Error ? error.message : String(error)
 
   const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
   const waitlistPosition = detail?.currentUserWaitlistPosition
@@ -36,7 +40,20 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
   return (
     <>
       <div className={`column margin-left-16 no-grow ${isPaymentPending ? 'width-auto' : 'width-28'} participation-cell`}>
-        {detail ? (
+        {error ? (
+          <Tooltip title={`Failed to load event details: ${errorMessage}`}>
+            <span
+              className="detail-error"
+              data-testid="event-detail-error"
+              role="button"
+              tabIndex={0}
+              onClick={() => setErrorOpen(true)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setErrorOpen(true) }}
+            >
+              &#9888;
+            </span>
+          </Tooltip>
+        ) : detail ? (
           isParticipating
             ? (
               <span className="participating-yes">
@@ -101,6 +118,15 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setJsonOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={errorOpen} onClose={() => setErrorOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Event Details Error</DialogTitle>
+        <DialogContent>
+          <p className="dialog-json">Failed to load event details: {errorMessage}</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setErrorOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>

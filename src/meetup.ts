@@ -1,0 +1,25 @@
+import type { MeetupEvent } from './api'
+
+export const WOLFGANG_MEMBER_ID = '456811393'
+export const MY_MEMBER_ID = '176325322'
+export const FLORIDSDORF_VENUE_ID = '28170985'
+
+export function isHostedByWolfgang(event: MeetupEvent): boolean {
+  return event.eventHosts.some((host) => host.memberId === WOLFGANG_MEMBER_ID)
+}
+
+export function isVisibleMeetup(event: MeetupEvent): boolean {
+  return event.status !== 'CANCELLED' && event.venue.id !== FLORIDSDORF_VENUE_ID
+}
+
+export function isMyRsvp(event: MeetupEvent): boolean {
+  return event.rsvps.edges.some((edge) => edge.node.member.id === MY_MEMBER_ID)
+}
+
+export function formatAttendance(event: MeetupEvent): string {
+  const max = event.maxTickets
+  const going = event.going.totalCount
+  if (max === going) return 'full'
+  if (max < going) return `overbooked (${max})`
+  return `${max - going} free of ${max}`
+}

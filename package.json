@@ -10,6 +10,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:app": "playwright test",
+    "validate": "npm run lint && npm run test:app",
     "deploy": "npm run build && netlify deploy --dir=./dist --alias=preview",
     "deploy:prod": "npm run build && netlify deploy --dir=./dist --prod"
   },
@@ -17,6 +18,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^9.2.0",
+    "@netlify/functions": "^5.3.0",
     "@tanstack/react-query": "^5.101.4",
     "axios": "^1.18.1",
     "dayjs": "^1.11.21",

@@ -64,9 +64,70 @@ export interface EventDetail extends Event {
   currentUserWaitlistPosition: number | null
 }
 
+export interface MeetupEvent {
+  id: string
+  title: string
+  dateTime: string
+  status: string
+  eventUrl: string
+  venue: {
+    id: string
+    name: string
+  }
+  eventHosts: {
+    memberId: string
+  }[]
+  maxTickets: number
+  going: {
+    totalCount: number
+  }
+  rsvps: {
+    totalCount: number
+    edges: {
+      node: {
+        member: {
+          id: string
+        }
+      }
+    }[]
+  }
+}
+
+export interface MeetupGraphqlResponse {
+  data: {
+    groupByUrlname: {
+      events: {
+        edges: {
+          node: MeetupEvent
+        }[]
+      }
+    }
+  }
+}
+
 const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/dev-proxy/' : 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/')
 export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
 export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
+export const MEETUP_URL = `/.netlify/functions/proxy/gql2`
+
+export function buildMeetupBody(): Record<string, unknown> {
+  const afterDateTime = `${new Date().toISOString().slice(0, 10)}T00:00:00Z`
+  return {
+    operationName: 'getUpcomingGroupEvents',
+    variables: {
+      urlname: 'vienna-sports-meetup',
+      title: 'padel',
+      status: ['ACTIVE'],
+      afterDateTime,
+    },
+    extensions: {
+      persistedQuery: {
+        version: 1,
+        sha256Hash: '81a7529c2bcfd8739837a20305ed04bc9555a1c2629663c62f79df5e5bad70ab',
+      },
+    },
+  }
+}
 
 function extractCookie(name: string): string | undefined {
   const stored = localStorage.getItem(name)

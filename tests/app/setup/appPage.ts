@@ -8,7 +8,7 @@ export class AppPage {
   }
 
   get fetchButton(): Locator {
-    return this.page.getByRole('button', { name: 'Fetch Events' })
+    return this.page.getByTestId('fetch-events-button')
   }
 
   get userChip(): Locator {

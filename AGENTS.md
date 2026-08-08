@@ -34,14 +34,23 @@ mypadel/
 │   ├── App.tsx                 # Top-level component: state + wiring (~90 lines)
 │   ├── api.ts                  # axios instance, proxy URLs, ensureCookieAuth, types
 │   ├── ics.ts                  # iCalendar (.ics) generation + filenames + download helper
+│   ├── eventTracking.ts        # IndexedDB known-event store (per-source keys like `sunset:`/`meetup:`) + first-fetch ack + new-id detection
 │   ├── components/             # Extracted UI components
 │   │   ├── CredentialsButton.tsx  # Credentials button + 3-field dialog
-│   │   ├── EventsTable.tsx        # Events table rendering
+│   │   ├── AckAllButton.tsx       # "Ack all N new events" button above a tab table
+│   │   ├── OnlyNewToggle.tsx      # "Only new" filter toggle next to the ack-all button
+│   │   ├── EventsTable.tsx        # Events table rendering (sunset) + SunsetRow
 │   │   ├── EventDetailCell.tsx    # Per-event participation + Actions dropdown (Show JSON, Add to Calendar, Open Event)
+│   │   ├── MeetupTable.tsx        # Meetup table rendering + MeetupRow
+│   │   ├── CombinedTable.tsx      # Combined (sunset + meetup) chronological view
 │   │   └── ParticipationCell.tsx  # participants/max formatting
+│   ├── meetup.ts               # Meetup helpers (wolfgang/visible/rsvp/attendance)
 │   ├── App.css                 # Events table styles
 │   ├── index.css               # Global styles, CSS variables, dark mode
 │   └── assets/
+├── netlify/
+│   └── functions/
+│       └── proxy.ts            # Netlify Function proxy -> TARGET_PROXY env var (MYKO_SECRET auth, no cookies)
 └── supabase/
     ├── config.toml             # Full Supabase project configuration
     └── functions/
@@ -63,6 +72,7 @@ mypadel/
 - **Auth:** `x-myko-auth` header, key stored in `localStorage` under `myko-auth-key`.
 - **Fetch is triggered manually** by button click — no auto-loading, no polling, no caching.
 - **Event model** has ~20 fields, but the table only renders title, date, and status.
+- **New-event tracking:** after each fetch, fetched event IDs are diffed against the IndexedDB known-key store (`src/eventTracking.ts`), where each known event is a separate record keyed `sunset:<id>` or `meetup:<id>` (so both sources can share raw IDs). The first-ever fetch acks every event; later unknown keys get a tab badge, a `new` label + per-row `ack` button in the main tables, and an `Ack all N new events` button above the tab's table. An `Only new` toggle next to it filters the tab's table down to the new entries (per tab, auto-off when no new events remain).
 
 ### Backend (supabase/functions/)
 

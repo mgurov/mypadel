@@ -106,10 +106,11 @@ export function CredentialsButton({ authKey, email, password, onSave }: Credenti
   return (
     <>
       <Button
+        data-testid="credentials-button"
         variant={complete ? 'outlined' : 'contained'}
         onClick={openDialog}
       >
-        {complete ? 'Credentials Set' : 'Set Credentials'}
+        {complete ? 'Auth' : 'Set Auth'}
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Credentials</DialogTitle>

@@ -11,12 +11,92 @@
   gap: 12px;
 }
 
+.tab-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: flex-start;
+}
+
 .events-table {
   width: 100%;
   max-width: 900px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.meetup-table-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  max-width: 900px;
+  width: 100%;
+  text-align: left;
+}
+
+.tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: #d32f2f;
+  box-sizing: border-box;
+}
+
+.new-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #d32f2f;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.source-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #6b6375;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.source-label-sunset {
+  background: #aa3bff;
+}
+
+.source-label-wolfgang {
+  background: #2e7d32;
+}
+
+.source-label-meetup {
+  background: #1976d2;
 }
 
 .table-row {
@@ -157,6 +237,21 @@
 
 .participation-cell {
   position: relative;
+}
+
+.detail-error {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d32f2f;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .refetch-spinner {

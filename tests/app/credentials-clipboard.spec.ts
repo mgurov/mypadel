@@ -4,21 +4,20 @@ import { AnnotationNoCredPrefill } from './setup/credentialsFixture'
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 
-const DIALOG_OPENER = 'Set Credentials'
-const DIALOG_OPENER_SET = 'Credentials Set'
+const credentialsButton = (page: Page) => page.getByTestId('credentials-button')
 
 async function setClipboardText(page: Page, text: string) {
   await page.evaluate((value) => navigator.clipboard.writeText(value), text)
 }
 
-async function openDialog(page: Page, opener: string = DIALOG_OPENER) {
+async function openDialog(page: Page) {
   await page.goto('/')
-  await page.getByRole('button', { name: opener }).click()
+  await credentialsButton(page).click()
   await expect(page.getByRole('dialog')).toBeVisible()
 }
 
-async function setClipboardAndOpenDialog(page: Page, text: string, opener: string = DIALOG_OPENER) {
-  await openDialog(page, opener)
+async function setClipboardAndOpenDialog(page: Page, text: string) {
+  await openDialog(page)
   await setClipboardText(page, text)
 }
 
@@ -45,7 +44,7 @@ test('copy writes full credentials JSON to the clipboard', AnnotationNoCredPrefi
     localStorage.setItem('myko-cred-email', 'player@example.com')
     localStorage.setItem('myko-cred-password', 'hunter2')
   })
-  await openDialog(page, DIALOG_OPENER_SET)
+  await openDialog(page)
 
   await copyButton(page).click()
 
@@ -88,7 +87,7 @@ test('paste with empty values keeps previous values and warns', AnnotationNoCred
     localStorage.setItem('myko-cred-email', 'old@example.com')
     localStorage.setItem('myko-cred-password', 'old-pass')
   })
-  await setClipboardAndOpenDialog(page, JSON.stringify({ authKey: 'new-key', email: '', password: '' }), DIALOG_OPENER_SET)
+  await setClipboardAndOpenDialog(page, JSON.stringify({ authKey: 'new-key', email: '', password: '' }))
 
   await pasteButton(page).click()
 
@@ -130,7 +129,7 @@ test('paste then save persists credentials', AnnotationNoCredPrefill, async ({ p
   await pasteButton(page).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click()
 
-  await expect(page.getByRole('button', { name: DIALOG_OPENER_SET })).toBeVisible()
+  await expect(credentialsButton(page)).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem('myko-auth-key'))).toBe('key-1')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-email'))).toBe('a@b.c')
   expect(await page.evaluate(() => localStorage.getItem('myko-cred-password'))).toBe('pass-1')
@@ -151,7 +150,7 @@ test('error message clears when the dialog is reopened', AnnotationNoCredPrefill
   await expect(page.getByRole('alert')).toContainText('Clipboard does not contain valid JSON.')
 
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
-  await page.getByRole('button', { name: DIALOG_OPENER }).click()
+  await credentialsButton(page).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expect(page.getByRole('alert')).toHaveCount(0)
 })

@@ -40,6 +40,19 @@ interface WorldEventDetail extends WorldEvent {
   currentUserWaitlistPosition: number | null
 }
 
+interface MeetupNode {
+  id: string
+  title: string
+  dateTime: string
+  status: string
+  eventUrl: string
+  venue: { id: string; name: string }
+  eventHosts: { memberId: string }[]
+  maxTickets: number
+  going: { totalCount: number }
+  rsvps: { totalCount: number; edges: { node: { member: { id: string } } }[] }
+}
+
 type WorldEventInput = Partial<WorldEvent> & {
   participants?: unknown[]
   currentUserPayment?: unknown
@@ -81,6 +94,19 @@ const defaultEvent = (): WorldEvent => ({
   matchTableGeneratedAt: null,
   matchTableConfirmedAt: null,
   _count: { participants: 3 },
+})
+
+const defaultMeetupNode = (): MeetupNode => ({
+  id: 'meetup-1',
+  title: 'Padel Meetup',
+  dateTime: futureDate(1, 10),
+  status: 'ACTIVE',
+  eventUrl: 'https://www.meetup.com/vienna-sports-meetup/events/1/',
+  venue: { id: 'venue-1', name: 'Vienna Court' },
+  eventHosts: [{ memberId: 'host-1' }],
+  maxTickets: 8,
+  going: { totalCount: 5 },
+  rsvps: { totalCount: 5, edges: [{ node: { member: { id: 'member-1' } } }] },
 })
 
 export const defaultAuth = {
@@ -133,6 +159,7 @@ class World {
   private state = {
     events: [] as WorldEvent[],
     eventDetails: new Map<string, WorldEventDetail>(),
+    meetupEvents: [] as MeetupNode[],
     user: defaultUser,
     auth: { ...defaultAuth },
   }
@@ -140,6 +167,7 @@ class World {
   constructor(page: Page) {
     this.page = page
     void page.route(PROXY_BASE + "/**", (route) => this.handleProxy(route))
+    void page.route('**/.netlify/functions/proxy/gql2', (route) => this.handleProxy(route))
   }
 
   private handleProxy = async (route: Route) => {
@@ -147,6 +175,18 @@ class World {
 
     if (url.pathname.endsWith('/.netlify/functions/events')) {
       await route.fulfill({ json: this.state.events })
+    } else if (url.pathname.endsWith('/.netlify/functions/proxy/gql2')) {
+      await route.fulfill({
+        json: {
+          data: {
+            groupByUrlname: {
+              events: {
+                edges: this.state.meetupEvents.map((node) => ({ node })),
+              },
+            },
+          },
+        },
+      })
     } else if (url.pathname.includes('/.netlify/functions/event-details')) {
       const eventId = url.searchParams.get('id')
       const detail = eventId ? this.state.eventDetails.get(eventId) : undefined
@@ -194,6 +234,11 @@ class World {
     return this.state.events
   }
 
+  givenMeetupEvents(inputs: Partial<MeetupNode>[]): MeetupNode[] {
+    this.state.meetupEvents = inputs.map((node) => ({ ...defaultMeetupNode(), ...node }))
+    return this.state.meetupEvents
+  }
+
   private presentedToken(route: Route): string | undefined {
     return route.request().headers()['m_access_token']
   }
@@ -229,4 +274,4 @@ class World {
 }
 
 export { World, defaultUser }
-export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth }
+export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode }
