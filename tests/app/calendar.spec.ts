@@ -60,20 +60,26 @@ test('each event downloads its own ics file', async ({ page, world }) => {
 })
 
 test('keeps the UTC timezone designation on dates', async ({ page, world }) => {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  date.setHours(16, 0, 0, 0)
+  const endDate = new Date(date)
+  endDate.setHours(18, 0, 0, 0)
+
   await loadEvents(world, [
     {
       id: 'evt-1',
       title: 'Morning Padel',
-      date: '2026-08-06T16:00:00.000Z',
-      endDate: '2026-08-06T18:00:00.000Z',
+      date: date.toISOString(),
+      endDate: endDate.toISOString(),
     },
   ], page)
 
   const download = await downloadCalendar(page)
 
   const content = fs.readFileSync((await download.path())!, 'utf8')
-  expect(content).toContain('DTSTART:20260806T160000Z')
-  expect(content).toContain('DTEND:20260806T180000Z')
+  expect(content).toContain(`DTSTART:${icsTime(date.toISOString())}`)
+  expect(content).toContain(`DTEND:${icsTime(endDate.toISOString())}`)
 })
 
 test('escapes special characters in ics text fields', async ({ page, world }) => {
