@@ -50,7 +50,7 @@ export function buildEventIcs(event: Event): string {
     `DTSTAMP:${icsUtcTimestamp()}`,
     `DTSTART:${icsUtcDateTime(event.date)}`,
     ...(hasEnd ? [`DTEND:${icsUtcDateTime(event.endDate!)}`] : []),
-    `SUMMARY:${escapeText(event.title)}`,
+    `SUMMARY:${escapeText('M: Padel ' + event.title)}`,
     ...(event.location ? [`LOCATION:${escapeText(event.location)}`] : []),
     ...(details ? [`DESCRIPTION:${escapeText(details)}`] : []),
     `URL:https://sunsetpadel.at/events/${event.id}`,

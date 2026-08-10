@@ -34,7 +34,7 @@ test('downloads an ics file for the first event', async ({ page, world }) => {
   const content = fs.readFileSync((await download.path())!, 'utf8')
   expect(content).toContain('BEGIN:VCALENDAR')
   expect(content).toContain('END:VCALENDAR')
-  expect(content).toContain('SUMMARY:Morning Padel')
+  expect(content).toContain('SUMMARY:M: Padel Morning Padel')
   expect(content).toContain(`UID:evt-1@mypadel`)
   expect(content).toContain(`DTSTART:${icsTime(first.date)}`)
   expect(content).toContain(`DTEND:${icsTime(first.endDate)}`)
@@ -54,7 +54,7 @@ test('each event downloads its own ics file', async ({ page, world }) => {
 
   expect(download.suggestedFilename()).toBe('Evening-Padel.ics')
   const content = fs.readFileSync((await download.path())!, 'utf8')
-  expect(content).toContain('SUMMARY:Evening Padel')
+  expect(content).toContain('SUMMARY:M: Padel Evening Padel')
   expect(content).toContain('UID:evt-2@mypadel')
   expect(content).toContain(`DTSTART:${icsTime(evening.date)}`)
 })
@@ -92,6 +92,6 @@ test('escapes special characters in ics text fields', async ({ page, world }) =>
 
   expect(download.suggestedFilename()).toBe('Team-A-B-C.ics')
   const content = fs.readFileSync((await download.path())!, 'utf8')
-  expect(content).toContain('SUMMARY:Team A\\, B\\; C')
+  expect(content).toContain('SUMMARY:M: Padel Team A\\, B\\; C')
   expect(content).toContain('DESCRIPTION:Line 1\\nLine 2\\, ok')
 })
