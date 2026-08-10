@@ -374,6 +374,33 @@ test('shows a fetch indicator on tabs while their source is fetched', async ({ p
   await expect(tab(page, 'combined').locator('.MuiCircularProgress-root')).toHaveCount(0)
 })
 
+test('does not show a (0) counter on tabs whose source has not loaded yet', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup' }])
+  await page.goto('/')
+
+  let releaseMeetup!: () => void
+  const heldMeetup = new Promise<void>((r) => { releaseMeetup = r })
+  await page.route('**/.netlify/functions/proxy/gql2', async (route) => {
+    await heldMeetup
+    await route.fallback()
+  })
+
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await expect(tab(page, 'sunset')).toContainText('(1)')
+  await expect(tab(page, 'wolfgang')).not.toContainText('(0)')
+  await expect(tab(page, 'meetup')).not.toContainText('(0)')
+  await expect(tab(page, 'combined')).not.toContainText('(')
+
+  releaseMeetup()
+
+  await expect(tab(page, 'combined')).toContainText('(2)')
+  await expect(tab(page, 'wolfgang')).toContainText('(0)')
+  await expect(tab(page, 'meetup')).toContainText('(1)')
+})
+
 test('sunset tab is open by default after fetching', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup' }])
