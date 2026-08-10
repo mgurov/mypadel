@@ -194,6 +194,13 @@ function App() {
 
   const hasFetched = events !== undefined || meetupEvents !== undefined
 
+  const tabHasData: Record<TabId, boolean> = {
+    combined: events !== undefined && meetupEvents !== undefined,
+    sunset: events !== undefined,
+    wolfgang: meetupEvents !== undefined,
+    meetup: meetupEvents !== undefined,
+  }
+
   const tabFetching: Record<TabId, boolean> = {
     combined: isFetching || meetupIsFetching,
     sunset: isFetching,
@@ -263,7 +270,7 @@ function App() {
                 }}
                 label={
                   <span className="tab-label">
-                    {`${tabLabel[id]} (${tabCounts[id]})`}
+                    {`${tabLabel[id]}${tabHasData[id] ? ` (${tabCounts[id]})` : ''}`}
                     {tabNewCounts[id] > 0 && (
                       <span data-testid={`tab-new-${id}`} className="new-badge">{tabNewCounts[id]}</span>
                     )}
