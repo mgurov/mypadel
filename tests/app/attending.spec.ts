@@ -6,7 +6,7 @@ const tab = (page: Page, name: string) => page.getByTestId(`tab-${name}`)
 const attendingToggle = (page: Page) => page.getByTestId('only-attending-toggle')
 
 test('attending toggle sits under the tab header', async ({ page, world }) => {
-  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }] }])
   await page.goto('/')
   await fetchButton(page).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
@@ -15,6 +15,32 @@ test('attending toggle sits under the tab header', async ({ page, world }) => {
   const tabBox = await tab(page, 'sunset').boundingBox()
   const toggleBox = await attendingToggle(page).boundingBox()
   expect(toggleBox!.y).toBeGreaterThan(tabBox!.y)
+})
+
+test('attending toggle is hidden when the active tab has no joined events', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await expect(attendingToggle(page)).toHaveCount(0)
+})
+
+test('attending toggle appears on tabs that have joined events and hides on those without', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: [{ userId: 'user-1' }] }])
+  world.givenMeetupEvents([
+    { id: 'm1', title: 'Meetup One', rsvps: { totalCount: 0, edges: [] } },
+    { id: 'm2', title: 'Meetup Two', rsvps: { totalCount: 0, edges: [] } },
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await expect(attendingToggle(page)).toBeVisible()
+
+  await tab(page, 'meetup').click()
+  await expect(page.getByText('Meetup One')).toBeVisible()
+  await expect(attendingToggle(page)).toHaveCount(0)
 })
 
 test('attending toggle shows only sunset events the user participates in', async ({ page, world }) => {

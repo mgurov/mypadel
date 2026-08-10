@@ -5,7 +5,7 @@ export function OnlyNewToggle({ active, disabled, onToggle }: { active: boolean;
   return (
     <FormControlLabel
       control={<Switch data-testid="only-new-toggle" checked={active} disabled={disabled} onChange={onToggle} />}
-      label="Show new"
+      label="New"
     />
   )
 }

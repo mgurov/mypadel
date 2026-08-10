@@ -154,6 +154,17 @@ function App() {
   const newWolfgang = wolfgangList.filter((event) => newIds.has(eventKey('meetup', event.id)))
   const newOtherMeetup = meetupList.filter((event) => newIds.has(eventKey('meetup', event.id)))
 
+  const joinedSunset = (events ?? []).filter((event) => attendingSunsetIds.has(event.id))
+  const joinedWolfgang = wolfgangEvents.filter(isMyRsvp)
+  const joinedMeetup = otherMeetupEvents.filter(isMyRsvp)
+
+  const joinedCounts: Record<TabId, number> = {
+    combined: joinedSunset.length + joinedWolfgang.length + joinedMeetup.length,
+    sunset: joinedSunset.length,
+    wolfgang: joinedWolfgang.length,
+    meetup: joinedMeetup.length,
+  }
+
   const newEntries: Record<TabId, CombinedEntry[]> = {
     combined: [
       ...newSunset.map((event) => ({ source: 'sunset' as const, event })),
@@ -308,11 +319,13 @@ function App() {
         {hasFetched && (
           <>
             <div className="tab-controls">
-              <OnlyAttendingToggle active={showOnlyAttending} disabled={user === null} onToggle={() => setShowOnlyAttending((v) => !v)} />
+              {joinedCounts[activeTab] > 0 && (
+                <OnlyAttendingToggle active={showOnlyAttending} disabled={user === null} onToggle={() => setShowOnlyAttending((v) => !v)} />
+              )}
               {tabNewCounts[activeTab] > 0 && (
                 <>
-                  <AckAllButton count={tabNewCounts[activeTab]} onAckAll={() => ackKeys(newEntries[activeTab].map(entryKey))} />
                   <OnlyNewToggle active={filterActive(activeTab)} onToggle={() => toggleOnlyNew(activeTab)} />
+                  <AckAllButton count={tabNewCounts[activeTab]} onAckAll={() => ackKeys(newEntries[activeTab].map(entryKey))} />
                 </>
               )}
             </div>

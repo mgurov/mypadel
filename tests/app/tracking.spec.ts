@@ -127,6 +127,33 @@ test('tracks new meetup events on their tab', async ({ page, world }) => {
   await expect(ackButton(page)).toHaveCount(1)
 })
 
+test('ack-all button sits to the right of the filter toggles', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  world.givenEvents([
+    { id: 'evt-1', title: 'Morning Padel' },
+    { id: 'evt-2', title: 'Evening Padel', participants: [{ userId: 'user-1' }] },
+  ])
+  await fetchButton(page).click()
+  await expect(newBadge(page, 'sunset')).toHaveText('1')
+
+  const joined = page.getByTestId('only-attending-toggle')
+  const newToggle = page.getByTestId('only-new-toggle')
+  const ackAll = page.getByTestId('ack-all-button')
+  await expect(joined).toBeVisible()
+  await expect(newToggle).toBeVisible()
+  await expect(ackAll).toBeVisible()
+
+  const joinedBox = await joined.boundingBox()
+  const newBox = await newToggle.boundingBox()
+  const ackAllBox = await ackAll.boundingBox()
+  expect(joinedBox!.x).toBeLessThan(newBox!.x)
+  expect(newBox!.x).toBeLessThan(ackAllBox!.x)
+})
+
 test('only-new toggle filters the table to new events', async ({ page, world }) => {
   world.givenEvents([
     { id: 'evt-1', title: 'Morning Padel' },

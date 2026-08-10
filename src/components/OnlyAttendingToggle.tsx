@@ -5,7 +5,7 @@ export function OnlyAttendingToggle({ active, disabled, onToggle }: { active: bo
   return (
     <FormControlLabel
       control={<Switch data-testid="only-attending-toggle" checked={active} disabled={disabled} onChange={onToggle} />}
-      label="Show attending"
+      label="Joined"
     />
   )
 }
