@@ -145,10 +145,10 @@ test('only-new toggle filters the table to new events', async ({ page, world }) 
   await expect(newBadge(page, 'sunset')).toHaveText('1')
 
   const toggle = page.getByTestId('only-new-toggle')
-  await expect(toggle).toContainText('Only new')
+  await expect(toggle).not.toBeChecked()
   await toggle.click()
 
-  await expect(toggle).toContainText('Showing only new')
+  await expect(toggle).toBeChecked()
   await expect(page.getByText('Morning Padel')).toHaveCount(0)
   await expect(page.getByText('Late Night Padel')).toBeVisible()
 

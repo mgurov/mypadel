@@ -239,7 +239,6 @@ function App() {
           <Button data-testid="fetch-events-button" variant={credentialsComplete ? 'contained' : 'outlined'} onClick={handleFetch} disabled={fetching}>
             {fetching ? 'Loading...' : 'Fetch'}
           </Button>
-          <OnlyAttendingToggle active={showOnlyAttending} disabled={user === null} onToggle={() => setShowOnlyAttending((v) => !v)} />
           {user && (
             <Chip
               data-testid="user-elo-chip"
@@ -306,51 +305,33 @@ function App() {
           </Tabs>
         )}
 
-        {activeTab === 'combined' && combinedEntries.length > 0 && (
+        {hasFetched && (
           <>
-            {newEntries.combined.length > 0 && (
-              <div className="tab-controls">
-                <AckAllButton count={newEntries.combined.length} onAckAll={() => ackKeys(newEntries.combined.map(entryKey))} />
-                <OnlyNewToggle active={filterActive('combined')} onToggle={() => toggleOnlyNew('combined')} />
-              </div>
-            )}
-            <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} userId={user?.id} newIds={newIds} onAck={ackEntry} />
-          </>
-        )}
+            <div className="tab-controls">
+              <OnlyAttendingToggle active={showOnlyAttending} disabled={user === null} onToggle={() => setShowOnlyAttending((v) => !v)} />
+              {tabNewCounts[activeTab] > 0 && (
+                <>
+                  <AckAllButton count={tabNewCounts[activeTab]} onAckAll={() => ackKeys(newEntries[activeTab].map(entryKey))} />
+                  <OnlyNewToggle active={filterActive(activeTab)} onToggle={() => toggleOnlyNew(activeTab)} />
+                </>
+              )}
+            </div>
 
-        {activeTab === 'sunset' && sunsetList.length > 0 && (
-          <>
-            {newEntries.sunset.length > 0 && (
-              <div className="tab-controls">
-                <AckAllButton count={newEntries.sunset.length} onAckAll={() => ackKeys(newEntries.sunset.map(entryKey))} />
-                <OnlyNewToggle active={filterActive('sunset')} onToggle={() => toggleOnlyNew('sunset')} />
-              </div>
+            {activeTab === 'combined' && combinedEntries.length > 0 && (
+              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} userId={user?.id} newIds={newIds} onAck={ackEntry} />
             )}
-            <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} onAck={ackSunsetEvent} />
-          </>
-        )}
 
-        {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
-          <>
-            {newEntries.wolfgang.length > 0 && (
-              <div className="tab-controls">
-                <AckAllButton count={newEntries.wolfgang.length} onAckAll={() => ackKeys(newEntries.wolfgang.map(entryKey))} />
-                <OnlyNewToggle active={filterActive('wolfgang')} onToggle={() => toggleOnlyNew('wolfgang')} />
-              </div>
+            {activeTab === 'sunset' && sunsetList.length > 0 && (
+              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} onAck={ackSunsetEvent} />
             )}
-            <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} />
-          </>
-        )}
 
-        {activeTab === 'meetup' && meetupList.length > 0 && (
-          <>
-            {newEntries.meetup.length > 0 && (
-              <div className="tab-controls">
-                <AckAllButton count={newEntries.meetup.length} onAckAll={() => ackKeys(newEntries.meetup.map(entryKey))} />
-                <OnlyNewToggle active={filterActive('meetup')} onToggle={() => toggleOnlyNew('meetup')} />
-              </div>
+            {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
+              <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} />
             )}
-            <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} />
+
+            {activeTab === 'meetup' && meetupList.length > 0 && (
+              <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} />
+            )}
           </>
         )}
       </section>

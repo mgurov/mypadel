@@ -1,16 +1,11 @@
-import Button from '@mui/material/Button'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 
-export function OnlyNewToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
+export function OnlyNewToggle({ active, disabled, onToggle }: { active: boolean; disabled?: boolean; onToggle: () => void }) {
   return (
-    <Button
-      data-testid="only-new-toggle"
-      size="small"
-      variant={active ? 'contained' : 'outlined'}
-      color="error"
-      aria-pressed={active}
-      onClick={onToggle}
-    >
-      {active ? 'Showing only new' : 'Only new'}
-    </Button>
+    <FormControlLabel
+      control={<Switch data-testid="only-new-toggle" checked={active} disabled={disabled} onChange={onToggle} />}
+      label="Show new"
+    />
   )
 }
