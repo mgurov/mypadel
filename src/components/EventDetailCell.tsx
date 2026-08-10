@@ -9,7 +9,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import Tooltip from '@mui/material/Tooltip'
-import { api, EVENT_DETAILS_URL, type Event, type EventDetail } from '../api'
+import { fetchEventDetail, type Event, type EventDetail } from '../api'
 import { downloadEventIcs } from '../ics'
 
 export function EventDetailCell({ event, userId }: { event: Event; userId: string | undefined }) {
@@ -20,10 +20,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
 
   const { data: detail, error, isFetching } = useQuery<EventDetail>({
     queryKey: ['eventDetail', eventId],
-    queryFn: async () => {
-      const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${eventId}`)
-      return data
-    },
+    queryFn: () => fetchEventDetail(eventId),
   })
 
   const errorMessage = error instanceof Error ? error.message : String(error)

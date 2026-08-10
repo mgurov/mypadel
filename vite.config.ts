@@ -24,7 +24,6 @@ export default defineConfig({
           '/.netlify/functions/proxy/gql2': {
             target: 'https://preview--mykopadel.netlify.app',
             changeOrigin: true,
-            //rewrite: (path) => path.replace(/^\/netlify-proxy/, '/'),
           },
         }
       : undefined,

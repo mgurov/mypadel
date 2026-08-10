@@ -8,6 +8,7 @@
 
 .button-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -157,6 +158,11 @@
 .width-auto {
   width: auto;
   min-width: 28px;
+}
+
+.meetup-actions {
+  display: flex;
+  gap: 8px;
 }
 
 @media (max-width: 500px) {

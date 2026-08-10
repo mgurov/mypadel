@@ -1,8 +1,18 @@
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import type { Event } from './api'
+import type { Event, MeetupEvent } from './api'
 
 dayjs.extend(utc)
+
+interface IcsParams {
+  id: string
+  title: string
+  date: string
+  endDate?: string | null
+  location?: string
+  description?: string
+  url: string
+}
 
 function escapeText(value: string): string {
   return value
@@ -31,13 +41,10 @@ function foldLine(line: string): string {
   return out + rest
 }
 
-export function buildEventIcs(event: Event): string {
-  const start = dayjs(event.date)
-  const end = event.endDate ? dayjs(event.endDate) : null
+function buildIcs(params: IcsParams): string {
+  const start = dayjs(params.date)
+  const end = params.endDate ? dayjs(params.endDate) : null
   const hasEnd = end !== null && end.valueOf() > start.valueOf()
-  const details = [event.description, event.price ? `Price: ${event.price}` : '']
-    .filter(Boolean)
-    .join('\n')
 
   const lines = [
     'BEGIN:VCALENDAR',
@@ -46,14 +53,14 @@ export function buildEventIcs(event: Event): string {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${event.id}@mypadel`,
+    `UID:${params.id}@mypadel`,
     `DTSTAMP:${icsUtcTimestamp()}`,
-    `DTSTART:${icsUtcDateTime(event.date)}`,
-    ...(hasEnd ? [`DTEND:${icsUtcDateTime(event.endDate!)}`] : []),
-    `SUMMARY:${escapeText('M: Padel ' + event.title)}`,
-    ...(event.location ? [`LOCATION:${escapeText(event.location)}`] : []),
-    ...(details ? [`DESCRIPTION:${escapeText(details)}`] : []),
-    `URL:https://sunsetpadel.at/events/${event.id}`,
+    `DTSTART:${icsUtcDateTime(params.date)}`,
+    ...(hasEnd ? [`DTEND:${icsUtcDateTime(params.endDate!)}`] : []),
+    `SUMMARY:${escapeText(params.title)}`,
+    ...(params.location ? [`LOCATION:${escapeText(params.location)}`] : []),
+    ...(params.description ? [`DESCRIPTION:${escapeText(params.description)}`] : []),
+    `URL:${params.url}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ]
@@ -61,17 +68,59 @@ export function buildEventIcs(event: Event): string {
   return lines.map(foldLine).join('\r\n')
 }
 
-export function eventIcsFilename(event: Event): string {
-  const safe = event.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+export function buildEventIcs(event: Event): string {
+  const details = [event.description, event.price ? `Price: ${event.price}` : '']
+    .filter(Boolean)
+    .join('\n')
+
+  return buildIcs({
+    id: event.id,
+    title: 'M: Padel ' + event.title,
+    date: event.date,
+    endDate: event.endDate,
+    location: event.location,
+    description: details,
+    url: `https://sunsetpadel.at/events/${event.id}`,
+  })
+}
+
+export function buildMeetupEventIcs(event: MeetupEvent): string {
+  return buildIcs({
+    id: event.id,
+    title: event.title,
+    date: event.dateTime,
+    location: event.venue?.name,
+    url: event.eventUrl,
+  })
+}
+
+function icsFilename(title: string): string {
+  const safe = title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
   return `${safe || 'event'}.ics`
 }
 
-export function downloadEventIcs(event: Event): void {
-  const blob = new Blob([buildEventIcs(event)], { type: 'text/calendar;charset=utf-8' })
+export function eventIcsFilename(event: Event): string {
+  return icsFilename(event.title)
+}
+
+export function meetupEventIcsFilename(event: MeetupEvent): string {
+  return icsFilename(event.title)
+}
+
+function downloadIcs(ics: string, filename: string): void {
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = eventIcsFilename(event)
+  a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export function downloadEventIcs(event: Event): void {
+  downloadIcs(buildEventIcs(event), eventIcsFilename(event))
+}
+
+export function downloadMeetupEventIcs(event: MeetupEvent): void {
+  downloadIcs(buildMeetupEventIcs(event), meetupEventIcsFilename(event))
 }

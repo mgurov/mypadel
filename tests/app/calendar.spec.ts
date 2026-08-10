@@ -95,3 +95,38 @@ test('escapes special characters in ics text fields', async ({ page, world }) =>
   expect(content).toContain('SUMMARY:M: Padel Team A\\, B\\; C')
   expect(content).toContain('DESCRIPTION:Line 1\\nLine 2\\, ok')
 })
+
+test('downloads an ics file for a meetup event', async ({ page, world }) => {
+  const dateTime = new Date()
+  dateTime.setDate(dateTime.getDate() + 2)
+  dateTime.setHours(18, 30, 0, 0)
+
+  world.givenMeetupEvents([
+    {
+      id: 'meetup-1',
+      title: 'Padel Meetup',
+      dateTime: dateTime.toISOString(),
+      eventUrl: 'https://www.meetup.com/vienna-sports-meetup/events/42/',
+      venue: { id: 'venue-1', name: 'Vienna Court' },
+    },
+  ])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await page.getByTestId('tab-meetup').click()
+  await expect(page.getByText('Padel Meetup')).toBeVisible()
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('link', { name: 'Calendar' }).click(),
+  ])
+
+  expect(download.suggestedFilename()).toBe('Padel-Meetup.ics')
+  const content = fs.readFileSync((await download.path())!, 'utf8')
+  expect(content).toContain('BEGIN:VCALENDAR')
+  expect(content).toContain('END:VCALENDAR')
+  expect(content).toContain('SUMMARY:Padel Meetup')
+  expect(content).toContain(`UID:meetup-1@mypadel`)
+  expect(content).toContain(`DTSTART:${icsTime(dateTime.toISOString())}`)
+  expect(content).toContain('LOCATION:Vienna Court')
+  expect(content).toContain('URL:https://www.meetup.com/vienna-sports-meetup/events/42/')
+})

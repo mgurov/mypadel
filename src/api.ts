@@ -110,6 +110,11 @@ export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
 export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
 export const MEETUP_URL = `/.netlify/functions/proxy/gql2`
 
+export async function fetchEventDetail(id: string): Promise<EventDetail> {
+  const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${id}`)
+  return data
+}
+
 export function buildMeetupBody(): Record<string, unknown> {
   const afterDateTime = `${new Date().toISOString().slice(0, 10)}T00:00:00Z`
   return {

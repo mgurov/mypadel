@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useQueries, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -8,14 +8,15 @@ import Chip from '@mui/material/Chip';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import CircularProgress from '@mui/material/CircularProgress';
-import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
+import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
 import { CredentialsButton, type Credentials } from './components/CredentialsButton'
 import { EventsTable } from './components/EventsTable'
 import { MeetupTable } from './components/MeetupTable'
-import { isHostedByWolfgang, isVisibleMeetup } from './meetup'
+import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from './meetup'
 import { CombinedTable, type CombinedEntry } from './components/CombinedTable'
 import { AckAllButton } from './components/AckAllButton'
 import { OnlyNewToggle } from './components/OnlyNewToggle'
+import { OnlyAttendingToggle } from './components/OnlyAttendingToggle'
 import { addKnownKeys, eventKey, trackFetchedKeys } from './eventTracking'
 
 type TabId = 'combined' | 'sunset' | 'wolfgang' | 'meetup'
@@ -31,6 +32,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('sunset')
   const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
+  const [showOnlyAttending, setShowOnlyAttending] = useState(false)
 
   const queryClient = useQueryClient()
 
@@ -90,6 +92,13 @@ function App() {
     placeholderData: keepPreviousData,
   })
 
+  const sunsetDetailQueries = useQueries({
+    queries: (events ?? []).map((event) => ({
+      queryKey: ['eventDetail', event.id],
+      queryFn: () => fetchEventDetail(event.id),
+    })),
+  })
+
   useEffect(() => {
     if (events === undefined || meetupEvents === undefined) return
     const fetchedKeys = [
@@ -114,22 +123,36 @@ function App() {
   const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
   const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
 
+  const attendingSunsetIds = new Set<string>()
+  for (const query of sunsetDetailQueries) {
+    const detail = query.data
+    if (detail === undefined) continue
+    const attends =
+      detail.participants.some((p) => p.userId === user?.id) ||
+      (detail.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0)
+    if (attends) attendingSunsetIds.add(detail.id)
+  }
+
+  const sunsetList = showOnlyAttending ? (events ?? []).filter((event) => attendingSunsetIds.has(event.id)) : (events ?? [])
+  const wolfgangList = showOnlyAttending ? wolfgangEvents.filter(isMyRsvp) : wolfgangEvents
+  const meetupList = showOnlyAttending ? otherMeetupEvents.filter(isMyRsvp) : otherMeetupEvents
+
   const tabCounts: Record<TabId, number> = {
-    combined: (events?.length ?? 0) + wolfgangEvents.length + otherMeetupEvents.length,
-    sunset: events?.length ?? 0,
-    wolfgang: wolfgangEvents.length,
-    meetup: otherMeetupEvents.length,
+    combined: sunsetList.length + wolfgangList.length + meetupList.length,
+    sunset: sunsetList.length,
+    wolfgang: wolfgangList.length,
+    meetup: meetupList.length,
   }
 
   const combinedEntries: CombinedEntry[] = [
-    ...(events ?? []).map((event) => ({ source: 'sunset' as const, event })),
-    ...wolfgangEvents.map((event) => ({ source: 'wolfgang' as const, event })),
-    ...otherMeetupEvents.map((event) => ({ source: 'meetup' as const, event })),
+    ...sunsetList.map((event) => ({ source: 'sunset' as const, event })),
+    ...wolfgangList.map((event) => ({ source: 'wolfgang' as const, event })),
+    ...meetupList.map((event) => ({ source: 'meetup' as const, event })),
   ]
 
-  const newSunset = (events ?? []).filter((event) => newIds.has(eventKey('sunset', event.id)))
-  const newWolfgang = wolfgangEvents.filter((event) => newIds.has(eventKey('meetup', event.id)))
-  const newOtherMeetup = otherMeetupEvents.filter((event) => newIds.has(eventKey('meetup', event.id)))
+  const newSunset = sunsetList.filter((event) => newIds.has(eventKey('sunset', event.id)))
+  const newWolfgang = wolfgangList.filter((event) => newIds.has(eventKey('meetup', event.id)))
+  const newOtherMeetup = meetupList.filter((event) => newIds.has(eventKey('meetup', event.id)))
 
   const newEntries: Record<TabId, CombinedEntry[]> = {
     combined: [
@@ -216,6 +239,7 @@ function App() {
           <Button data-testid="fetch-events-button" variant={credentialsComplete ? 'contained' : 'outlined'} onClick={handleFetch} disabled={fetching}>
             {fetching ? 'Loading...' : 'Fetch'}
           </Button>
+          <OnlyAttendingToggle active={showOnlyAttending} disabled={user === null} onToggle={() => setShowOnlyAttending((v) => !v)} />
           {user && (
             <Chip
               data-testid="user-elo-chip"
@@ -294,7 +318,7 @@ function App() {
           </>
         )}
 
-        {activeTab === 'sunset' && events && events.length > 0 && (
+        {activeTab === 'sunset' && sunsetList.length > 0 && (
           <>
             {newEntries.sunset.length > 0 && (
               <div className="tab-controls">
@@ -302,11 +326,11 @@ function App() {
                 <OnlyNewToggle active={filterActive('sunset')} onToggle={() => toggleOnlyNew('sunset')} />
               </div>
             )}
-            <EventsTable events={filterActive('sunset') ? newSunset : events} userId={user?.id} newIds={newIds} onAck={ackSunsetEvent} />
+            <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} onAck={ackSunsetEvent} />
           </>
         )}
 
-        {activeTab === 'wolfgang' && wolfgangEvents.length > 0 && (
+        {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
           <>
             {newEntries.wolfgang.length > 0 && (
               <div className="tab-controls">
@@ -314,11 +338,11 @@ function App() {
                 <OnlyNewToggle active={filterActive('wolfgang')} onToggle={() => toggleOnlyNew('wolfgang')} />
               </div>
             )}
-            <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangEvents} newIds={newIds} onAck={ackMeetupEvent} />
+            <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} />
           </>
         )}
 
-        {activeTab === 'meetup' && otherMeetupEvents.length > 0 && (
+        {activeTab === 'meetup' && meetupList.length > 0 && (
           <>
             {newEntries.meetup.length > 0 && (
               <div className="tab-controls">
@@ -326,7 +350,7 @@ function App() {
                 <OnlyNewToggle active={filterActive('meetup')} onToggle={() => toggleOnlyNew('meetup')} />
               </div>
             )}
-            <MeetupTable events={filterActive('meetup') ? newOtherMeetup : otherMeetupEvents} newIds={newIds} onAck={ackMeetupEvent} />
+            <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} />
           </>
         )}
       </section>
