@@ -87,7 +87,7 @@ export function buildEventIcs(event: Event): string {
 export function buildMeetupEventIcs(event: MeetupEvent): string {
   return buildIcs({
     id: event.id,
-    title: event.title,
+    title: 'M: Padel ' + event.title,
     date: event.dateTime,
     location: event.venue?.name,
     url: event.eventUrl,

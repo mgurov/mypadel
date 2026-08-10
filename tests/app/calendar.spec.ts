@@ -124,7 +124,7 @@ test('downloads an ics file for a meetup event', async ({ page, world }) => {
   const content = fs.readFileSync((await download.path())!, 'utf8')
   expect(content).toContain('BEGIN:VCALENDAR')
   expect(content).toContain('END:VCALENDAR')
-  expect(content).toContain('SUMMARY:Padel Meetup')
+  expect(content).toContain('SUMMARY:M: Padel Padel Meetup')
   expect(content).toContain(`UID:meetup-1@mypadel`)
   expect(content).toContain(`DTSTART:${icsTime(dateTime.toISOString())}`)
   expect(content).toContain('LOCATION:Vienna Court')
