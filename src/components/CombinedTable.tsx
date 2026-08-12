@@ -20,14 +20,14 @@ function entryTime(entry: CombinedEntry): number {
     : new Date(entry.event.dateTime).getTime()
 }
 
-export function CombinedTable({ entries, userId, newIds, onAck }: { entries: CombinedEntry[]; userId: string | undefined; newIds: ReadonlySet<string>; onAck: (entry: CombinedEntry) => void }) {
+export function CombinedTable({ entries, userId, newIds, urgentUnpaidIds, onAck }: { entries: CombinedEntry[]; userId: string | undefined; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; onAck: (entry: CombinedEntry) => void }) {
   const sorted = [...entries].sort((a, b) => entryTime(a) - entryTime(b))
   return (
     <div className="events-table">
       {sorted.map((entry) => (
         <div key={`${entry.source}-${entry.event.id}`} className="table-row-group">
           {entry.source === 'sunset' ? (
-            <SunsetRow event={entry.event} userId={userId} label={SOURCE_LABELS.sunset} isNew={newIds.has(eventKey('sunset', entry.event.id))} onAck={() => onAck(entry)} />
+            <SunsetRow event={entry.event} userId={userId} label={SOURCE_LABELS.sunset} isNew={newIds.has(eventKey('sunset', entry.event.id))} urgentUnpaid={urgentUnpaidIds.has(entry.event.id)} onAck={() => onAck(entry)} />
           ) : (
             <MeetupRow event={entry.event} label={SOURCE_LABELS[entry.source]} isNew={newIds.has(eventKey('meetup', entry.event.id))} onAck={() => onAck(entry)} />
           )}

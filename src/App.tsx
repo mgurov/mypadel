@@ -123,7 +123,10 @@ function App() {
   const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
   const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
 
+  const now = Date.now()
+  const DAY_MS = 24 * 60 * 60 * 1000
   const attendingSunsetIds = new Set<string>()
+  const urgentUnpaidSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
     const detail = query.data
     if (detail === undefined) continue
@@ -131,6 +134,13 @@ function App() {
       detail.participants.some((p) => p.userId === user?.id) ||
       (detail.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0)
     if (attends) attendingSunsetIds.add(detail.id)
+    if (
+      attends &&
+      new Date(detail.date).getTime() - now < DAY_MS &&
+      detail.currentUserPayment?.status !== 'PAID'
+    ) {
+      urgentUnpaidSunsetIds.add(detail.id)
+    }
   }
 
   const sunsetList = showOnlyAttending ? (events ?? []).filter((event) => attendingSunsetIds.has(event.id)) : (events ?? [])
@@ -331,11 +341,11 @@ function App() {
             </div>
 
             {activeTab === 'combined' && combinedEntries.length > 0 && (
-              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} userId={user?.id} newIds={newIds} onAck={ackEntry} />
+              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} userId={user?.id} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} onAck={ackEntry} />
             )}
 
             {activeTab === 'sunset' && sunsetList.length > 0 && (
-              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} onAck={ackSunsetEvent} />
+              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} onAck={ackSunsetEvent} />
             )}
 
             {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
