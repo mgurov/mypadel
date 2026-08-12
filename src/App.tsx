@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import dayjs from 'dayjs'
 import { useQuery, useQueries, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Button from '@mui/material/Button';
@@ -123,8 +124,7 @@ function App() {
   const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
   const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
 
-  const now = Date.now()
-  const DAY_MS = 24 * 60 * 60 * 1000
+  const now = dayjs()
   const attendingSunsetIds = new Set<string>()
   const urgentUnpaidSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
@@ -136,7 +136,7 @@ function App() {
     if (attends) attendingSunsetIds.add(detail.id)
     if (
       attends &&
-      new Date(detail.date).getTime() - now < DAY_MS &&
+      dayjs(detail.date).startOf('day').diff(now.startOf('day'), 'day') <= 1 &&
       detail.currentUserPayment?.status !== 'PAID'
     ) {
       urgentUnpaidSunsetIds.add(detail.id)
