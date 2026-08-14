@@ -122,13 +122,14 @@ test('clicking the format indicator pops up the description', async ({ page, wor
 
 test('description popup stays open until clicked away', async ({ page, world }) => {
   const description = 'Climb the Ladder format - start on court 4 and move up'
+  await page.clock.install()
   const dialog = await openCourtsWithDescription(page, world, description)
 
   await dialog.getByTestId('event-format-indicator').click()
   const popup = page.getByTestId('event-format-description')
   await expect(popup).toContainText(description)
   await expect(popup).toBeVisible()
-  await page.waitForTimeout(3000)
+  await page.clock.fastForward(3000)
   await expect(popup).toBeVisible()
 
   await page.mouse.click(10, 10)

@@ -88,6 +88,14 @@ mypadel/
 - `test:e2e` — `playwright test`
 - `test:e2e:ui` — `playwright test --ui`
 
+## E2E Testing Conventions
+
+- **No hardcoded timeouts in tests.** Never use `page.waitForTimeout(...)` or `setTimeout`-based sleeps. The test timeout is short (3000ms), so a real-time wait either flushes the budget or needlessly slows the suite.
+- To verify behavior over time, prefer:
+  - **Time travel:** install the clock with `page.clock.install()` **before navigation**, then advance it instantly with `page.clock.fastForward(...)` / `page.clock.runFor(...)`.
+  - **Polling:** rely on Playwright's auto-retrying `expect(...)` assertions (which poll until their own timeout), or `expect.poll(...)` for custom retries.
+- Prefer deterministic assertions that auto-retry over any explicit waiting.
+
 ## No typecheck script
 
 Run `tsc -b` directly or use `npm run build` to type-check.
