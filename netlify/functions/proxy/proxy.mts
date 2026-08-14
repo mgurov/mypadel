@@ -57,7 +57,7 @@ export default async (request: Request, context: Context) => {
 
     if (request.method !== "GET" && request.method !== "HEAD") {
       init.body = request.body;
-      init.duplex = "half"; // required by undici when streaming a request body
+      //init.duplex = "half"; // required by undici when streaming a request body
     }
 
 

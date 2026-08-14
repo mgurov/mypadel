@@ -1,3 +1,4 @@
+import { Context } from '@netlify/functions'
 const allowedPathsRaw = process.env.TARGET_SUN_PROXY_PATHES || "";
 const allowedPaths = allowedPathsRaw.split(",").map((p) => p.trim());
 
@@ -17,7 +18,10 @@ const respond = (cors: Record<string, string>) => (body: BodyInit | null, init: 
   return new Response(body, { ...init, headers })
 }
 
-export default async (request: Request) => {
+export default async (request: Request, context: Context) => {
+
+  context.log("Sunset proxy involved")
+
   const origin = request.headers.get('origin')
   const cors = corsHeaders(origin)
   const respondWith = respond(cors)
@@ -90,7 +94,13 @@ export default async (request: Request) => {
       }
     }
 
-    return respondWith(resp.body, {
+    console.log('resp.body was', resp.body)
+
+    const json_body = await resp.json()
+
+    console.log('json_body was', json_body)
+
+    return respondWith(json_body, {
       status: resp.status,
       statusText: resp.statusText,
       headers: respHeaders,
