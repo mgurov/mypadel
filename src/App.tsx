@@ -5,24 +5,13 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import CircularProgress from '@mui/material/CircularProgress';
 import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
 import { CredentialsButton, type Credentials } from './components/CredentialsButton'
-import { EventsTable } from './components/EventsTable'
-import { MeetupTable } from './components/MeetupTable'
 import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from './meetup'
-import { CombinedTable, type CombinedEntry } from './components/CombinedTable'
-import { AckAllButton } from './components/AckAllButton'
-import { OnlyNewToggle } from './components/OnlyNewToggle'
-import { OnlyAttendingToggle } from './components/OnlyAttendingToggle'
+import { type CombinedEntry } from './components/CombinedTable'
+import { EventTables, type TabId } from './components/EventTables'
 import { addKnownKeys, eventKey, trackFetchedKeys } from './eventTracking'
 import { useSunsetUser } from './userContext'
-
-type TabId = 'combined' | 'sunset' | 'wolfgang' | 'meetup'
-
-const TAB_IDS: TabId[] = ['combined', 'sunset', 'wolfgang', 'meetup']
 
 function App() {
   const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
@@ -184,9 +173,6 @@ function App() {
     meetup: newOtherMeetup.length,
   }
 
-  const entryKey = (entry: CombinedEntry): string =>
-    eventKey(entry.source === 'sunset' ? 'sunset' : 'meetup', entry.event.id)
-
   const ackKeys = (keys: string[]) => {
     if (keys.length === 0) return
     setNewIds((prev) => {
@@ -198,10 +184,6 @@ function App() {
     void addKnownKeys(keys)
   }
 
-  const ackEntry = (entry: CombinedEntry) => ackKeys([entryKey(entry)])
-  const ackSunsetEvent = (event: Event) => ackKeys([eventKey('sunset', event.id)])
-  const ackMeetupEvent = (event: MeetupEvent) => ackKeys([eventKey('meetup', event.id)])
-
   const toggleOnlyNew = (id: TabId) => {
     setShowOnlyNew((prev) => {
       const next = new Set(prev)
@@ -209,22 +191,6 @@ function App() {
       else next.add(id)
       return next
     })
-  }
-
-  const filterActive = (id: TabId) => showOnlyNew.has(id) && tabNewCounts[id] > 0
-
-  const tabLabel: Record<TabId, string> = {
-    combined: 'Combined',
-    sunset: 'Sunset',
-    wolfgang: 'Wolfgang',
-    meetup: 'Meetup',
-  }
-
-  const tabColor: Record<TabId, string> = {
-    combined: '#6b6375',
-    sunset: '#aa3bff',
-    wolfgang: '#2e7d32',
-    meetup: '#1976d2',
   }
 
   const hasFetched = events !== undefined || meetupEvents !== undefined
@@ -281,73 +247,30 @@ function App() {
         )}
 
         {hasFetched && (
-          <Tabs
-            value={activeTab}
-            onChange={(_e, value: TabId) => setActiveTab(value)}
-            variant="fullWidth"
-            sx={{
-              width: '100%',
-              maxWidth: 900,
-              '& .MuiTabs-indicator': { display: 'none' },
-            }}
-          >
-            {TAB_IDS.map((id) => (
-              <Tab
-                key={id}
-                value={id}
-                data-testid={`tab-${id}`}
-                sx={{
-                  backgroundColor: tabColor[id],
-                  color: '#fff',
-                  opacity: activeTab === id ? 1 : 0.65,
-                  '&:hover': { color: '#fff', opacity: 1 },
-                  '&.Mui-selected': { color: '#fff', backgroundColor: tabColor[id] },
-                  '@media (max-width: 480px)': { padding: '6px 2px' },
-                }}
-                label={
-                  <span className="tab-label">
-                    <span className="tab-label-text">{`${tabLabel[id]}${tabHasData[id] ? ` (${tabCounts[id]})` : ''}`}</span>
-                    {tabNewCounts[id] > 0 && (
-                      <span data-testid={`tab-new-${id}`} className="new-badge">{tabNewCounts[id]}</span>
-                    )}
-                    {tabFetching[id] && <CircularProgress className="tab-spinner" size={12} sx={{ color: 'rgba(255, 255, 255, 0.9)' }} />}
-                  </span>
-                }
-              />
-            ))}
-          </Tabs>
-        )}
-
-        {hasFetched && (
-          <>
-            <div className="tab-controls">
-              {joinedCounts[activeTab] > 0 && (
-                <OnlyAttendingToggle active={showOnlyAttending} disabled={user === null} onToggle={() => setShowOnlyAttending((v) => !v)} />
-              )}
-              {tabNewCounts[activeTab] > 0 && (
-                <>
-                  <OnlyNewToggle active={filterActive(activeTab)} onToggle={() => toggleOnlyNew(activeTab)} />
-                  <AckAllButton count={tabNewCounts[activeTab]} onAckAll={() => ackKeys(newEntries[activeTab].map(entryKey))} />
-                </>
-              )}
-            </div>
-
-            {activeTab === 'combined' && combinedEntries.length > 0 && (
-              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} />
-            )}
-
-            {activeTab === 'sunset' && sunsetList.length > 0 && (
-              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} onAck={ackSunsetEvent} />
-            )}
-
-            {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
-              <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} />
-            )}
-
-            {activeTab === 'meetup' && meetupList.length > 0 && (
-              <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} />
-            )}
-          </>
+          <EventTables
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            user={user}
+            tabCounts={tabCounts}
+            tabNewCounts={tabNewCounts}
+            tabHasData={tabHasData}
+            tabFetching={tabFetching}
+            joinedCounts={joinedCounts}
+            showOnlyAttending={showOnlyAttending}
+            onToggleAttending={() => setShowOnlyAttending((v) => !v)}
+            showOnlyNew={showOnlyNew}
+            onToggleOnlyNew={toggleOnlyNew}
+            newIds={newIds}
+            combinedEntries={combinedEntries}
+            newEntries={newEntries}
+            sunsetEvents={sunsetList}
+            newSunsetEvents={newSunset}
+            wolfgangEvents={wolfgangList}
+            newWolfgangEvents={newWolfgang}
+            meetupEvents={meetupList}
+            newMeetupEvents={newOtherMeetup}
+            onAckKeys={ackKeys}
+          />
         )}
       </section>
     </>
