@@ -79,7 +79,7 @@ test('shows the cancel sign for a sunset event in the combined tab', async ({ pa
   await expect(rowFor(page, 'Combined Cancel')).toContainText('cancel 24h')
 })
 
-test('shows the cancellation deadline when clicking the cancel sign', async ({ page, world }) => {
+test('shows the cancellation deadline in a popup when clicking the cancel sign', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME }])
   await showEvents(page, 'Cancel Soon')
 
@@ -91,16 +91,56 @@ test('shows the cancellation deadline when clicking the cancel sign', async ({ p
 
   await expect(page.getByTestId('cancel-deadline')).toContainText('free cancel until')
   await expect(page.getByTestId('cancel-deadline')).toContainText(/\d{1,2}:\d{2}/)
+  await expect(page.getByTestId('cancel-ack-button')).toBeVisible()
 })
 
-test('hides the cancellation deadline when clicking the cancel sign again', async ({ page, world }) => {
+test('hides the cancel sign when acknowledging the cancellation in the popup', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME }])
   await showEvents(page, 'Cancel Soon')
 
   await page.getByTestId('cancel-label').click()
-  await expect(page.getByTestId('cancel-deadline')).toBeVisible()
+  await page.getByTestId('cancel-ack-button').click()
+
+  await expect(page.getByTestId('cancel-label')).toHaveCount(0)
+  await expect(page.getByTestId('cancel-deadline')).toHaveCount(0)
+})
+
+test('keeps the cancel sign hidden after acknowledging, across a reload', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME }])
+  await showEvents(page, 'Cancel Soon')
 
   await page.getByTestId('cancel-label').click()
+  await page.getByTestId('cancel-ack-button').click()
+  await expect(page.getByTestId('cancel-label')).toHaveCount(0)
 
-  await expect(page.getByTestId('cancel-deadline')).toHaveCount(0)
+  await page.reload()
+  await fetchButton(page).click()
+  await expect(page.getByText('Cancel Soon')).toBeVisible()
+  await expect(page.getByTestId('cancel-label')).toHaveCount(0)
+})
+
+test('acknowledging the cancellation does not ack the event newness', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME }])
+  await showEvents(page, 'Cancel Soon')
+
+  world.givenEvents([
+    { id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME },
+    { id: 'evt-2', title: 'New Urgent', date: '2026-09-06T12:00:00Z', participants: ME },
+  ])
+  await fetchButton(page).click()
+  await expect(page.getByText('New Urgent')).toBeVisible()
+
+  const row = rowFor(page, 'New Urgent')
+  await expect(row.locator('.new-label')).toBeVisible()
+  await row.getByTestId('cancel-label').click()
+  await row.getByTestId('cancel-ack-button').click()
+
+  await expect(row.getByTestId('cancel-label')).toHaveCount(0)
+  await expect(row.locator('.new-label')).toBeVisible()
+
+  await page.reload()
+  await fetchButton(page).click()
+  await expect(page.getByText('New Urgent')).toBeVisible()
+  await expect(rowFor(page, 'New Urgent').getByTestId('cancel-label')).toHaveCount(0)
+  await expect(rowFor(page, 'New Urgent').locator('.new-label')).toBeVisible()
 })

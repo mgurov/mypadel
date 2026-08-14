@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Button from '@mui/material/Button'
+import Popover from '@mui/material/Popover'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import type { Event, EventDetail } from '../api'
 import { fetchEventDetail } from '../api'
 import { cancellationDeadline, isCancellationUrgent } from '../cancellation'
-import { eventKey } from '../eventTracking'
+import { ackCancellation, eventKey, isCancellationAcked } from '../eventTracking'
 import { useSunsetUser } from '../userContext'
 import { EventDetailCell } from './EventDetailCell'
 import { ParticipationCell } from './ParticipationCell'
@@ -21,9 +22,27 @@ function formatDate(dateString: string): string {
   })
 }
 
+function useCancellationAck(key: string) {
+  const [acked, setAcked] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    void isCancellationAcked(key).then((value) => {
+      if (!cancelled) setAcked(value)
+    })
+    return () => { cancelled = true }
+  }, [key])
+  const ack = () => {
+    setAcked(true)
+    void ackCancellation(key)
+  }
+  return { acked, ack }
+}
+
 export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?: string; isNew?: boolean; onAck: () => void }) {
   const { user } = useSunsetUser()
-  const [showCancelDeadline, setShowCancelDeadline] = useState(false)
+  const key = eventKey('sunset', event.id)
+  const { acked: cancellationAcked, ack: ackCancellationNow } = useCancellationAck(key)
+  const [cancelAnchor, setCancelAnchor] = useState<HTMLElement | null>(null)
   const { data: detail } = useQuery<EventDetail>({
     queryKey: ['eventDetail', event.id],
     queryFn: () => fetchEventDetail(event.id),
@@ -32,6 +51,7 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
   const waitlisted = detail?.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0
   const attends = participates || waitlisted
   const urgentCancellation = attends && isCancellationUrgent(event)
+  const showCancelLabel = urgentCancellation && !cancellationAcked
   const urgentUnpaid =
     attends &&
     dayjs(event.date).startOf('day').diff(dayjs().startOf('day'), 'day') <= 1 &&
@@ -43,30 +63,23 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
         {label && <span className={`source-label source-label-${label.toLowerCase()}`}>{label}</span>}
         {isNew && <span className="new-label">new</span>}
         {urgentUnpaid && <span className="unpaid-label">unpaid</span>}
-        {urgentCancellation && (
-          <>
-            <span
-              className="cancel-label"
-              data-testid="cancel-label"
-              role="button"
-              tabIndex={0}
-              aria-expanded={showCancelDeadline}
-              onClick={() => setShowCancelDeadline((v) => !v)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setShowCancelDeadline((v) => !v)
-                }
-              }}
-            >
-              cancel 24h
-            </span>
-            {showCancelDeadline && (
-              <span className="cancel-deadline" data-testid="cancel-deadline">
-                free cancel until {formatDate(new Date(cancellationDeadline(event)).toISOString())}
-              </span>
-            )}
-          </>
+        {showCancelLabel && (
+          <span
+            className="cancel-label"
+            data-testid="cancel-label"
+            role="button"
+            tabIndex={0}
+            aria-expanded={Boolean(cancelAnchor)}
+            onClick={(e) => setCancelAnchor(e.currentTarget)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setCancelAnchor(e.currentTarget)
+              }
+            }}
+          >
+            cancel 24h
+          </span>
         )}
         {formatDate(event.date)}
         {isNew && (
@@ -80,6 +93,21 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
       <div className="column text-align-right no-grow width-56">
         <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
       </div>
+      <Popover
+        open={Boolean(cancelAnchor)}
+        anchorEl={cancelAnchor}
+        onClose={() => setCancelAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <div className="cancel-popover">
+          <span className="cancel-deadline" data-testid="cancel-deadline">
+            free cancel until {formatDate(new Date(cancellationDeadline(event)).toISOString())}
+          </span>
+          <Button size="small" data-testid="cancel-ack-button" onClick={() => { ackCancellationNow(); setCancelAnchor(null) }}>
+            ack
+          </Button>
+        </div>
+      </Popover>
     </div>
   )
 }

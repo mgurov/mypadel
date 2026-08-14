@@ -5,7 +5,8 @@ const STORE_NAME = 'known-events'
 export type EventSource = 'sunset' | 'meetup'
 
 export interface KnownEventRecord {
-  ackedAt: number
+  ackedAt?: number
+  cancellationAckedAt?: number
 }
 
 export function eventKey(source: EventSource, id: string): string {
@@ -42,8 +43,19 @@ export async function loadKnownKeys(): Promise<string[]> {
     const db = await getDb()
     return await new Promise<string[]>((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readonly')
-      const request = transaction.objectStore(STORE_NAME).getAllKeys()
-      request.onsuccess = () => resolve(request.result.map(String))
+      const store = transaction.objectStore(STORE_NAME)
+      const request = store.openCursor()
+      const keys: string[] = []
+      request.onsuccess = () => {
+        const cursor = request.result
+        if (cursor) {
+          const record = cursor.value as KnownEventRecord | undefined
+          if (record?.ackedAt != null) keys.push(String(cursor.key))
+          cursor.continue()
+        } else {
+          resolve(keys)
+        }
+      }
       request.onerror = () => reject(request.error)
     })
   } catch {
@@ -51,13 +63,47 @@ export async function loadKnownKeys(): Promise<string[]> {
   }
 }
 
+function getRecord(store: IDBObjectStore, key: string): Promise<KnownEventRecord | undefined> {
+  return new Promise((resolve, reject) => {
+    const request = store.get(key)
+    request.onsuccess = () => resolve(request.result as KnownEventRecord | undefined)
+    request.onerror = () => reject(request.error)
+  })
+}
+
 export async function addKnownKeys(keys: string[]): Promise<void> {
   if (keys.length === 0) return
   const db = await getDb()
+  const transaction = db.transaction(STORE_NAME, 'readwrite')
+  const store = transaction.objectStore(STORE_NAME)
+  for (const key of keys) {
+    const existing = await getRecord(store, key)
+    store.put({ ackedAt: Date.now(), cancellationAckedAt: existing?.cancellationAckedAt } satisfies KnownEventRecord, key)
+  }
   await new Promise<void>((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite')
-    const store = transaction.objectStore(STORE_NAME)
-    keys.forEach((key) => store.put({ ackedAt: Date.now() } satisfies KnownEventRecord, key))
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = () => reject(transaction.error)
+  })
+}
+
+export async function isCancellationAcked(key: string): Promise<boolean> {
+  try {
+    const db = await getDb()
+    const transaction = db.transaction(STORE_NAME, 'readonly')
+    const record = await getRecord(transaction.objectStore(STORE_NAME), key)
+    return record?.cancellationAckedAt != null
+  } catch {
+    return false
+  }
+}
+
+export async function ackCancellation(key: string): Promise<void> {
+  const db = await getDb()
+  const transaction = db.transaction(STORE_NAME, 'readwrite')
+  const store = transaction.objectStore(STORE_NAME)
+  const existing = await getRecord(store, key)
+  store.put({ ackedAt: existing?.ackedAt, cancellationAckedAt: Date.now() } satisfies KnownEventRecord, key)
+  await new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => resolve()
     transaction.onerror = () => reject(transaction.error)
   })
