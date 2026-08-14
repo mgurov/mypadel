@@ -10,6 +10,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import CircularProgress from '@mui/material/CircularProgress';
 import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
+import { isCancellationUrgent } from './cancellation'
 import { CredentialsButton, type Credentials } from './components/CredentialsButton'
 import { EventsTable } from './components/EventsTable'
 import { MeetupTable } from './components/MeetupTable'
@@ -127,6 +128,7 @@ function App() {
   const now = dayjs()
   const attendingSunsetIds = new Set<string>()
   const urgentUnpaidSunsetIds = new Set<string>()
+  const urgentCancellationSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
     const detail = query.data
     if (detail === undefined) continue
@@ -140,6 +142,9 @@ function App() {
       detail.currentUserPayment?.status !== 'PAID'
     ) {
       urgentUnpaidSunsetIds.add(detail.id)
+    }
+    if (attends && isCancellationUrgent(detail)) {
+      urgentCancellationSunsetIds.add(detail.id)
     }
   }
 
@@ -342,11 +347,11 @@ function App() {
             </div>
 
             {activeTab === 'combined' && combinedEntries.length > 0 && (
-              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} userId={user?.id} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} onAck={ackEntry} />
+              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} userId={user?.id} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} urgentCancellationIds={urgentCancellationSunsetIds} onAck={ackEntry} />
             )}
 
             {activeTab === 'sunset' && sunsetList.length > 0 && (
-              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} onAck={ackSunsetEvent} />
+              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} userId={user?.id} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} urgentCancellationIds={urgentCancellationSunsetIds} onAck={ackSunsetEvent} />
             )}
 
             {activeTab === 'wolfgang' && wolfgangList.length > 0 && (

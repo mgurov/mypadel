@@ -1,6 +1,5 @@
 import Button from '@mui/material/Button'
 import type { Event } from '../api'
-import { isCancellationUrgent } from '../cancellation'
 import { eventKey } from '../eventTracking'
 import { EventDetailCell } from './EventDetailCell'
 import { ParticipationCell } from './ParticipationCell'
@@ -16,15 +15,14 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function SunsetRow({ event, userId, label, isNew, urgentUnpaid, onAck }: { event: Event; userId: string | undefined; label?: string; isNew?: boolean; urgentUnpaid?: boolean; onAck: () => void }) {
-  const cancellationUrgent = isCancellationUrgent(event)
+export function SunsetRow({ event, userId, label, isNew, urgentUnpaid, urgentCancellation, onAck }: { event: Event; userId: string | undefined; label?: string; isNew?: boolean; urgentUnpaid?: boolean; urgentCancellation?: boolean; onAck: () => void }) {
   return (
     <div className={`table-row${urgentUnpaid ? ' table-row-highlight' : ''}`}>
       <div className="column margin-right-16">
         {label && <span className={`source-label source-label-${label.toLowerCase()}`}>{label}</span>}
         {isNew && <span className="new-label">new</span>}
         {urgentUnpaid && <span className="unpaid-label">unpaid</span>}
-        {cancellationUrgent && <span className="cancel-label">cancel 24h</span>}
+        {urgentCancellation && <span className="cancel-label">cancel 24h</span>}
         {formatDate(event.date)}
         {isNew && (
           <Button data-testid="ack-button" size="small" sx={{ ml: 1 }} onClick={onAck}>
@@ -41,12 +39,12 @@ export function SunsetRow({ event, userId, label, isNew, urgentUnpaid, onAck }: 
   )
 }
 
-export function EventsTable({ events, userId, newIds, urgentUnpaidIds, onAck }: { events: Event[]; userId: string | undefined; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
+export function EventsTable({ events, userId, newIds, urgentUnpaidIds, urgentCancellationIds, onAck }: { events: Event[]; userId: string | undefined; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; urgentCancellationIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
   return (
     <div className="events-table">
       {events.map((event) => (
         <div key={event.id} className="table-row-group">
-          <SunsetRow event={event} userId={userId} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} onAck={() => onAck(event)} />
+          <SunsetRow event={event} userId={userId} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} urgentCancellation={urgentCancellationIds.has(event.id)} onAck={() => onAck(event)} />
         </div>
       ))}
     </div>
