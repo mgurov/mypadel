@@ -1,14 +1,25 @@
 import { useMemo, useState } from 'react'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ToggleButton from '@mui/material/ToggleButton'
+import Tooltip from '@mui/material/Tooltip'
 import type { Participant } from '../api'
 
 const COURT_SIZES = [4, 5] as const
+
+export type EventFormatType = 'ladder' | 'king' | 'unknown'
+
+export function eventFormatType(description: string | undefined): EventFormatType {
+  const d = description?.toLowerCase() ?? ''
+  if (d.includes('climb the ladder format')) return 'ladder'
+  if (d.includes('king of the court')) return 'king'
+  return 'unknown'
+}
 
 function participantName(p: Participant): string {
   const full = p.user?.name?.trim()
@@ -16,8 +27,11 @@ function participantName(p: Participant): string {
   return [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ').trim()
 }
 
-export function CourtsDialog({ open, participants, userId, onClose }: { open: boolean; participants: Participant[]; userId: string | undefined; onClose: () => void }) {
+export function CourtsDialog({ open, participants, userId, description, onClose }: { open: boolean; participants: Participant[]; userId: string | undefined; description: string | undefined; onClose: () => void }) {
   const [courtSize, setCourtSize] = useState<number>(4)
+  const [showFormatInfo, setShowFormatInfo] = useState(false)
+
+  const format = eventFormatType(description)
 
   const sorted = useMemo(
     () => [...participants].sort((a, b) => (b.user?.elo ?? 0) - (a.user?.elo ?? 0)),
@@ -36,7 +50,25 @@ export function CourtsDialog({ open, participants, userId, onClose }: { open: bo
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Courts</DialogTitle>
+      <DialogTitle>
+        <div className="court-dialog-title-row">
+          <span>Courts</span>
+          <Tooltip
+            open={showFormatInfo}
+            onClose={() => setShowFormatInfo(false)}
+            title={description?.trim() || 'No description'}
+            placement="bottom"
+            disableHoverListener
+          >
+            <Chip
+              label={format}
+              size="small"
+              data-testid="event-format-indicator"
+              onClick={() => setShowFormatInfo((v) => !v)}
+            />
+          </Tooltip>
+        </div>
+      </DialogTitle>
       <DialogContent>
         <ToggleButtonGroup
           size="small"

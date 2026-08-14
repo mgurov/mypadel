@@ -84,3 +84,38 @@ test('highlights the court of the current user', async ({ page, world }) => {
   await expect(dialog.getByTestId('court-1')).toContainText('mine')
   await expect(dialog.getByTestId('court-2')).not.toHaveClass(/court-card-mine/)
 })
+
+async function openCourtsWithDescription(page: import('@playwright/test').Page, world: import('./setup/wordlyTest').World, description: string) {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', description }])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByRole('menuitem', { name: 'Courts' }).click()
+  return page.getByRole('dialog')
+}
+
+test('shows ladder format indicator for a ladder description', async ({ page, world }) => {
+  const dialog = await openCourtsWithDescription(page, world, 'Climb the Ladder format event details')
+  await expect(dialog.getByTestId('event-format-indicator')).toHaveText('ladder')
+})
+
+test('shows king format indicator for a king of the court description', async ({ page, world }) => {
+  const dialog = await openCourtsWithDescription(page, world, 'King of the Court tournament')
+  await expect(dialog.getByTestId('event-format-indicator')).toHaveText('king')
+})
+
+test('shows unknown format indicator otherwise', async ({ page, world }) => {
+  const dialog = await openCourtsWithDescription(page, world, 'Casual padel evening')
+  await expect(dialog.getByTestId('event-format-indicator')).toHaveText('unknown')
+})
+
+test('clicking the format indicator pops up the description', async ({ page, world }) => {
+  const description = 'Climb the Ladder format - start on court 4 and move up'
+  const dialog = await openCourtsWithDescription(page, world, description)
+
+  await dialog.getByTestId('event-format-indicator').click()
+
+  await expect(page.getByRole('tooltip')).toContainText(description)
+})
