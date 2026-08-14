@@ -24,6 +24,7 @@ interface WorldEvent {
   price: string
   disclaimer: string
   createdAt: string
+  freeCancellationUntil: string | null
   competitionId: string | null
   formatId: string | null
   formatConfig: string | null
@@ -88,6 +89,7 @@ const defaultEvent = (): WorldEvent => ({
   price: '10',
   disclaimer: '',
   createdAt: futureDate(-1, 9),
+  freeCancellationUntil: null,
   competitionId: null,
   formatId: null,
   formatConfig: null,

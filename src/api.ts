@@ -26,6 +26,7 @@ export interface Event {
   maxParticipants: number
   price: string
   disclaimer: string
+  freeCancellationUntil: string | null
   createdAt: string
   competitionId: string | null
   formatId: string | null
