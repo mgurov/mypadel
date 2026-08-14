@@ -10,6 +10,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ToggleButton from '@mui/material/ToggleButton'
 import Typography from '@mui/material/Typography'
 import type { Participant } from '../api'
+import { CourtPlayer } from './CourtPlayer'
 
 const COURT_SIZES = [4, 5] as const
 
@@ -22,23 +23,10 @@ function eventFormatType(description: string | undefined): EventFormatType {
   return 'unknown'
 }
 
-function participantName(p: Participant): string {
-  const full = p.user?.name?.trim()
-  if (full) return full
-  return [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ').trim()
-}
-
-function participantLastName(p: Participant): string {
-  const last = p.user?.lastName?.trim()
-  if (last) return last
-  return participantName(p)
-}
-
 export function CourtsDialog({ open, participants, waitlistCount, userId, description, onClose }: { open: boolean; participants: Participant[]; waitlistCount: number | undefined; userId: string | undefined; description: string | undefined; onClose: () => void }) {
   const format = eventFormatType(description)
   const [courtSize, setCourtSize] = useState<number>(() => (format === 'king' ? 5 : 4))
   const [showFormatInfo, setShowFormatInfo] = useState(false)
-  const [revealedNameId, setRevealedNameId] = useState<string | null>(null)
   const formatAnchor = useRef<HTMLDivElement>(null)
 
   const sorted = useMemo(
@@ -105,28 +93,7 @@ export function CourtsDialog({ open, participants, waitlistCount, userId, descri
               <div className="court-title">Court {i + 1}{i === myCourtIndex && <span className="court-mine-label"> mine</span>}</div>
               <ul className="court-players">
                 {court.map((p) => (
-                  <li
-                    key={p.id}
-                    className={`court-player${revealedNameId === p.id ? ' court-player-revealed' : ''}`}
-                    data-testid={`court-player-${p.id}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setRevealedNameId((id) => (id === p.id ? null : p.id))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setRevealedNameId((id) => (id === p.id ? null : p.id))
-                      }
-                    }}
-                  >
-                    <span className="court-player-name">
-                      {revealedNameId === p.id ? participantLastName(p) : participantName(p)}
-                      {p.premiumSubscriptionId != null && (
-                        <span className="premium-badge" data-testid="premium-badge" title="Premium subscription">&#9733;</span>
-                      )}
-                    </span>
-                    <span className="court-player-elo">{p.user?.elo}</span>
-                  </li>
+                  <CourtPlayer key={p.id} participant={p} />
                 ))}
               </ul>
             </div>

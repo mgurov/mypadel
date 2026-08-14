@@ -92,14 +92,14 @@ test('courts dialog shows a zero waitlist size when there is no waitlist', async
   await expect(dialog.getByTestId('waitlist-count')).toHaveText('Waitlist: 0')
 })
 
-test('courts dialog reveals the participant last name on row click', async ({ page, world }) => {
+test('courts dialog reveals the participant full name on row click', async ({ page, world }) => {
   const dialog = await openCourts(page, world)
 
   const alice = dialog.getByTestId('court-player-p-alice')
   await expect(alice.locator('.court-player-name')).toHaveText('Alice')
 
   await alice.click()
-  await expect(alice.locator('.court-player-name')).toHaveText('Wonderland')
+  await expect(alice.locator('.court-player-name')).toHaveText('Alice Wonderland')
 
   await alice.click()
   await expect(alice.locator('.court-player-name')).toHaveText('Alice')
