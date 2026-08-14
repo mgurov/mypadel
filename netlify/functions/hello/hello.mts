@@ -1,6 +1,6 @@
 import { Context } from '@netlify/functions'
 
-export default (request: Request, context: Context) => {
+export default (request: Request, _context: Context) => {
   try {
     const url = new URL(request.url)
     const subject = url.searchParams.get('name') || 'World'

@@ -14,7 +14,7 @@ const SKIP_RESPONSE_HEADERS = new Set([
 
 
 
-export default async (request: Request, context: Context) => {
+export default async (request: Request, _context: Context) => {
   try {
     const mykoSecret = process.env.MYKO_SECRET;
     if (!mykoSecret) {

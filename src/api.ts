@@ -170,7 +170,7 @@ export async function ensureCookieAuth(email: string, password: string): Promise
     const { data: me } = await api.get<{ user: User }>(`${PROXY_BASE}.netlify/functions/auth-me`)
     return me.user
   } catch (e) {
-    if (!axios.isAxiosError(e) || e.response?.status !== 401) throw new Error(`Auth refresh failed: HTTP ${e instanceof Error ? e.message : e}`)
+    if (!axios.isAxiosError(e) || e.response?.status !== 401) throw new Error(`Auth refresh failed: HTTP ${e instanceof Error ? e.message : String(e)}`)
   }
 
   const { data: loginData } = await api.post<{ user: User }>(
