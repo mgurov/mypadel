@@ -147,7 +147,7 @@ test('actions menu offers show json, calendar, and open event', async ({ page, w
   await fetchButton(page).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByTestId('event-actions-button').first().click()
 
   await expect(page.getByRole('menuitem', { name: 'Show JSON' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Add to Calendar' })).toBeVisible()
@@ -163,7 +163,7 @@ test('show json action opens event details dialog', async ({ page, world }) => {
   await fetchButton(page).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByTestId('event-actions-button').first().click()
   await page.getByRole('menuitem', { name: 'Show JSON' }).click()
 
   const dialog = page.getByRole('dialog')
@@ -197,7 +197,7 @@ test('actions button wraps below participants on narrow screens', async ({ page,
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
   const participants = page.locator('.width-56').first()
-  const actions = page.getByRole('button', { name: 'Actions' }).first()
+  const actions = page.getByTestId('event-actions-button').first()
 
   const overlap = async () => {
     const [a, p] = await Promise.all([actions.boundingBox(), participants.boundingBox()])

@@ -82,9 +82,10 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
           size="small"
           aria-haspopup="true"
           aria-expanded={Boolean(menuAnchor)}
+          data-testid="event-actions-button"
           onClick={(e) => setMenuAnchor(e.currentTarget)}
         >
-          Actions
+          More...
         </Button>
         <Menu
           anchorEl={menuAnchor}

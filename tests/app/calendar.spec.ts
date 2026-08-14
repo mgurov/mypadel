@@ -14,7 +14,7 @@ async function loadEvents(world: World, events: WorldEventInput[], page: import(
 }
 
 async function downloadCalendar(page: import('@playwright/test').Page, index = 0) {
-  await page.getByRole('button', { name: 'Actions' }).nth(index).click()
+  await page.getByTestId('event-actions-button').nth(index).click()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('menuitem', { name: 'Add to Calendar' }).click(),

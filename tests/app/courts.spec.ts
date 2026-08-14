@@ -18,7 +18,7 @@ async function openCourts(page: import('@playwright/test').Page, world: import('
   await page.getByTestId('fetch-events-button').click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByTestId('event-actions-button').first().click()
   await page.getByRole('menuitem', { name: 'Courts' }).click()
   return page.getByRole('dialog')
 }
@@ -29,7 +29,7 @@ test('actions menu offers the courts option', async ({ page, world }) => {
   await page.getByTestId('fetch-events-button').click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByTestId('event-actions-button').first().click()
 
   await expect(page.getByRole('menuitem', { name: 'Courts' })).toBeVisible()
 })
@@ -76,7 +76,7 @@ test('highlights the court of the current user', async ({ page, world }) => {
   await page.getByTestId('fetch-events-button').click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByTestId('event-actions-button').first().click()
   await page.getByRole('menuitem', { name: 'Courts' }).click()
 
   const dialog = page.getByRole('dialog')
@@ -91,7 +91,7 @@ async function openCourtsWithDescription(page: import('@playwright/test').Page, 
   await page.getByTestId('fetch-events-button').click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByTestId('event-actions-button').first().click()
   await page.getByRole('menuitem', { name: 'Courts' }).click()
   return page.getByRole('dialog')
 }
