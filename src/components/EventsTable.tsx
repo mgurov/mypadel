@@ -1,6 +1,10 @@
 import Button from '@mui/material/Button'
-import type { Event } from '../api'
+import { useQuery } from '@tanstack/react-query'
+import type { Event, EventDetail } from '../api'
+import { fetchEventDetail } from '../api'
+import { isCancellationUrgent } from '../cancellation'
 import { eventKey } from '../eventTracking'
+import { useSunsetUser } from '../userContext'
 import { EventDetailCell } from './EventDetailCell'
 import { ParticipationCell } from './ParticipationCell'
 
@@ -15,7 +19,16 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function SunsetRow({ event, label, isNew, urgentUnpaid, urgentCancellation, onAck }: { event: Event; label?: string; isNew?: boolean; urgentUnpaid?: boolean; urgentCancellation?: boolean; onAck: () => void }) {
+export function SunsetRow({ event, label, isNew, urgentUnpaid, onAck }: { event: Event; label?: string; isNew?: boolean; urgentUnpaid?: boolean; onAck: () => void }) {
+  const { user } = useSunsetUser()
+  const { data: detail } = useQuery<EventDetail>({
+    queryKey: ['eventDetail', event.id],
+    queryFn: () => fetchEventDetail(event.id),
+  })
+  const participates = detail?.participants.some((p) => p.userId === user?.id) ?? false
+  const waitlisted = detail?.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0
+  const urgentCancellation = (participates || waitlisted) && isCancellationUrgent(event)
+
   return (
     <div className={`table-row${urgentUnpaid ? ' table-row-highlight' : ''}`}>
       <div className="column margin-right-16">
@@ -39,12 +52,12 @@ export function SunsetRow({ event, label, isNew, urgentUnpaid, urgentCancellatio
   )
 }
 
-export function EventsTable({ events, newIds, urgentUnpaidIds, urgentCancellationIds, onAck }: { events: Event[]; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; urgentCancellationIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
+export function EventsTable({ events, newIds, urgentUnpaidIds, onAck }: { events: Event[]; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
   return (
     <div className="events-table">
       {events.map((event) => (
         <div key={event.id} className="table-row-group">
-          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} urgentCancellation={urgentCancellationIds.has(event.id)} onAck={() => onAck(event)} />
+          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} onAck={() => onAck(event)} />
         </div>
       ))}
     </div>
