@@ -119,7 +119,7 @@ function App() {
     })
   }, [events, meetupEvents])
 
-  const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase()
+  const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase() //TODO: extract the avatar into a component;
   const fetching = isFetching || meetupIsFetching
 
   const visibleMeetup = (meetupEvents ?? []).filter(isVisibleMeetup)
