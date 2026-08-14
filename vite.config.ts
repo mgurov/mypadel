@@ -25,6 +25,10 @@ export default defineConfig({
             target: 'https://preview--mykopadel.netlify.app',
             changeOrigin: true,
           },
+          '/.netlify/functions/sunset-proxy': {
+            target: 'https://preview--mykopadel.netlify.app',
+            changeOrigin: true,
+          },
         }
       : undefined,
   },
