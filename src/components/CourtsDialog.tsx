@@ -10,6 +10,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ToggleButton from '@mui/material/ToggleButton'
 import Typography from '@mui/material/Typography'
 import type { Participant } from '../api'
+import { useSunsetUser } from '../userContext'
 import { CourtPlayer } from './CourtPlayer'
 
 const COURT_SIZES = [4, 5] as const
@@ -23,7 +24,8 @@ function eventFormatType(description: string | undefined): EventFormatType {
   return 'unknown'
 }
 
-export function CourtsDialog({ open, participants, waitlistCount, userId, description, onClose }: { open: boolean; participants: Participant[]; waitlistCount: number | undefined; userId: string | undefined; description: string | undefined; onClose: () => void }) {
+export function CourtsDialog({ open, participants, waitlistCount, description, onClose }: { open: boolean; participants: Participant[]; waitlistCount: number | undefined; description: string | undefined; onClose: () => void }) {
+  const { user } = useSunsetUser()
   const format = eventFormatType(description)
   const [courtSize, setCourtSize] = useState<number>(() => (format === 'king' ? 5 : 4))
   const [showFormatInfo, setShowFormatInfo] = useState(false)
@@ -42,7 +44,7 @@ export function CourtsDialog({ open, participants, waitlistCount, userId, descri
     return groups
   }, [sorted, courtSize])
 
-  const myCourtIndex = userId != null ? courts.findIndex((court) => court.some((p) => p.userId === userId)) : -1
+  const myCourtIndex = user != null ? courts.findIndex((court) => court.some((p) => p.userId === user.id)) : -1
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>

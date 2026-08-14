@@ -11,9 +11,11 @@ import DialogActions from '@mui/material/DialogActions'
 import Tooltip from '@mui/material/Tooltip'
 import { fetchEventDetail, type Event, type EventDetail } from '../api'
 import { downloadEventIcs } from '../ics'
+import { useSunsetUser } from '../userContext'
 import { CourtsDialog } from './CourtsDialog'
 
-export function EventDetailCell({ event, userId }: { event: Event; userId: string | undefined }) {
+export function EventDetailCell({ event }: { event: Event }) {
+  const { user } = useSunsetUser()
   const [jsonOpen, setJsonOpen] = useState(false)
   const [errorOpen, setErrorOpen] = useState(false)
   const [courtsOpen, setCourtsOpen] = useState(false)
@@ -27,7 +29,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
 
   const errorMessage = error instanceof Error ? error.message : String(error)
 
-  const isParticipating = detail?.participants?.some(p => p.userId === userId) ?? false
+  const isParticipating = detail?.participants?.some(p => p.userId === user?.id) ?? false
   const waitlistPosition = detail?.currentUserWaitlistPosition
   const isWaiting = !isParticipating && waitlistPosition != null && waitlistPosition > 0
   const payment = detail?.currentUserPayment
@@ -116,7 +118,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
           )}
         </Menu>
       </div>
-      {courtsOpen && <CourtsDialog open participants={detail?.participants ?? []} waitlistCount={detail?.waitlistCount} userId={userId} description={event.description} onClose={() => setCourtsOpen(false)} />}
+      {courtsOpen && <CourtsDialog open participants={detail?.participants ?? []} waitlistCount={detail?.waitlistCount} description={event.description} onClose={() => setCourtsOpen(false)} />}
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>
         <DialogContent>

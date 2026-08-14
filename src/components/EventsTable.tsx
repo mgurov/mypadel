@@ -15,7 +15,7 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function SunsetRow({ event, userId, label, isNew, urgentUnpaid, urgentCancellation, onAck }: { event: Event; userId: string | undefined; label?: string; isNew?: boolean; urgentUnpaid?: boolean; urgentCancellation?: boolean; onAck: () => void }) {
+export function SunsetRow({ event, label, isNew, urgentUnpaid, urgentCancellation, onAck }: { event: Event; label?: string; isNew?: boolean; urgentUnpaid?: boolean; urgentCancellation?: boolean; onAck: () => void }) {
   return (
     <div className={`table-row${urgentUnpaid ? ' table-row-highlight' : ''}`}>
       <div className="column margin-right-16">
@@ -30,7 +30,7 @@ export function SunsetRow({ event, userId, label, isNew, urgentUnpaid, urgentCan
           </Button>
         )}
       </div>
-      <EventDetailCell event={event} userId={userId} />
+      <EventDetailCell event={event} />
       <div className="column text-align-right">{event.title}</div>
       <div className="column text-align-right no-grow width-56">
         <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
@@ -39,12 +39,12 @@ export function SunsetRow({ event, userId, label, isNew, urgentUnpaid, urgentCan
   )
 }
 
-export function EventsTable({ events, userId, newIds, urgentUnpaidIds, urgentCancellationIds, onAck }: { events: Event[]; userId: string | undefined; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; urgentCancellationIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
+export function EventsTable({ events, newIds, urgentUnpaidIds, urgentCancellationIds, onAck }: { events: Event[]; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; urgentCancellationIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
   return (
     <div className="events-table">
       {events.map((event) => (
         <div key={event.id} className="table-row-group">
-          <SunsetRow event={event} userId={userId} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} urgentCancellation={urgentCancellationIds.has(event.id)} onAck={() => onAck(event)} />
+          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} urgentCancellation={urgentCancellationIds.has(event.id)} onAck={() => onAck(event)} />
         </div>
       ))}
     </div>
