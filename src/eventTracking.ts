@@ -50,7 +50,7 @@ export async function loadKnownKeys(): Promise<string[]> {
         const cursor = request.result
         if (cursor) {
           const record = cursor.value as KnownEventRecord | undefined
-          if (record?.ackedAt != null) keys.push(String(cursor.key))
+          if (record?.ackedAt != null && typeof cursor.key === 'string') keys.push(cursor.key)
           cursor.continue()
         } else {
           resolve(keys)

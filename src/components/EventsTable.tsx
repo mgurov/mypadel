@@ -32,8 +32,7 @@ function useCancellationAck(key: string) {
     return () => { cancelled = true }
   }, [key])
   const ack = () => {
-    setAcked(true)
-    void ackCancellation(key)
+    void ackCancellation(key).then(() => setAcked(true))
   }
   return { acked, ack }
 }

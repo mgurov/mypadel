@@ -133,7 +133,7 @@ test('acknowledging the cancellation does not ack the event newness', async ({ p
   const row = rowFor(page, 'New Urgent')
   await expect(row.locator('.new-label')).toBeVisible()
   await row.getByTestId('cancel-label').click()
-  await row.getByTestId('cancel-ack-button').click()
+  await page.getByTestId('cancel-ack-button').click()
 
   await expect(row.getByTestId('cancel-label')).toHaveCount(0)
   await expect(row.locator('.new-label')).toBeVisible()
