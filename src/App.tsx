@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useQuery, useQueries, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Button from '@mui/material/Button';
@@ -7,19 +6,11 @@ import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
 import { CredentialsButton } from './components/CredentialsButton'
-import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from './meetup'
-import { type CombinedEntry } from './components/CombinedTable'
 import { EventTables, type TabId } from './components/EventTables'
-import { addKnownKeys, eventKey, trackFetchedKeys } from './eventTracking'
 import { useSunsetUser } from './userContext'
 import { useAuth } from './authContext'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('sunset')
-  const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
-  const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
-  const [showOnlyAttending, setShowOnlyAttending] = useState(false)
-
   const queryClient = useQueryClient()
   const { user, setUser } = useSunsetUser()
   const { authKey, credEmail, credPassword, authError, setAuthError, saveCredentials, hasCredentials, credentialsComplete } = useAuth()
@@ -75,29 +66,8 @@ function App() {
     })),
   })
 
-  useEffect(() => {
-    if (events === undefined || meetupEvents === undefined) return
-    const fetchedKeys = [
-      ...events.map((event) => eventKey('sunset', event.id)),
-      ...meetupEvents.filter(isVisibleMeetup).map((event) => eventKey('meetup', event.id)),
-    ]
-    if (fetchedKeys.length === 0) return
-    void trackFetchedKeys(fetchedKeys).then((found) => {
-      if (found.length === 0) return
-      setNewIds((prev) => {
-        const next = new Set(prev)
-        found.forEach((key) => next.add(key))
-        return next
-      })
-    })
-  }, [events, meetupEvents])
-
   const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase() //TODO: extract the avatar into a component;
   const fetching = isFetching || meetupIsFetching
-
-  const visibleMeetup = (meetupEvents ?? []).filter(isVisibleMeetup)
-  const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
-  const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
 
   const attendingSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
@@ -107,76 +77,6 @@ function App() {
       detail.participants.some((p) => p.userId === user?.id) ||
       (detail.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0)
     if (attends) attendingSunsetIds.add(detail.id)
-  }
-
-  const sunsetList = showOnlyAttending ? (events ?? []).filter((event) => attendingSunsetIds.has(event.id)) : (events ?? [])
-  const wolfgangList = showOnlyAttending ? wolfgangEvents.filter(isMyRsvp) : wolfgangEvents
-  const meetupList = showOnlyAttending ? otherMeetupEvents.filter(isMyRsvp) : otherMeetupEvents
-
-  const tabCounts: Record<TabId, number> = {
-    combined: sunsetList.length + wolfgangList.length + meetupList.length,
-    sunset: sunsetList.length,
-    wolfgang: wolfgangList.length,
-    meetup: meetupList.length,
-  }
-
-  const combinedEntries: CombinedEntry[] = [
-    ...sunsetList.map((event) => ({ source: 'sunset' as const, event })),
-    ...wolfgangList.map((event) => ({ source: 'wolfgang' as const, event })),
-    ...meetupList.map((event) => ({ source: 'meetup' as const, event })),
-  ]
-
-  const newSunset = sunsetList.filter((event) => newIds.has(eventKey('sunset', event.id)))
-  const newWolfgang = wolfgangList.filter((event) => newIds.has(eventKey('meetup', event.id)))
-  const newOtherMeetup = meetupList.filter((event) => newIds.has(eventKey('meetup', event.id)))
-
-  const joinedSunset = (events ?? []).filter((event) => attendingSunsetIds.has(event.id))
-  const joinedWolfgang = wolfgangEvents.filter(isMyRsvp)
-  const joinedMeetup = otherMeetupEvents.filter(isMyRsvp)
-
-  const joinedCounts: Record<TabId, number> = {
-    combined: joinedSunset.length + joinedWolfgang.length + joinedMeetup.length,
-    sunset: joinedSunset.length,
-    wolfgang: joinedWolfgang.length,
-    meetup: joinedMeetup.length,
-  }
-
-  const newEntries: Record<TabId, CombinedEntry[]> = {
-    combined: [
-      ...newSunset.map((event) => ({ source: 'sunset' as const, event })),
-      ...newWolfgang.map((event) => ({ source: 'wolfgang' as const, event })),
-      ...newOtherMeetup.map((event) => ({ source: 'meetup' as const, event })),
-    ],
-    sunset: newSunset.map((event) => ({ source: 'sunset' as const, event })),
-    wolfgang: newWolfgang.map((event) => ({ source: 'wolfgang' as const, event })),
-    meetup: newOtherMeetup.map((event) => ({ source: 'meetup' as const, event })),
-  }
-
-  const tabNewCounts: Record<TabId, number> = {
-    combined: newSunset.length + newWolfgang.length + newOtherMeetup.length,
-    sunset: newSunset.length,
-    wolfgang: newWolfgang.length,
-    meetup: newOtherMeetup.length,
-  }
-
-  const ackKeys = (keys: string[]) => {
-    if (keys.length === 0) return
-    setNewIds((prev) => {
-      if (!keys.some((key) => prev.has(key))) return prev
-      const next = new Set(prev)
-      keys.forEach((key) => next.delete(key))
-      return next
-    })
-    void addKnownKeys(keys)
-  }
-
-  const toggleOnlyNew = (id: TabId) => {
-    setShowOnlyNew((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   }
 
   const hasFetched = events !== undefined || meetupEvents !== undefined
@@ -234,28 +134,12 @@ function App() {
 
         {hasFetched && (
           <EventTables
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
             user={user}
-            tabCounts={tabCounts}
-            tabNewCounts={tabNewCounts}
+            sunsetEvents={events}
+            meetupEvents={meetupEvents}
+            attendingSunsetIds={attendingSunsetIds}
             tabHasData={tabHasData}
             tabFetching={tabFetching}
-            joinedCounts={joinedCounts}
-            showOnlyAttending={showOnlyAttending}
-            onToggleAttending={() => setShowOnlyAttending((v) => !v)}
-            showOnlyNew={showOnlyNew}
-            onToggleOnlyNew={toggleOnlyNew}
-            newIds={newIds}
-            combinedEntries={combinedEntries}
-            newEntries={newEntries}
-            sunsetEvents={sunsetList}
-            newSunsetEvents={newSunset}
-            wolfgangEvents={wolfgangList}
-            newWolfgangEvents={newWolfgang}
-            meetupEvents={meetupList}
-            newMeetupEvents={newOtherMeetup}
-            onAckKeys={ackKeys}
           />
         )}
       </section>
