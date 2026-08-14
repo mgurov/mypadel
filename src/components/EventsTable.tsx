@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import Button from '@mui/material/Button'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import type { Event, EventDetail } from '../api'
 import { fetchEventDetail } from '../api'
-import { isCancellationUrgent } from '../cancellation'
+import { cancellationDeadline, isCancellationUrgent } from '../cancellation'
 import { eventKey } from '../eventTracking'
 import { useSunsetUser } from '../userContext'
 import { EventDetailCell } from './EventDetailCell'
@@ -22,6 +23,7 @@ function formatDate(dateString: string): string {
 
 export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?: string; isNew?: boolean; onAck: () => void }) {
   const { user } = useSunsetUser()
+  const [showCancelDeadline, setShowCancelDeadline] = useState(false)
   const { data: detail } = useQuery<EventDetail>({
     queryKey: ['eventDetail', event.id],
     queryFn: () => fetchEventDetail(event.id),
@@ -41,7 +43,31 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
         {label && <span className={`source-label source-label-${label.toLowerCase()}`}>{label}</span>}
         {isNew && <span className="new-label">new</span>}
         {urgentUnpaid && <span className="unpaid-label">unpaid</span>}
-        {urgentCancellation && <span className="cancel-label">cancel 24h</span>}
+        {urgentCancellation && (
+          <>
+            <span
+              className="cancel-label"
+              data-testid="cancel-label"
+              role="button"
+              tabIndex={0}
+              aria-expanded={showCancelDeadline}
+              onClick={() => setShowCancelDeadline((v) => !v)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setShowCancelDeadline((v) => !v)
+                }
+              }}
+            >
+              cancel 24h
+            </span>
+            {showCancelDeadline && (
+              <span className="cancel-deadline" data-testid="cancel-deadline">
+                free cancel until {formatDate(new Date(cancellationDeadline(event)).toISOString())}
+              </span>
+            )}
+          </>
+        )}
         {formatDate(event.date)}
         {isNew && (
           <Button data-testid="ack-button" size="small" sx={{ ml: 1 }} onClick={onAck}>

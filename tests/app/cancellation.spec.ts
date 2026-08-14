@@ -78,3 +78,29 @@ test('shows the cancel sign for a sunset event in the combined tab', async ({ pa
 
   await expect(rowFor(page, 'Combined Cancel')).toContainText('cancel 24h')
 })
+
+test('shows the cancellation deadline when clicking the cancel sign', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME }])
+  await showEvents(page, 'Cancel Soon')
+
+  const row = rowFor(page, 'Cancel Soon')
+  await expect(row).toContainText('cancel 24h')
+  await expect(page.getByTestId('cancel-deadline')).toHaveCount(0)
+
+  await page.getByTestId('cancel-label').click()
+
+  await expect(page.getByTestId('cancel-deadline')).toContainText('free cancel until')
+  await expect(page.getByTestId('cancel-deadline')).toContainText(/\d{1,2}:\d{2}/)
+})
+
+test('hides the cancellation deadline when clicking the cancel sign again', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z', participants: ME }])
+  await showEvents(page, 'Cancel Soon')
+
+  await page.getByTestId('cancel-label').click()
+  await expect(page.getByTestId('cancel-deadline')).toBeVisible()
+
+  await page.getByTestId('cancel-label').click()
+
+  await expect(page.getByTestId('cancel-deadline')).toHaveCount(0)
+})
