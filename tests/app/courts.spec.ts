@@ -119,3 +119,29 @@ test('clicking the format indicator pops up the description', async ({ page, wor
 
   await expect(page.getByRole('tooltip')).toContainText(description)
 })
+
+test('preselects 5 players per court for king format and allows switching', async ({ page, world }) => {
+  const dialog = await openCourtsWithDescription(page, world, 'King of the Court tournament')
+
+  await expect(dialog.getByTestId('court-size-5')).toHaveAttribute('aria-pressed', 'true')
+  await expect(dialog.getByTestId('court-size-4')).toHaveAttribute('aria-pressed', 'false')
+
+  await dialog.getByTestId('court-size-4').click()
+
+  await expect(dialog.getByTestId('court-size-4')).toHaveAttribute('aria-pressed', 'true')
+  await expect(dialog.getByTestId('court-size-5')).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('preselects 4 players per court for ladder format', async ({ page, world }) => {
+  const dialog = await openCourtsWithDescription(page, world, 'Climb the Ladder format event')
+
+  await expect(dialog.getByTestId('court-size-4')).toHaveAttribute('aria-pressed', 'true')
+  await expect(dialog.getByTestId('court-size-5')).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('preselects 4 players per court for unknown format', async ({ page, world }) => {
+  const dialog = await openCourtsWithDescription(page, world, 'Casual padel evening')
+
+  await expect(dialog.getByTestId('court-size-4')).toHaveAttribute('aria-pressed', 'true')
+  await expect(dialog.getByTestId('court-size-5')).toHaveAttribute('aria-pressed', 'false')
+})

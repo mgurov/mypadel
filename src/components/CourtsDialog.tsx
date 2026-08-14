@@ -28,10 +28,9 @@ function participantName(p: Participant): string {
 }
 
 export function CourtsDialog({ open, participants, userId, description, onClose }: { open: boolean; participants: Participant[]; userId: string | undefined; description: string | undefined; onClose: () => void }) {
-  const [courtSize, setCourtSize] = useState<number>(4)
-  const [showFormatInfo, setShowFormatInfo] = useState(false)
-
   const format = eventFormatType(description)
+  const [courtSize, setCourtSize] = useState<number>(() => (format === 'king' ? 5 : 4))
+  const [showFormatInfo, setShowFormatInfo] = useState(false)
 
   const sorted = useMemo(
     () => [...participants].sort((a, b) => (b.user?.elo ?? 0) - (a.user?.elo ?? 0)),
