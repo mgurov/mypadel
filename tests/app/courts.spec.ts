@@ -117,7 +117,22 @@ test('clicking the format indicator pops up the description', async ({ page, wor
 
   await dialog.getByTestId('event-format-indicator').click()
 
-  await expect(page.getByRole('tooltip')).toContainText(description)
+  await expect(page.getByTestId('event-format-description')).toContainText(description)
+})
+
+test('description popup stays open until clicked away', async ({ page, world }) => {
+  const description = 'Climb the Ladder format - start on court 4 and move up'
+  const dialog = await openCourtsWithDescription(page, world, description)
+
+  await dialog.getByTestId('event-format-indicator').click()
+  const popup = page.getByTestId('event-format-description')
+  await expect(popup).toContainText(description)
+  await expect(popup).toBeVisible()
+  await page.waitForTimeout(3000)
+  await expect(popup).toBeVisible()
+
+  await dialog.getByTestId('event-format-indicator').click()
+  await expect(popup).toHaveCount(0)
 })
 
 test('preselects 5 players per court for king format and allows switching', async ({ page, world }) => {

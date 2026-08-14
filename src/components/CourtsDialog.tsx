@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
+import Popover from '@mui/material/Popover'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import ToggleButton from '@mui/material/ToggleButton'
-import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
 import type { Participant } from '../api'
 
 const COURT_SIZES = [4, 5] as const
@@ -31,6 +32,7 @@ export function CourtsDialog({ open, participants, userId, description, onClose 
   const format = eventFormatType(description)
   const [courtSize, setCourtSize] = useState<number>(() => (format === 'king' ? 5 : 4))
   const [showFormatInfo, setShowFormatInfo] = useState(false)
+  const formatAnchor = useRef<HTMLDivElement>(null)
 
   const sorted = useMemo(
     () => [...participants].sort((a, b) => (b.user?.elo ?? 0) - (a.user?.elo ?? 0)),
@@ -52,20 +54,23 @@ export function CourtsDialog({ open, participants, userId, description, onClose 
       <DialogTitle>
         <div className="court-dialog-title-row">
           <span>Courts</span>
-          <Tooltip
+          <Chip
+            label={format}
+            size="small"
+            ref={formatAnchor}
+            data-testid="event-format-indicator"
+            onClick={() => setShowFormatInfo((v) => !v)}
+          />
+          <Popover
             open={showFormatInfo}
+            anchorEl={formatAnchor.current}
             onClose={() => setShowFormatInfo(false)}
-            title={description?.trim() || 'No description'}
-            placement="bottom"
-            disableHoverListener
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           >
-            <Chip
-              label={format}
-              size="small"
-              data-testid="event-format-indicator"
-              onClick={() => setShowFormatInfo((v) => !v)}
-            />
-          </Tooltip>
+            <Typography sx={{ p: 2, maxWidth: 320, whiteSpace: 'pre-wrap' }} data-testid="event-format-description">
+              {description?.trim() || 'No description'}
+            </Typography>
+          </Popover>
         </div>
       </DialogTitle>
       <DialogContent>
