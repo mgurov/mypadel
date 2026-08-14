@@ -6,18 +6,15 @@ import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
-import { CredentialsButton, type Credentials } from './components/CredentialsButton'
+import { CredentialsButton } from './components/CredentialsButton'
 import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from './meetup'
 import { type CombinedEntry } from './components/CombinedTable'
 import { EventTables, type TabId } from './components/EventTables'
 import { addKnownKeys, eventKey, trackFetchedKeys } from './eventTracking'
 import { useSunsetUser } from './userContext'
+import { useAuth } from './authContext'
 
 function App() {
-  const [authKey, setAuthKey] = useState(() => localStorage.getItem('myko-auth-key') ?? '')
-  const [credEmail, setCredEmail] = useState(() => localStorage.getItem('myko-cred-email') ?? '')
-  const [credPassword, setCredPassword] = useState(() => localStorage.getItem('myko-cred-password') ?? '')
-  const [authError, setAuthError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('sunset')
   const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
@@ -25,6 +22,7 @@ function App() {
 
   const queryClient = useQueryClient()
   const { user, setUser } = useSunsetUser()
+  const { authKey, credEmail, credPassword, authError, setAuthError, saveCredentials, hasCredentials, credentialsComplete } = useAuth()
 
   const handleFetch = async () => {
     void refetchMeetup().catch(() => {})
@@ -32,17 +30,7 @@ function App() {
     void queryClient.refetchQueries({ queryKey: ['eventDetail'] })
   }
 
-  const saveCredentials = (creds: Credentials) => {
-    localStorage.setItem('myko-auth-key', creds.authKey)
-    localStorage.setItem('myko-cred-email', creds.email)
-    localStorage.setItem('myko-cred-password', creds.password)
-    setAuthKey(creds.authKey)
-    setCredEmail(creds.email)
-    setCredPassword(creds.password)
-  }
-
   const hasCredentials = credEmail !== '' && credPassword !== ''
-  const credentialsComplete = authKey !== '' && credEmail !== '' && credPassword !== ''
 
   const { data: events, error, refetch, isFetching } = useQuery<Event[]>({
     queryKey: ['events', authKey, credEmail],
