@@ -20,9 +20,9 @@ const expectVariant = (button: Locator, variant: 'contained' | 'outlined') =>
 async function fillCredentials(page: Page, authKey: string, email: string, password: string) {
   await credentialsButton(page).click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('x-myko-auth').fill(authKey)
-  await dialog.getByLabel('Email').fill(email)
-  await dialog.getByLabel('Password').fill(password)
+  await dialog.getByLabel('x-myko-auth', { exact: true }).fill(authKey)
+  await dialog.getByLabel('Email', { exact: true }).fill(email)
+  await dialog.getByLabel('Password', { exact: true }).fill(password)
   await dialog.getByRole('button', { name: 'Save' }).click()
 }
 
@@ -38,9 +38,9 @@ test('credentials dialog contains all three fields', AnnotationNoCredPrefill, as
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  await expect(dialog.getByLabel('x-myko-auth')).toBeVisible()
-  await expect(dialog.getByLabel('Email')).toBeVisible()
-  await expect(dialog.getByLabel('Password')).toBeVisible()
+  await expect(dialog.getByLabel('x-myko-auth', { exact: true })).toBeVisible()
+  await expect(dialog.getByLabel('Email', { exact: true })).toBeVisible()
+  await expect(dialog.getByLabel('Password', { exact: true })).toBeVisible()
 })
 
 test('button indicates all three pieces missing by default', AnnotationNoCredPrefill, async ({ page }) => {
@@ -84,8 +84,8 @@ test('saving a partial set still indicates what is missing', AnnotationNoCredPre
   await page.goto('/')
   await credentialsButton(page).click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('x-myko-auth').fill('test-secret-key')
-  await dialog.getByLabel('Email').fill('player@example.com')
+  await dialog.getByLabel('x-myko-auth', { exact: true }).fill('test-secret-key')
+  await dialog.getByLabel('Email', { exact: true }).fill('player@example.com')
   await dialog.getByRole('button', { name: 'Save' }).click()
 
   await expect(credentialsButton(page)).toBeVisible()
@@ -104,18 +104,18 @@ test('dialog prefills saved values on reopen', AnnotationNoCredPrefill, async ({
   await credentialsSetButton(page).click()
 
   const dialog = page.getByRole('dialog')
-  await expect(dialog.getByLabel('x-myko-auth')).toHaveValue('saved-key')
-  await expect(dialog.getByLabel('Email')).toHaveValue('saved@example.com')
-  await expect(dialog.getByLabel('Password')).toHaveValue('saved-pass')
+  await expect(dialog.getByLabel('x-myko-auth', { exact: true })).toHaveValue('saved-key')
+  await expect(dialog.getByLabel('Email', { exact: true })).toHaveValue('saved@example.com')
+  await expect(dialog.getByLabel('Password', { exact: true })).toHaveValue('saved-pass')
 })
 
 test('cancel does not save credentials', AnnotationNoCredPrefill, async ({ page }) => {
   await page.goto('/')
   await credentialsButton(page).click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('x-myko-auth').fill('test-secret-key')
-  await dialog.getByLabel('Email').fill('player@example.com')
-  await dialog.getByLabel('Password').fill('hunter2')
+  await dialog.getByLabel('x-myko-auth', { exact: true }).fill('test-secret-key')
+  await dialog.getByLabel('Email', { exact: true }).fill('player@example.com')
+  await dialog.getByLabel('Password', { exact: true }).fill('hunter2')
   await dialog.getByRole('button', { name: 'Cancel' }).click()
 
   await expect(credentialsButton(page)).toBeVisible()

@@ -21,9 +21,10 @@ async function setClipboardAndOpenDialog(page: Page, text: string) {
   await setClipboardText(page, text)
 }
 
-const field = (page: Page, label: string) => page.getByRole('dialog').getByLabel(label)
-const copyButton = (page: Page) => page.getByRole('button', { name: 'Copy' })
+const field = (page: Page, label: string) => page.getByRole('dialog').getByLabel(label, { exact: true })
+const copyButton = (page: Page) => page.getByRole('button', { name: 'Copy all' })
 const pasteButton = (page: Page) => page.getByRole('button', { name: 'Paste' })
+const fieldCopyButton = (page: Page, label: string) => page.getByRole('button', { name: `Copy ${label}` })
 
 test('copy is disabled and paste enabled when no values are set', AnnotationNoCredPrefill, async ({ page }) => {
   await openDialog(page)
@@ -54,6 +55,41 @@ test('copy writes full credentials JSON to the clipboard', AnnotationNoCredPrefi
     email: 'player@example.com',
     password: 'hunter2',
   })
+})
+
+test('field copy buttons are disabled when their field is empty', AnnotationNoCredPrefill, async ({ page }) => {
+  await openDialog(page)
+
+  await expect(fieldCopyButton(page, 'x-myko-auth')).toBeDisabled()
+  await expect(fieldCopyButton(page, 'Email')).toBeDisabled()
+  await expect(fieldCopyButton(page, 'Password')).toBeDisabled()
+})
+
+test('each field copy button writes its own value to the clipboard', AnnotationNoCredPrefill, async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('myko-auth-key', 'secret-key')
+    localStorage.setItem('myko-cred-email', 'player@example.com')
+    localStorage.setItem('myko-cred-password', 'hunter2')
+  })
+  await openDialog(page)
+
+  await fieldCopyButton(page, 'x-myko-auth').click()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('secret-key')
+
+  await fieldCopyButton(page, 'Email').click()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('player@example.com')
+
+  await fieldCopyButton(page, 'Password').click()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('hunter2')
+})
+
+test('field copy button copies an edited field value', AnnotationNoCredPrefill, async ({ page }) => {
+  await openDialog(page)
+
+  await field(page, 'Email').fill('edited@example.com')
+  await fieldCopyButton(page, 'Email').click()
+
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('edited@example.com')
 })
 
 test('paste fills all fields from full JSON', AnnotationNoCredPrefill, async ({ page }) => {
