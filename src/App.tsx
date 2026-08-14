@@ -311,6 +311,7 @@ function App() {
                   opacity: activeTab === id ? 1 : 0.65,
                   '&:hover': { color: '#fff', opacity: 1 },
                   '&.Mui-selected': { color: '#fff', backgroundColor: tabColor[id] },
+                  '@media (max-width: 480px)': { padding: '6px 2px' },
                 }}
                 label={
                   <span className="tab-label">
