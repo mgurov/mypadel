@@ -9,5 +9,6 @@ export function cancellationDeadline(event: Pick<Event, 'freeCancellationUntil' 
 }
 
 export function isCancellationUrgent(event: Pick<Event, 'freeCancellationUntil' | 'date'>, now: Date = new Date()): boolean {
-  return cancellationDeadline(event) - now.getTime() < FREE_CANCELLATION_HOURS * HOUR_MS
+  const msUntilDeadline = cancellationDeadline(event) - now.getTime()
+  return msUntilDeadline > 0 && msUntilDeadline < FREE_CANCELLATION_HOURS * HOUR_MS
 }

@@ -16,7 +16,7 @@ async function showEvents(page: Page, title: string) {
 }
 
 test('shows the cancel sign when the null deadline falls within 24h', async ({ page, world }) => {
-  world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-05T18:00:00Z' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Cancel Soon', date: '2026-09-06T12:00:00Z' }])
   await showEvents(page, 'Cancel Soon')
 
   await expect(rowFor(page, 'Cancel Soon')).toContainText('cancel 24h')
@@ -47,8 +47,19 @@ test('does not show the cancel sign for a far future explicit deadline', async (
   await expect(rowFor(page, 'Far Deadline')).not.toContainText('cancel 24h')
 })
 
+test('does not show the cancel sign when the free cancellation window has already closed', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Null Passed', date: '2026-09-05T18:00:00Z' },
+    { id: 'evt-2', title: 'Explicit Passed', date: '2026-09-05T18:00:00Z', freeCancellationUntil: '2026-09-04T10:00:00Z' },
+  ])
+  await showEvents(page, 'Null Passed')
+
+  await expect(rowFor(page, 'Null Passed')).not.toContainText('cancel 24h')
+  await expect(rowFor(page, 'Explicit Passed')).not.toContainText('cancel 24h')
+})
+
 test('shows the cancel sign for a sunset event in the combined tab', async ({ page, world }) => {
-  world.givenEvents([{ id: 'evt-1', title: 'Combined Cancel', date: '2026-09-05T18:00:00Z' }])
+  world.givenEvents([{ id: 'evt-1', title: 'Combined Cancel', date: '2026-09-06T12:00:00Z' }])
   await page.clock.install({ time: new Date(FIXED_NOW) })
   await page.goto('/')
   await fetchButton(page).click()
