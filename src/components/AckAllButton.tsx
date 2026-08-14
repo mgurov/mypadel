@@ -1,7 +1,7 @@
 import Button from '@mui/material/Button'
 
 export function AckAllButton({ count, onAckAll }: { count: number; onAckAll: () => void }) {
-  if (count === 0) return null
+  if (count < 2) return null
   return (
     <Button
       data-testid="ack-all-button"

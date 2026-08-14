@@ -40,7 +40,7 @@ test('marks a newly fetched event with a badge, ack-all button, and row ack', as
   await expect(newBadge(page, 'sunset')).toHaveText('1')
   await expect(newBadge(page, 'combined')).toHaveText('1')
 
-  await expect(ackAllButton(page)).toContainText('Ack all 1 new events')
+  await expect(ackAllButton(page)).toHaveCount(0)
   await expect(ackButton(page)).toHaveCount(1)
 
   await expect(page.locator('.events-table .new-label')).toHaveCount(1)
@@ -63,7 +63,7 @@ test('ack acknowledges a single new event', async ({ page, world }) => {
   await ackButton(page).first().click()
 
   await expect(newBadge(page, 'sunset')).toHaveText('1')
-  await expect(ackAllButton(page)).toContainText('Ack all 1 new events')
+  await expect(ackAllButton(page)).toHaveCount(0)
   await expect(ackButton(page)).toHaveCount(1)
 })
 
@@ -123,7 +123,7 @@ test('tracks new meetup events on their tab', async ({ page, world }) => {
   await expect(newBadge(page, 'combined')).toHaveText('1')
 
   await tab(page, 'meetup').click()
-  await expect(ackAllButton(page)).toContainText('Ack all 1 new events')
+  await expect(ackAllButton(page)).toHaveCount(0)
   await expect(ackButton(page)).toHaveCount(1)
 })
 
@@ -136,9 +136,10 @@ test('ack-all button sits to the right of the filter toggles', async ({ page, wo
   world.givenEvents([
     { id: 'evt-1', title: 'Morning Padel' },
     { id: 'evt-2', title: 'Evening Padel', participants: [{ userId: 'user-1' }] },
+    { id: 'evt-3', title: 'Late Night Padel', participants: [{ userId: 'user-1' }] },
   ])
   await fetchButton(page).click()
-  await expect(newBadge(page, 'sunset')).toHaveText('1')
+  await expect(newBadge(page, 'sunset')).toHaveText('2')
 
   const joined = page.getByTestId('only-attending-toggle')
   const newToggle = page.getByTestId('only-new-toggle')
