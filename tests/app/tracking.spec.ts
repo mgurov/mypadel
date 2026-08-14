@@ -186,3 +186,37 @@ test('only-new toggle filters the table to new events', async ({ page, world }) 
   await expect(ackAllButton(page)).toHaveCount(0)
   await expect(page.getByTestId('only-new-toggle')).toHaveCount(0)
 })
+
+test('new-event badges stay fully visible inside their tabs on narrow mobile layouts', async ({ page, world }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  world.givenEvents(Array.from({ length: 8 }, (_, i) => ({ id: `evt-${i + 1}`, title: `Morning Padel ${i + 1}` })))
+  world.givenMeetupEvents([
+    ...Array.from({ length: 4 }, (_, i) => ({ id: `wg-${i + 1}`, title: `Wolfgang Meetup ${i + 1}`, eventHosts: [{ memberId: '456811393' }] })),
+    ...Array.from({ length: 4 }, (_, i) => ({ id: `mt-${i + 1}`, title: `Casual Meetup ${i + 1}`, eventHosts: [{ memberId: 'other-host' }] })),
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel 1')).toBeVisible()
+
+  world.givenEvents([
+    ...Array.from({ length: 8 }, (_, i) => ({ id: `evt-${i + 1}`, title: `Morning Padel ${i + 1}` })),
+    { id: 'evt-new', title: 'New Sunset Padel' },
+  ])
+  world.givenMeetupEvents([
+    ...Array.from({ length: 4 }, (_, i) => ({ id: `wg-${i + 1}`, title: `Wolfgang Meetup ${i + 1}`, eventHosts: [{ memberId: '456811393' }] })),
+    { id: 'wg-new', title: 'New Wolfgang Meetup', eventHosts: [{ memberId: '456811393' }] },
+    ...Array.from({ length: 4 }, (_, i) => ({ id: `mt-${i + 1}`, title: `Casual Meetup ${i + 1}`, eventHosts: [{ memberId: 'other-host' }] })),
+    { id: 'mt-new', title: 'New Casual Meetup', eventHosts: [{ memberId: 'other-host' }] },
+  ])
+  await fetchButton(page).click()
+
+  for (const name of ['combined', 'sunset', 'wolfgang', 'meetup']) {
+    const badge = newBadge(page, name)
+    await expect(badge).toBeVisible()
+    await expect(badge).toHaveText(name === 'combined' ? '3' : '1')
+    const badgeBox = await badge.boundingBox()
+    const tabBox = await tab(page, name).boundingBox()
+    expect(badgeBox!.x).toBeGreaterThanOrEqual(tabBox!.x)
+    expect(badgeBox!.x + badgeBox!.width).toBeLessThanOrEqual(tabBox!.x + tabBox!.width)
+  }
+})
