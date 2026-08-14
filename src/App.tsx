@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import dayjs from 'dayjs'
 import { useQuery, useQueries, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Button from '@mui/material/Button';
@@ -125,9 +124,7 @@ function App() {
   const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
   const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
 
-  const now = dayjs()
   const attendingSunsetIds = new Set<string>()
-  const urgentUnpaidSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
     const detail = query.data
     if (detail === undefined) continue
@@ -135,13 +132,6 @@ function App() {
       detail.participants.some((p) => p.userId === user?.id) ||
       (detail.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0)
     if (attends) attendingSunsetIds.add(detail.id)
-    if (
-      attends &&
-      dayjs(detail.date).startOf('day').diff(now.startOf('day'), 'day') <= 1 &&
-      detail.currentUserPayment?.status !== 'PAID'
-    ) {
-      urgentUnpaidSunsetIds.add(detail.id)
-    }
   }
 
   const sunsetList = showOnlyAttending ? (events ?? []).filter((event) => attendingSunsetIds.has(event.id)) : (events ?? [])
@@ -343,11 +333,11 @@ function App() {
             </div>
 
             {activeTab === 'combined' && combinedEntries.length > 0 && (
-              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} onAck={ackEntry} />
+              <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} />
             )}
 
             {activeTab === 'sunset' && sunsetList.length > 0 && (
-              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} urgentUnpaidIds={urgentUnpaidSunsetIds} onAck={ackSunsetEvent} />
+              <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} onAck={ackSunsetEvent} />
             )}
 
             {activeTab === 'wolfgang' && wolfgangList.length > 0 && (

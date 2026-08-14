@@ -1,5 +1,6 @@
 import Button from '@mui/material/Button'
 import { useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import type { Event, EventDetail } from '../api'
 import { fetchEventDetail } from '../api'
 import { isCancellationUrgent } from '../cancellation'
@@ -19,7 +20,7 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function SunsetRow({ event, label, isNew, urgentUnpaid, onAck }: { event: Event; label?: string; isNew?: boolean; urgentUnpaid?: boolean; onAck: () => void }) {
+export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?: string; isNew?: boolean; onAck: () => void }) {
   const { user } = useSunsetUser()
   const { data: detail } = useQuery<EventDetail>({
     queryKey: ['eventDetail', event.id],
@@ -27,7 +28,12 @@ export function SunsetRow({ event, label, isNew, urgentUnpaid, onAck }: { event:
   })
   const participates = detail?.participants.some((p) => p.userId === user?.id) ?? false
   const waitlisted = detail?.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0
-  const urgentCancellation = (participates || waitlisted) && isCancellationUrgent(event)
+  const attends = participates || waitlisted
+  const urgentCancellation = attends && isCancellationUrgent(event)
+  const urgentUnpaid =
+    attends &&
+    dayjs(event.date).startOf('day').diff(dayjs().startOf('day'), 'day') <= 1 &&
+    detail?.currentUserPayment?.status !== 'PAID'
 
   return (
     <div className={`table-row${urgentUnpaid ? ' table-row-highlight' : ''}`}>
@@ -52,12 +58,12 @@ export function SunsetRow({ event, label, isNew, urgentUnpaid, onAck }: { event:
   )
 }
 
-export function EventsTable({ events, newIds, urgentUnpaidIds, onAck }: { events: Event[]; newIds: ReadonlySet<string>; urgentUnpaidIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
+export function EventsTable({ events, newIds, onAck }: { events: Event[]; newIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
   return (
     <div className="events-table">
       {events.map((event) => (
         <div key={event.id} className="table-row-group">
-          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} urgentUnpaid={urgentUnpaidIds.has(event.id)} onAck={() => onAck(event)} />
+          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} />
         </div>
       ))}
     </div>
