@@ -218,5 +218,14 @@ test('new-event badges stay fully visible inside their tabs on narrow mobile lay
     const tabBox = await tab(page, name).boundingBox()
     expect(badgeBox!.x).toBeGreaterThanOrEqual(tabBox!.x)
     expect(badgeBox!.x + badgeBox!.width).toBeLessThanOrEqual(tabBox!.x + tabBox!.width)
+
+    const labelText = tab(page, name).locator('.tab-label-text')
+    const { scrollWidth, clientWidth, offsetWidth } = await labelText.evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+      offsetWidth: el.offsetWidth,
+    }))
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth)
+    expect(offsetWidth).toBeGreaterThan(0)
   }
 })
