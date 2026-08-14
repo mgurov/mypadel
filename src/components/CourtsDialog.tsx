@@ -11,16 +11,16 @@ import type { Participant } from '../api'
 const COURT_SIZES = [4, 5] as const
 
 function participantName(p: Participant): string {
-  const full = p.user.name?.trim()
+  const full = p.user?.name?.trim()
   if (full) return full
-  return [p.user.firstName, p.user.lastName].filter(Boolean).join(' ').trim()
+  return [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ').trim()
 }
 
 export function CourtsDialog({ open, participants, onClose }: { open: boolean; participants: Participant[]; onClose: () => void }) {
   const [courtSize, setCourtSize] = useState<number>(4)
 
   const sorted = useMemo(
-    () => [...participants].sort((a, b) => b.user.elo - a.user.elo),
+    () => [...participants].sort((a, b) => (b.user?.elo ?? 0) - (a.user?.elo ?? 0)),
     [participants],
   )
 
@@ -57,7 +57,7 @@ export function CourtsDialog({ open, participants, onClose }: { open: boolean; p
                 {court.map((p) => (
                   <li key={p.id} className="court-player">
                     <span className="court-player-name">{participantName(p)}</span>
-                    <span className="court-player-elo">{p.user.elo}</span>
+                    <span className="court-player-elo">{p.user?.elo}</span>
                   </li>
                 ))}
               </ul>
