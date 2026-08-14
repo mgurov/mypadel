@@ -304,6 +304,26 @@
   background: #fafafa;
 }
 
+.court-card-mine {
+  border: 2px solid #aa3bff;
+  background: #f6edff;
+}
+
+.court-mine-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #aa3bff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .court-title {
   font-weight: 600;
   margin-bottom: 8px;

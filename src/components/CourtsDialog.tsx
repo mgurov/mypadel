@@ -16,7 +16,7 @@ function participantName(p: Participant): string {
   return [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ').trim()
 }
 
-export function CourtsDialog({ open, participants, onClose }: { open: boolean; participants: Participant[]; onClose: () => void }) {
+export function CourtsDialog({ open, participants, userId, onClose }: { open: boolean; participants: Participant[]; userId: string | undefined; onClose: () => void }) {
   const [courtSize, setCourtSize] = useState<number>(4)
 
   const sorted = useMemo(
@@ -31,6 +31,8 @@ export function CourtsDialog({ open, participants, onClose }: { open: boolean; p
     }
     return groups
   }, [sorted, courtSize])
+
+  const myCourtIndex = userId != null ? courts.findIndex((court) => court.some((p) => p.userId === userId)) : -1
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -51,8 +53,8 @@ export function CourtsDialog({ open, participants, onClose }: { open: boolean; p
         </ToggleButtonGroup>
         <div className="courts-grid">
           {courts.map((court, i) => (
-            <div key={i} className="court-card" data-testid={`court-${i + 1}`}>
-              <div className="court-title">Court {i + 1}</div>
+            <div key={i} className={`court-card${i === myCourtIndex ? ' court-card-mine' : ''}`} data-testid={`court-${i + 1}`}>
+              <div className="court-title">Court {i + 1}{i === myCourtIndex && <span className="court-mine-label"> mine</span>}</div>
               <ul className="court-players">
                 {court.map((p) => (
                   <li key={p.id} className="court-player">

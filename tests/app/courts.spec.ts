@@ -65,3 +65,22 @@ test('courts dialog closes', async ({ page, world }) => {
   await dialog.getByRole('button', { name: 'Close' }).click()
   await expect(dialog).toHaveCount(0)
 })
+
+test('highlights the court of the current user', async ({ page, world }) => {
+  const withMine = [
+    ...participants,
+    { id: 'p-me', userId: 'user-1', user: { name: 'Me', firstName: 'Me', lastName: '', elo: 1700 } },
+  ]
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: withMine }])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Actions' }).first().click()
+  await page.getByRole('menuitem', { name: 'Courts' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByTestId('court-1')).toHaveClass(/court-card-mine/)
+  await expect(dialog.getByTestId('court-1')).toContainText('mine')
+  await expect(dialog.getByTestId('court-2')).not.toHaveClass(/court-card-mine/)
+})
