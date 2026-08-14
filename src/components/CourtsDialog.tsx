@@ -28,7 +28,7 @@ function participantName(p: Participant): string {
   return [p.user?.firstName, p.user?.lastName].filter(Boolean).join(' ').trim()
 }
 
-export function CourtsDialog({ open, participants, userId, description, onClose }: { open: boolean; participants: Participant[]; userId: string | undefined; description: string | undefined; onClose: () => void }) {
+export function CourtsDialog({ open, participants, waitlistCount, userId, description, onClose }: { open: boolean; participants: Participant[]; waitlistCount: number | undefined; userId: string | undefined; description: string | undefined; onClose: () => void }) {
   const format = eventFormatType(description)
   const [courtSize, setCourtSize] = useState<number>(() => (format === 'king' ? 5 : 4))
   const [showFormatInfo, setShowFormatInfo] = useState(false)
@@ -54,13 +54,18 @@ export function CourtsDialog({ open, participants, userId, description, onClose 
       <DialogTitle>
         <div className="court-dialog-title-row">
           <span>Courts</span>
-          <Chip
-            label={format}
-            size="small"
-            ref={formatAnchor}
-            data-testid="event-format-indicator"
-            onClick={() => setShowFormatInfo((v) => !v)}
-          />
+          <div className="court-dialog-title-chips">
+            {waitlistCount != null && (
+              <Chip label={`Waitlist: ${waitlistCount}`} size="small" color="warning" data-testid="waitlist-count" />
+            )}
+            <Chip
+              label={format}
+              size="small"
+              ref={formatAnchor}
+              data-testid="event-format-indicator"
+              onClick={() => setShowFormatInfo((v) => !v)}
+            />
+          </div>
           <Popover
             open={showFormatInfo}
             anchorEl={formatAnchor.current}

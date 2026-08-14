@@ -36,6 +36,7 @@ interface WorldEvent {
 
 interface WorldEventDetail extends WorldEvent {
   participants: unknown[]
+  waitlistCount: number
   currentUserPayment: unknown
   currentUserWaitlistPosition: number | null
 }
@@ -55,6 +56,7 @@ interface MeetupNode {
 
 type WorldEventInput = Partial<WorldEvent> & {
   participants?: unknown[]
+  waitlistCount?: number
   currentUserPayment?: unknown
   currentUserWaitlistPosition?: number | null
 }
@@ -221,11 +223,12 @@ class World {
   }
 
   givenEvents(inputs: WorldEventInput[]): WorldEvent[] {
-    this.state.events = inputs.map(({ participants, currentUserPayment, currentUserWaitlistPosition, ...eventFields }) => {
+    this.state.events = inputs.map(({ participants, waitlistCount, currentUserPayment, currentUserWaitlistPosition, ...eventFields }) => {
       const event = { ...defaultEvent(), ...eventFields }
       this.state.eventDetails.set(event.id, {
         ...event,
         participants: participants ?? [],
+        waitlistCount: waitlistCount ?? 0,
         currentUserPayment: currentUserPayment ?? null,
         currentUserWaitlistPosition: currentUserWaitlistPosition ?? null,
       })

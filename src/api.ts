@@ -60,6 +60,7 @@ export interface Payment {
 
 export interface EventDetail extends Event {
   participants: Participant[]
+  waitlistCount: number
   currentUserPayment: Payment | null
   currentUserWaitlistPosition: number | null
 }

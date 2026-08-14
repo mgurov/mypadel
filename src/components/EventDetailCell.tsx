@@ -116,7 +116,7 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
           )}
         </Menu>
       </div>
-      {courtsOpen && <CourtsDialog open participants={detail?.participants ?? []} userId={userId} description={event.description} onClose={() => setCourtsOpen(false)} />}
+      {courtsOpen && <CourtsDialog open participants={detail?.participants ?? []} waitlistCount={detail?.waitlistCount} userId={userId} description={event.description} onClose={() => setCourtsOpen(false)} />}
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>
         <DialogContent>

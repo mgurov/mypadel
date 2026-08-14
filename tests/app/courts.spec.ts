@@ -66,6 +66,32 @@ test('courts dialog closes', async ({ page, world }) => {
   await expect(dialog).toHaveCount(0)
 })
 
+test('courts dialog shows the waitlist size', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants, waitlistCount: 2 }])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Courts' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByTestId('waitlist-count')).toHaveText('Waitlist: 2')
+})
+
+test('courts dialog shows a zero waitlist size when there is no waitlist', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants, waitlistCount: 0 }])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Courts' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByTestId('waitlist-count')).toHaveText('Waitlist: 0')
+})
+
 test('highlights the court of the current user', async ({ page, world }) => {
   const withMine = [
     ...participants,
