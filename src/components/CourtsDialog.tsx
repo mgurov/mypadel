@@ -12,9 +12,9 @@ import type { Participant } from '../api'
 
 const COURT_SIZES = [4, 5] as const
 
-export type EventFormatType = 'ladder' | 'king' | 'unknown'
+type EventFormatType = 'ladder' | 'king' | 'unknown'
 
-export function eventFormatType(description: string | undefined): EventFormatType {
+function eventFormatType(description: string | undefined): EventFormatType {
   const d = description?.toLowerCase() ?? ''
   if (d.includes('climb the ladder format')) return 'ladder'
   if (d.includes('king of the court')) return 'king'
