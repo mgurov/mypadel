@@ -289,3 +289,45 @@
   top: -4px;
   right: -4px;
 }
+
+.courts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.court-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.court-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.court-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.court-player {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.court-player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.court-player-elo {
+  font-weight: 600;
+}

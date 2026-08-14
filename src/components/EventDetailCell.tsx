@@ -11,10 +11,12 @@ import DialogActions from '@mui/material/DialogActions'
 import Tooltip from '@mui/material/Tooltip'
 import { fetchEventDetail, type Event, type EventDetail } from '../api'
 import { downloadEventIcs } from '../ics'
+import { CourtsDialog } from './CourtsDialog'
 
 export function EventDetailCell({ event, userId }: { event: Event; userId: string | undefined }) {
   const [jsonOpen, setJsonOpen] = useState(false)
   const [errorOpen, setErrorOpen] = useState(false)
+  const [courtsOpen, setCourtsOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const { id: eventId } = event
 
@@ -102,12 +104,18 @@ export function EventDetailCell({ event, userId }: { event: Event; userId: strin
             Open Event
           </MenuItem>
           {detail && (
+            <MenuItem onClick={() => { setCourtsOpen(true); closeMenu() }}>
+              Courts
+            </MenuItem>
+          )}
+          {detail && (
             <MenuItem onClick={() => { setJsonOpen(true); closeMenu() }}>
               Show JSON
             </MenuItem>
           )}
         </Menu>
       </div>
+      <CourtsDialog open={courtsOpen} participants={detail?.participants ?? []} onClose={() => setCourtsOpen(false)} />
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>
         <DialogContent>
