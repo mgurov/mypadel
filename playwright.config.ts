@@ -27,7 +27,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['iPhone 12 Pro'] },
+      use: { ...devices['iPhone 12 Pro'], defaultBrowserType: 'chromium' },
     },
   ],
 
