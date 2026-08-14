@@ -1,27 +1,20 @@
-import { useQuery, useQueries, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useQueries, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
-import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
 import { CredentialsButton } from './components/CredentialsButton'
+import { FetchButton } from './components/FetchButton'
 import { EventTables, type TabId } from './components/EventTables'
 import { useSunsetUser } from './userContext'
 import { useAuth } from './authContext'
 
 function App() {
-  const queryClient = useQueryClient()
   const { user, setUser } = useSunsetUser()
-  const { authKey, credEmail, credPassword, authError, setAuthError, saveCredentials, hasCredentials, credentialsComplete } = useAuth()
+  const { authKey, credEmail, credPassword, authError, setAuthError, saveCredentials, hasCredentials } = useAuth()
 
-  const handleFetch = async () => {
-    void refetchMeetup().catch(() => {})
-    await refetch().catch(() => {})
-    void queryClient.refetchQueries({ queryKey: ['eventDetail'] })
-  }
-
-  const { data: events, error, refetch, isFetching } = useQuery<Event[]>({
+  const { data: events, error, isFetching } = useQuery<Event[]>({
     queryKey: ['events', authKey, credEmail],
     queryFn: async () => {
       setAuthError(null)
@@ -47,7 +40,6 @@ function App() {
   const {
     data: meetupEvents,
     error: meetupError,
-    refetch: refetchMeetup,
     isFetching: meetupIsFetching,
   } = useQuery<MeetupEvent[]>({
     queryKey: ['meetupEvents', authKey],
@@ -67,7 +59,6 @@ function App() {
   })
 
   const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase() //TODO: extract the avatar into a component;
-  const fetching = isFetching || meetupIsFetching
 
   const attendingSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
@@ -100,9 +91,7 @@ function App() {
       <section id="center">
         <div className="button-row">
           <CredentialsButton authKey={authKey} email={credEmail} password={credPassword} onSave={saveCredentials} />
-          <Button data-testid="fetch-events-button" variant={credentialsComplete ? 'contained' : 'outlined'} onClick={handleFetch} disabled={fetching}>
-            {fetching ? 'Loading...' : 'Fetch'}
-          </Button>
+          <FetchButton />
           {user && (
             <Chip
               data-testid="user-elo-chip"
