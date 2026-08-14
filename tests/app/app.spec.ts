@@ -513,7 +513,9 @@ test('meetup events are split into wolfgang and meetup tabs', async ({ page, wor
   await tab(page, 'wolfgang').click()
   await expect(page.getByText('Wolfgang Padel')).toBeVisible()
   await expect(page.getByText('full')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Open' }).first()).toHaveAttribute('href', 'https://www.meetup.com/wolfgang')
+  await page.getByTestId('event-actions-button').first().click()
+  const openEvent = page.getByRole('menuitem', { name: 'Open Event' })
+  await expect(openEvent).toHaveAttribute('href', 'https://www.meetup.com/wolfgang')
   await expect(page.getByText('Cancelled Padel')).toHaveCount(0)
   await expect(page.getByText('Floridsdorf Padel')).toHaveCount(0)
 

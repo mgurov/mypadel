@@ -2,7 +2,7 @@ import Button from '@mui/material/Button'
 import type { MeetupEvent } from '../api'
 import { eventKey } from '../eventTracking'
 import { isMyRsvp, formatAttendance } from '../meetup'
-import { downloadMeetupEventIcs } from '../ics'
+import { MeetupDetailCell } from './MeetupDetailCell'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
@@ -37,14 +37,7 @@ export function MeetupRow({ event, label, isNew, onAck }: { event: MeetupEvent; 
       </div>
       <div className="column">{event.title}</div>
       <div className="column text-align-right margin-right-16 no-grow">{formatAttendance(event)}</div>
-      <div className="column no-grow meetup-actions">
-        <a href="#" onClick={(e) => { e.preventDefault(); downloadMeetupEventIcs(event) }}>
-          Calendar
-        </a>
-        <a href={event.eventUrl} target="_blank" rel="noopener noreferrer">
-          Open
-        </a>
-      </div>
+      <MeetupDetailCell event={event} />
     </div>
   )
 }

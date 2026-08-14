@@ -184,11 +184,6 @@
   min-width: 28px;
 }
 
-.meetup-actions {
-  display: flex;
-  gap: 8px;
-}
-
 @media (max-width: 500px) {
   .table-row {
     flex-wrap: wrap;

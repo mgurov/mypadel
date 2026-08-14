@@ -115,9 +115,10 @@ test('downloads an ics file for a meetup event', async ({ page, world }) => {
   await page.getByTestId('tab-meetup').click()
   await expect(page.getByText('Padel Meetup')).toBeVisible()
 
+  await page.getByTestId('event-actions-button').first().click()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('link', { name: 'Calendar' }).click(),
+    page.getByRole('menuitem', { name: 'Add to Calendar' }).click(),
   ])
 
   expect(download.suggestedFilename()).toBe('Padel-Meetup.ics')
