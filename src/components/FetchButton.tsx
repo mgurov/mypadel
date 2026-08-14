@@ -9,10 +9,15 @@ export function FetchButton() {
   const fetchingMeetup = useIsFetching({ queryKey: ['meetupEvents'] }) > 0
   const fetching = fetchingEvents || fetchingMeetup
 
+  const fetchQueries = async (queryKey: string[], type: 'active' | 'all' = 'all') => {
+    const queries = queryClient.getQueryCache().findAll({ queryKey, type })
+    await Promise.allSettled(queries.map((query) => query.fetch()))
+  }
+
   const handleFetch = async () => {
-    void queryClient.refetchQueries({ queryKey: ['meetupEvents'] })
-    await queryClient.refetchQueries({ queryKey: ['events'] })
-    void queryClient.refetchQueries({ queryKey: ['eventDetail'] })
+    void fetchQueries(['meetupEvents'])
+    await fetchQueries(['events'])
+    void fetchQueries(['eventDetail'], 'active')
   }
 
   return (
