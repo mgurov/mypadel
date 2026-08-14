@@ -40,12 +40,23 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tab-label-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .new-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -56,6 +67,10 @@
   color: #fff;
   background: #d32f2f;
   box-sizing: border-box;
+}
+
+.tab-spinner {
+  flex-shrink: 0;
 }
 
 .new-label {

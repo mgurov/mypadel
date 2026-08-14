@@ -314,11 +314,11 @@ function App() {
                 }}
                 label={
                   <span className="tab-label">
-                    {`${tabLabel[id]}${tabHasData[id] ? ` (${tabCounts[id]})` : ''}`}
+                    <span className="tab-label-text">{`${tabLabel[id]}${tabHasData[id] ? ` (${tabCounts[id]})` : ''}`}</span>
                     {tabNewCounts[id] > 0 && (
                       <span data-testid={`tab-new-${id}`} className="new-badge">{tabNewCounts[id]}</span>
                     )}
-                    {tabFetching[id] && <CircularProgress size={12} sx={{ color: 'rgba(255, 255, 255, 0.9)' }} />}
+                    {tabFetching[id] && <CircularProgress className="tab-spinner" size={12} sx={{ color: 'rgba(255, 255, 255, 0.9)' }} />}
                   </span>
                 }
               />
