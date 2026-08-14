@@ -30,8 +30,6 @@ function App() {
     void queryClient.refetchQueries({ queryKey: ['eventDetail'] })
   }
 
-  const hasCredentials = credEmail !== '' && credPassword !== ''
-
   const { data: events, error, refetch, isFetching } = useQuery<Event[]>({
     queryKey: ['events', authKey, credEmail],
     queryFn: async () => {
