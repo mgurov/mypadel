@@ -131,7 +131,7 @@ test('description popup stays open until clicked away', async ({ page, world }) 
   await page.waitForTimeout(3000)
   await expect(popup).toBeVisible()
 
-  await dialog.getByTestId('event-format-indicator').click()
+  await page.mouse.click(10, 10)
   await expect(popup).toHaveCount(0)
 })
 
