@@ -1,4 +1,4 @@
-const allowedPathsRaw = process.env.TARGET_PROXY_PATHES || "";
+const allowedPathsRaw = process.env.TARGET_SUN_PROXY_PATHES || "";
 const allowedPaths = allowedPathsRaw.split(",").map((p) => p.trim());
 
 function corsHeaders(origin: string | null): Record<string, string> {
@@ -37,9 +37,9 @@ export default async (request: Request) => {
     return respondWith("MYKO_SECRET doesn't match", { status: 401 })
   }
 
-  const targetBase = process.env.TARGET_PROXY;
+  const targetBase = process.env.TARGET_SUN_PROXY;
   if (!targetBase) {
-    return respondWith("TARGET_PROXY env var is not set", { status: 500 })
+    return respondWith("TARGET_SUN_PROXY env var is not set", { status: 500 })
   }
 
   const url = new URL(request.url);
