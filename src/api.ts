@@ -106,9 +106,6 @@ export interface MeetupGraphqlResponse {
 }
 
 const PROXY_BASE = '/.netlify/functions/sunset-proxy/'
-// const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/dev-proxy/' : 'https://cpfgugbirflalcjuludp.supabase.co/functions/v1/proxy/')
-// export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
-// export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
 export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
 export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
 export const MEETUP_URL = `/.netlify/functions/proxy/gql2`
