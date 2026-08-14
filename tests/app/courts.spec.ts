@@ -2,12 +2,12 @@ import { expect } from '@playwright/test'
 import { test } from './setup/ourTest'
 
 const participants = [
-  { id: 'p-alice', userId: 'u-alice', user: { name: 'Alice', firstName: 'Alice', lastName: '', elo: 1500 } },
-  { id: 'p-bob', userId: 'u-bob', user: { name: 'Bob', firstName: 'Bob', lastName: '', elo: 1600 } },
-  { id: 'p-carol', userId: 'u-carol', user: { name: 'Carol', firstName: 'Carol', lastName: '', elo: 1400 } },
-  { id: 'p-dave', userId: 'u-dave', user: { name: 'Dave', firstName: 'Dave', lastName: '', elo: 1550 } },
-  { id: 'p-eve', userId: 'u-eve', user: { name: 'Eve', firstName: 'Eve', lastName: '', elo: 1450 } },
-  { id: 'p-frank', userId: 'u-frank', user: { name: 'Frank', firstName: 'Frank', lastName: '', elo: 1300 } },
+  { id: 'p-alice', userId: 'u-alice', user: { name: 'Alice', firstName: 'Alice', lastName: 'Wonderland', elo: 1500 } },
+  { id: 'p-bob', userId: 'u-bob', user: { name: 'Bob', firstName: 'Bob', lastName: 'Johnson', elo: 1600 } },
+  { id: 'p-carol', userId: 'u-carol', user: { name: 'Carol', firstName: 'Carol', lastName: 'White', elo: 1400 } },
+  { id: 'p-dave', userId: 'u-dave', user: { name: 'Dave', firstName: 'Dave', lastName: 'Smith', elo: 1550 } },
+  { id: 'p-eve', userId: 'u-eve', user: { name: 'Eve', firstName: 'Eve', lastName: 'Brown', elo: 1450 } },
+  { id: 'p-frank', userId: 'u-frank', user: { name: 'Frank', firstName: 'Frank', lastName: 'Miller', elo: 1300 } },
 ]
 
 async function openCourts(page: import('@playwright/test').Page, world: import('./setup/wordlyTest').World) {
@@ -90,6 +90,37 @@ test('courts dialog shows a zero waitlist size when there is no waitlist', async
 
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByTestId('waitlist-count')).toHaveText('Waitlist: 0')
+})
+
+test('courts dialog reveals the participant last name on row click', async ({ page, world }) => {
+  const dialog = await openCourts(page, world)
+
+  const alice = dialog.getByTestId('court-player-p-alice')
+  await expect(alice.locator('.court-player-name')).toHaveText('Alice')
+
+  await alice.click()
+  await expect(alice.locator('.court-player-name')).toHaveText('Wonderland')
+
+  await alice.click()
+  await expect(alice.locator('.court-player-name')).toHaveText('Alice')
+})
+
+test('courts dialog marks premium participants with a badge', async ({ page, world }) => {
+  const withPremium = [
+    { id: 'p-alice', userId: 'u-alice', premiumSubscriptionId: 'sub-1', user: { name: 'Alice', firstName: 'Alice', lastName: '', elo: 1500 } },
+    { id: 'p-bob', userId: 'u-bob', premiumSubscriptionId: null, user: { name: 'Bob', firstName: 'Bob', lastName: '', elo: 1600 } },
+  ]
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: withPremium }])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Courts' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByTestId('court-player-p-alice').getByTestId('premium-badge')).toBeVisible()
+  await expect(dialog.getByTestId('court-player-p-bob').getByTestId('premium-badge')).toHaveCount(0)
 })
 
 test('highlights the court of the current user', async ({ page, world }) => {

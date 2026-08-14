@@ -367,6 +367,36 @@
   justify-content: space-between;
   gap: 8px;
   padding: 4px 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.court-player:focus-visible {
+  outline: 2px solid #aa3bff;
+  outline-offset: 1px;
+}
+
+.court-player-revealed {
+  background: #aa3bff;
+  border-radius: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  margin-left: -4px;
+  margin-right: -4px;
+}
+
+.court-player-revealed .court-player-name,
+.court-player-revealed .court-player-elo {
+  color: #fff;
+}
+
+.premium-badge {
+  margin-left: 6px;
+  color: #f5a623;
+}
+
+.court-player-revealed .premium-badge {
+  color: #ffd700;
 }
 
 .court-player-name {

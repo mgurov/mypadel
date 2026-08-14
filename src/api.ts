@@ -44,6 +44,7 @@ export interface Participant {
   createdAt: string
   eventId: string
   userId: string
+  premiumSubscriptionId: string | null
   user: {
     id: string
     firstName: string
