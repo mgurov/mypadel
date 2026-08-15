@@ -55,7 +55,6 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
   const urgentCancellation = attends && isCancellationUrgent(event)
   const showCancelLabel = urgentCancellation && !cancellationAcked
   const urgentUnpaid =
-    !ended &&
     attends &&
     dayjs(event.date).startOf('day').diff(dayjs().startOf('day'), 'day') <= 1 &&
     detail?.currentUserPayment?.status !== 'PAID'

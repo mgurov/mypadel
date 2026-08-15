@@ -11,6 +11,16 @@ function futureDate(daysAhead: number, hour: number): string {
   return d.toISOString()
 }
 
+function hoursFromNow(hours: number): string {
+  return new Date(Date.now() + hours * 3600_000).toISOString()
+}
+
+function todayStart(): string {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.toISOString()
+}
+
 const rowFor = (page: Page, title: string) =>
   page.locator('.table-row-group', { hasText: title }).locator('.table-row')
 
@@ -78,6 +88,17 @@ test('highlights an unpaid sunset event with no payment record', async ({ page, 
 
   await expect(rowFor(page, 'No Payment Record')).toHaveClass(/table-row-highlight/)
   await expect(rowFor(page, 'No Payment Record')).toContainText('unpaid')
+})
+
+test('still highlights an unpaid sunset event that has already ended', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Ended Unpaid', date: todayStart(), endDate: hoursFromNow(-1), participants: [{ userId: 'user-1' }], currentUserPayment: { id: 'pay-1', status: 'PENDING' } },
+  ])
+  await fetchAndShow(page, 'Ended Unpaid')
+
+  await expect(rowFor(page, 'Ended Unpaid')).toHaveClass(/table-row-highlight/)
+  await expect(rowFor(page, 'Ended Unpaid')).toHaveClass(/table-row-ended/)
+  await expect(rowFor(page, 'Ended Unpaid')).toContainText('unpaid')
 })
 
 test('highlights an unpaid sunset row in the combined tab', async ({ page, world }) => {
