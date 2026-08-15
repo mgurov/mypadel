@@ -71,6 +71,7 @@ export interface MeetupEvent {
   id: string
   title: string
   dateTime: string
+  endTime: string
   status: string
   eventUrl: string
   venue: {

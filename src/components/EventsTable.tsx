@@ -7,6 +7,7 @@ import type { Event, EventDetail } from '../api'
 import { fetchEventDetail } from '../api'
 import { cancellationDeadline, isCancellationUrgent } from '../cancellation'
 import { ackCancellation, eventKey, isCancellationAcked } from '../eventTracking'
+import { hasEnded, isLive } from '../timing'
 import { useSunsetUser } from '../userContext'
 import { EventDetailCell } from './EventDetailCell'
 import { ParticipationCell } from './ParticipationCell'
@@ -49,15 +50,25 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
   const participates = detail?.participants.some((p) => p.userId === user?.id) ?? false
   const waitlisted = detail?.currentUserWaitlistPosition != null && detail.currentUserWaitlistPosition > 0
   const attends = participates || waitlisted
+  const ended = hasEnded(event.endDate)
+  const live = isLive(event.date, event.endDate)
   const urgentCancellation = attends && isCancellationUrgent(event)
   const showCancelLabel = urgentCancellation && !cancellationAcked
   const urgentUnpaid =
+    !ended &&
     attends &&
     dayjs(event.date).startOf('day').diff(dayjs().startOf('day'), 'day') <= 1 &&
     detail?.currentUserPayment?.status !== 'PAID'
 
+  const rowClass = [
+    'table-row',
+    urgentUnpaid ? 'table-row-highlight' : '',
+    live && attends ? 'table-row-live' : '',
+    ended ? 'table-row-ended' : '',
+  ].filter(Boolean).join(' ')
+
   return (
-    <div className={`table-row${urgentUnpaid ? ' table-row-highlight' : ''}`}>
+    <div className={rowClass}>
       <div className="column margin-right-16">
         {label && <span className={`source-label source-label-${label.toLowerCase()}`}>{label}</span>}
         {isNew && <span className="new-label">new</span>}

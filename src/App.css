@@ -195,6 +195,23 @@
   background-color: #ffe0b2;
 }
 
+.table-row-live {
+  background-color: #e8f5e9;
+  box-shadow: inset 3px 0 0 #2e7d32;
+}
+
+.table-row-live:hover {
+  background-color: #c8e6c9;
+}
+
+.table-row-ended {
+  opacity: 0.5;
+}
+
+.table-row-ended:hover {
+  background-color: transparent;
+}
+
 .column {
   flex: 1;
 }

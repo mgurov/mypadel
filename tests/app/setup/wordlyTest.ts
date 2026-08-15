@@ -46,6 +46,7 @@ interface MeetupNode {
   id: string
   title: string
   dateTime: string
+  endTime: string
   status: string
   eventUrl: string
   venue: { id: string; name: string }
@@ -104,6 +105,7 @@ const defaultMeetupNode = (): MeetupNode => ({
   id: 'meetup-1',
   title: 'Padel Meetup',
   dateTime: futureDate(1, 10),
+  endTime: futureDate(1, 12),
   status: 'ACTIVE',
   eventUrl: 'https://www.meetup.com/vienna-sports-meetup/events/1/',
   venue: { id: 'venue-1', name: 'Vienna Court' },
