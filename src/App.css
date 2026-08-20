@@ -108,6 +108,21 @@
   vertical-align: middle;
 }
 
+.archived-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #616161;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
 .cancel-label {
   display: inline-block;
   font-size: 10px;
