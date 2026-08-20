@@ -31,7 +31,7 @@ function App() {
       const { data } = await api.get<Event[]>(EVENTS_URL)
       const now = new Date()
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= startOfToday && e.status != "ARCHIVED")
+      return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= startOfToday)
     },
     enabled: false,
     placeholderData: keepPreviousData,
@@ -70,11 +70,15 @@ function App() {
     if (attends) attendingSunsetIds.add(detail.id)
   }
 
-  const hasFetched = events !== undefined || meetupEvents !== undefined
+  const filteredEvents = events?.filter(
+    (e) => e.status !== "ARCHIVED" || attendingSunsetIds.has(e.id)
+  )
+
+  const hasFetched = filteredEvents !== undefined || meetupEvents !== undefined
 
   const tabHasData: Record<TabId, boolean> = {
-    combined: events !== undefined && meetupEvents !== undefined,
-    sunset: events !== undefined,
+    combined: filteredEvents !== undefined && meetupEvents !== undefined,
+    sunset: filteredEvents !== undefined,
     wolfgang: meetupEvents !== undefined,
     meetup: meetupEvents !== undefined,
   }
@@ -124,7 +128,7 @@ function App() {
         {hasFetched && (
           <EventTables
             user={user}
-            sunsetEvents={events}
+            sunsetEvents={filteredEvents}
             meetupEvents={meetupEvents}
             attendingSunsetIds={attendingSunsetIds}
             tabHasData={tabHasData}
