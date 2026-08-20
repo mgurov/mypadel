@@ -29,9 +29,7 @@ function App() {
         throw new Error(`Cookie auth failed: ${msg}`)
       }
       const { data } = await api.get<Event[]>(EVENTS_URL)
-      const now = new Date()
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      return data.filter(e => !e.title.startsWith('Ladies Night') && new Date(e.date) >= startOfToday)
+      return data
     },
     enabled: false,
     placeholderData: keepPreviousData,
@@ -70,8 +68,13 @@ function App() {
     if (attends) attendingSunsetIds.add(detail.id)
   }
 
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const filteredEvents = events?.filter(
-    (e) => e.status !== "ARCHIVED" || attendingSunsetIds.has(e.id)
+    (e) =>
+      !e.title.startsWith('Ladies Night') &&
+      new Date(e.date) >= startOfToday &&
+      (e.status !== "ARCHIVED" || attendingSunsetIds.has(e.id))
   )
 
   const hasFetched = filteredEvents !== undefined || meetupEvents !== undefined
