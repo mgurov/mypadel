@@ -73,6 +73,29 @@ export interface WorldRegistration {
 
 type RegistrationInput = Partial<Omit<WorldRegistration, 'event'>> & { event?: Partial<ProfileEvent> }
 
+export interface WorldMatchPlayer {
+  id: string
+  name: string
+  elo: number
+  previousElo: number
+  newElo: number
+}
+
+export interface WorldMatchTable {
+  eventId: string
+  mode: string
+  status: string
+  generatedAt: string
+  confirmedAt: string
+  courts: { courtNumber: number; players: WorldMatchPlayer[]; isManual: boolean; manualOverride: boolean }[]
+  matches: unknown[]
+}
+
+export interface MatchTableInput {
+  eventId: string
+  players?: Partial<WorldMatchPlayer>[]
+}
+
 type WorldEventInput = Partial<WorldEvent> & {
   participants?: unknown[]
   waitlistCount?: number
@@ -197,6 +220,7 @@ class World {
     eventDetails: new Map<string, WorldEventDetail>(),
     meetupEvents: [] as MeetupNode[],
     registrations: [] as WorldRegistration[],
+    matchTables: new Map<string, WorldMatchTable>(),
     profileStatus: 200,
     user: defaultUser,
     auth: { ...defaultAuth },
@@ -231,6 +255,14 @@ class World {
       if (detail) {
         const body = this.hasValidAccessToken(route) ? detail : this.withoutUserInfo(detail)
         await route.fulfill({ json: body })
+      } else {
+        await route.fulfill({ status: 404, json: { error: 'not found' } })
+      }
+    } else if (url.pathname.endsWith('/.netlify/functions/event-match-table')) {
+      const eventId = url.searchParams.get('eventId')
+      const table = eventId ? this.state.matchTables.get(eventId) : undefined
+      if (table) {
+        await route.fulfill({ json: table })
       } else {
         await route.fulfill({ status: 404, json: { error: 'not found' } })
       }
@@ -304,6 +336,21 @@ class World {
     this.state.registrations = []
   }
 
+  givenMatchTables(inputs: MatchTableInput[]): void {
+    for (const { eventId, players } of inputs) {
+      const table: WorldMatchTable = {
+        eventId,
+        mode: 'AUTO_COURTS',
+        status: 'CONFIRMED',
+        generatedAt: futureDate(-1, 18),
+        confirmedAt: futureDate(-1, 20),
+        courts: [{ courtNumber: 1, players: (players ?? []).map((player) => ({ ...player } as WorldMatchPlayer)), isManual: false, manualOverride: false }],
+        matches: [],
+      }
+      this.state.matchTables.set(eventId, table)
+    }
+  }
+
   private presentedToken(route: Route): string | undefined {
     return route.request().headers()['m_access_token']
   }
@@ -339,4 +386,4 @@ class World {
 }
 
 export { World, defaultUser }
-export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode, RegistrationInput }
+export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode, RegistrationInput, MatchTableInput }
