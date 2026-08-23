@@ -325,7 +325,9 @@ class World {
   givenRegistrations(inputs: RegistrationInput[]): WorldRegistration[] {
     this.state.profileStatus = 200
     this.state.registrations = inputs.map(({ event, ...regFields }, i) => {
-      const registration = { ...defaultRegistration(i), ...regFields, event: { ...defaultRegistration(i).event, ...event } }
+      const base = defaultRegistration(i)
+      const mergedEvent = { ...base.event, ...event }
+      const registration = { ...base, ...regFields, eventId: regFields.eventId ?? mergedEvent.id, event: mergedEvent }
       return registration
     })
     return this.state.registrations
