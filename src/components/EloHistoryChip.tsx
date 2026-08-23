@@ -9,8 +9,8 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Typography from '@mui/material/Typography'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { fetchProfile, pastRegistrations } from '../api'
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
+import { eloDeltaForPlayer, fetchEventMatchTable, fetchProfile, pastRegistrations } from '../api'
 import { useAuth } from '../authContext'
 import { useSunsetUser } from '../userContext'
 
@@ -29,6 +29,10 @@ function getInitials(firstName: string | undefined, lastName: string | undefined
   return `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
 }
 
+function formatDelta(delta: number): string {
+  return delta > 0 ? `+${delta}` : `${delta}`
+}
+
 export function EloHistoryChip() {
   const { user } = useSunsetUser()
   const { authKey } = useAuth()
@@ -45,9 +49,17 @@ export function EloHistoryChip() {
     placeholderData: keepPreviousData,
   })
 
-  if (!user) return null
-
   const past = pastRegistrations(profile?.registrations ?? [])
+
+  const matchTableQueries = useQueries({
+    queries: past.map((registration) => ({
+      queryKey: ['eventMatchTable', registration.eventId],
+      queryFn: () => fetchEventMatchTable(registration.eventId),
+      enabled: open && user != null,
+    })),
+  })
+
+  if (!user) return null
 
   return (
     <>
@@ -89,12 +101,30 @@ export function EloHistoryChip() {
           )}
           {!error && past.length > 0 && (
             <ul className="elo-history-list" data-testid="elo-history-list">
-              {past.map((registration) => (
-                <li key={registration.id} className="table-row elo-history-row" data-testid="elo-history-row">
-                  <div className="column">{formatDate(registration.event.endDate)}</div>
-                  <div className="column text-align-right no-grow margin-left-16">{registration.event.title}</div>
-                </li>
-              ))}
+              {past.map((registration, i) => {
+                const matchTable = matchTableQueries[i]?.data
+                const delta = matchTable ? eloDeltaForPlayer(matchTable, user.id) : null
+                return (
+                  <li key={registration.id} className="table-row elo-history-row" data-testid="elo-history-row">
+                    <div className="column">
+                      {formatDate(registration.event.endDate)}
+                      <div className="elo-history-title">{registration.event.title}</div>
+                    </div>
+                    <div className="column text-align-right no-grow margin-left-16">
+                      {delta != null && (
+                        <span
+                          data-testid="elo-history-delta"
+                          className={
+                            delta > 0 ? 'elo-delta-positive' : delta < 0 ? 'elo-delta-negative' : 'elo-delta-zero'
+                          }
+                        >
+                          {formatDelta(delta)}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </DialogContent>

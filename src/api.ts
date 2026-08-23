@@ -124,6 +124,60 @@ export function pastRegistrations(registrations: ProfileRegistration[], now: Dat
     .sort((a, b) => new Date(b.event.endDate).getTime() - new Date(a.event.endDate).getTime())
 }
 
+export interface MatchTablePlayer {
+  id: string
+  name: string
+  elo: number
+  previousElo: number
+  newElo: number
+}
+
+export interface MatchCourt {
+  courtNumber: number
+  players: MatchTablePlayer[]
+  isManual: boolean
+  manualOverride: boolean
+}
+
+export interface RatingChange {
+  userId: string
+  before: number
+  delta: number
+  after: number
+}
+
+export interface MatchTableMatch {
+  id: string
+  courtNumber: number
+  round: number
+  pair1: MatchTablePlayer[]
+  pair2: MatchTablePlayer[]
+  score1: number | null
+  score2: number | null
+  status: string
+  updatedAt: string | null
+  updatedBy: MatchTablePlayer | null
+  ratingChanges: RatingChange[]
+}
+
+export interface EventMatchTable {
+  eventId: string
+  mode: string
+  status: string
+  generatedAt: string | null
+  confirmedAt: string | null
+  courts: MatchCourt[]
+  matches: MatchTableMatch[]
+}
+
+export function eloDeltaForPlayer(matchTable: EventMatchTable, userId: string): number | null {
+  for (const court of matchTable.courts ?? []) {
+    const player = court.players?.find((p) => p.id === userId)
+    if (player) return player.newElo - player.previousElo
+  }
+  return null
+}
+
 export interface MeetupGraphqlResponse {
   data: {
     groupByUrlname: {
@@ -142,9 +196,15 @@ export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
 export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
 export const MEETUP_URL = `/.netlify/functions/proxy/gql2`
 export const PROFILE_URL = `${PROXY_BASE}.netlify/functions/profile`
+export const EVENT_MATCH_TABLE_URL = `${PROXY_BASE}.netlify/functions/event-match-table`
 
 export async function fetchEventDetail(id: string): Promise<EventDetail> {
   const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${id}`)
+  return data
+}
+
+export async function fetchEventMatchTable(eventId: string): Promise<EventMatchTable> {
+  const { data } = await api.get<EventMatchTable>(`${EVENT_MATCH_TABLE_URL}?eventId=${eventId}`)
   return data
 }
 
