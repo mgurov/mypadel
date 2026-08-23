@@ -473,3 +473,24 @@
 .court-player-elo {
   font-weight: 600;
 }
+
+.elo-history-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.elo-history-row {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 0;
+}
+
+.elo-history-list .elo-history-row:last-child {
+  border-bottom: none;
+}
+
+.elo-history-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}

@@ -1,12 +1,11 @@
 import { useQuery, useQueries, keepPreviousData } from '@tanstack/react-query'
 import './App.css'
 import Alert from '@mui/material/Alert';
-import Avatar from '@mui/material/Avatar';
-import Chip from '@mui/material/Chip';
-import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse, type User } from './api'
+import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse } from './api'
 import { CredentialsButton } from './components/CredentialsButton'
 import { FetchButton } from './components/FetchButton'
 import { EventTables, type TabId } from './components/EventTables'
+import { EloHistoryChip } from './components/EloHistoryChip'
 import { useSunsetUser } from './userContext'
 import { useAuth } from './authContext'
 
@@ -56,8 +55,6 @@ function App() {
     })),
   })
 
-  const getInitials = (u: User) => `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase() //TODO: extract the avatar into a component;
-
   const attendingSunsetIds = new Set<string>()
   for (const query of sunsetDetailQueries) {
     const detail = query.data
@@ -99,15 +96,7 @@ function App() {
         <div className="button-row">
           <CredentialsButton authKey={authKey} email={credEmail} password={credPassword} onSave={saveCredentials} />
           <FetchButton />
-          {user && (
-            <Chip
-              data-testid="user-elo-chip"
-              avatar={<Avatar sx={{ width: 28, height: 28, fontSize: 12 }}>{getInitials(user)}</Avatar>}
-              label={`${user.elo}`}
-              size="small"
-              sx={{ ml: 1 }}
-            />
-          )}
+          <EloHistoryChip />
         </div>
 
         {authError && (

@@ -97,6 +97,33 @@ export interface MeetupEvent {
   }
 }
 
+export interface ProfileEvent {
+  id: string
+  title: string
+  date: string
+  endDate: string
+}
+
+export interface ProfileRegistration {
+  id: string
+  createdAt: string
+  eventId: string
+  userId: string
+  event: ProfileEvent
+}
+
+export interface Profile {
+  id: string
+  elo: number
+  registrations: ProfileRegistration[]
+}
+
+export function pastRegistrations(registrations: ProfileRegistration[], now: Date = new Date()): ProfileRegistration[] {
+  return registrations
+    .filter((r) => new Date(r.event.endDate).getTime() < now.getTime())
+    .sort((a, b) => new Date(b.event.endDate).getTime() - new Date(a.event.endDate).getTime())
+}
+
 export interface MeetupGraphqlResponse {
   data: {
     groupByUrlname: {
@@ -114,9 +141,15 @@ const PROXY_BASE = import.meta.env.VITE_PROXY_BASE ?? (import.meta.env.DEV ? '/d
 export const EVENTS_URL = `${PROXY_BASE}.netlify/functions/events`
 export const EVENT_DETAILS_URL = `${PROXY_BASE}.netlify/functions/event-details`
 export const MEETUP_URL = `/.netlify/functions/proxy/gql2`
+export const PROFILE_URL = `${PROXY_BASE}.netlify/functions/profile`
 
 export async function fetchEventDetail(id: string): Promise<EventDetail> {
   const { data } = await api.get<EventDetail>(`${EVENT_DETAILS_URL}?id=${id}`)
+  return data
+}
+
+export async function fetchProfile(): Promise<Profile> {
+  const { data } = await api.get<Profile>(PROFILE_URL)
   return data
 }
 
