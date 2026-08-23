@@ -15,12 +15,24 @@ export class AppPage {
     return this.page.getByTestId('user-elo-chip')
   }
 
+  get eloHistoryDialog(): Locator {
+    return this.page.getByRole('dialog')
+  }
+
+  get eloHistoryRows(): Locator {
+    return this.eloHistoryDialog.getByTestId('elo-history-row')
+  }
+
   get authError(): Locator {
     return this.page.getByRole('alert').filter({ hasText: /^Cookie auth failed/ })
   }
 
   async fetchEvents() {
     await this.fetchButton.click()
+  }
+
+  async openEloHistory() {
+    await this.userChip.click()
   }
 
   async fetchAndWaitFor(urlPart: string): Promise<Response> {

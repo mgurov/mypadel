@@ -56,6 +56,23 @@ interface MeetupNode {
   rsvps: { totalCount: number; edges: { node: { member: { id: string } } }[] }
 }
 
+interface ProfileEvent {
+  id: string
+  title: string
+  date: string
+  endDate: string
+}
+
+export interface WorldRegistration {
+  id: string
+  createdAt: string
+  eventId: string
+  userId: string
+  event: ProfileEvent
+}
+
+type RegistrationInput = Partial<Omit<WorldRegistration, 'event'>> & { event?: Partial<ProfileEvent> }
+
 type WorldEventInput = Partial<WorldEvent> & {
   participants?: unknown[]
   waitlistCount?: number
@@ -135,6 +152,19 @@ const defaultUser: WorldUser = {
   isPremium: false,
 }
 
+const defaultRegistration = (index: number): WorldRegistration => ({
+  id: `reg-${index}`,
+  createdAt: futureDate(-7, 9),
+  eventId: `evt-reg-${index}`,
+  userId: 'user-1',
+  event: {
+    id: `evt-reg-${index}`,
+    title: `Past Padel ${index}`,
+    date: futureDate(-1, 10),
+    endDate: futureDate(-1, 12),
+  },
+})
+
 export const wordlyTest = test.extend<{ world: World; appPage: AppPage }>({
   appPage: [async ({ page }, use) => {
     await use(new AppPage(page))
@@ -166,6 +196,8 @@ class World {
     events: [] as WorldEvent[],
     eventDetails: new Map<string, WorldEventDetail>(),
     meetupEvents: [] as MeetupNode[],
+    registrations: [] as WorldRegistration[],
+    profileStatus: 200,
     user: defaultUser,
     auth: { ...defaultAuth },
   }
@@ -202,6 +234,18 @@ class World {
       } else {
         await route.fulfill({ status: 404, json: { error: 'not found' } })
       }
+    } else if (url.pathname.endsWith('/.netlify/functions/profile')) {
+      await route.fulfill({
+        status: this.state.profileStatus,
+        json:
+          this.state.profileStatus === 200
+            ? {
+                id: this.state.user.id,
+                elo: this.state.user.elo,
+                registrations: this.state.registrations,
+              }
+            : { error: 'profile unavailable' },
+      })
     } else if (url.pathname.endsWith('/.netlify/functions/auth-login')) {
       const body = route.request().postDataJSON() as { email?: string; password?: string } | null
       if (body?.email === this.state.auth.email && body?.password === this.state.auth.password) {
@@ -246,6 +290,20 @@ class World {
     return this.state.meetupEvents
   }
 
+  givenRegistrations(inputs: RegistrationInput[]): WorldRegistration[] {
+    this.state.profileStatus = 200
+    this.state.registrations = inputs.map(({ event, ...regFields }, i) => {
+      const registration = { ...defaultRegistration(i), ...regFields, event: { ...defaultRegistration(i).event, ...event } }
+      return registration
+    })
+    return this.state.registrations
+  }
+
+  givenProfileUnavailable() {
+    this.state.profileStatus = 500
+    this.state.registrations = []
+  }
+
   private presentedToken(route: Route): string | undefined {
     return route.request().headers()['m_access_token']
   }
@@ -281,4 +339,4 @@ class World {
 }
 
 export { World, defaultUser }
-export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode }
+export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode, RegistrationInput }
