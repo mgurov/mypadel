@@ -101,7 +101,7 @@ test('courts dialog reveals the participant full name on row click', async ({ pa
   await alice.click()
   await expect(alice.locator('.court-player-name')).toHaveText('Alice Wonderland')
 
-  await alice.click()
+  await alice.locator('.court-player-elo').click()
   await expect(alice.locator('.court-player-name')).toHaveText('Alice')
 })
 
