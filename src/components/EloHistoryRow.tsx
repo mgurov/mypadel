@@ -55,7 +55,7 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
           </span>
         )}
       </div>
-      {player && (
+      {revealed && player && (
         <div className="elo-history-details" data-testid="elo-history-details">
           {detailEntries(player).map(([key, value]) => (
             <div key={key} className="elo-history-detail" data-testid="elo-history-detail">
@@ -65,7 +65,7 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
           ))}
         </div>
       )}
-      {matchDeltas.length > 0 && (
+      {revealed && matchDeltas.length > 0 && (
         <ul className="elo-history-matches" data-testid="elo-history-matches">
           {matchDeltas.map(({ round, delta: matchDelta }) => (
             <li key={round} className="elo-history-match" data-testid="elo-history-match">
