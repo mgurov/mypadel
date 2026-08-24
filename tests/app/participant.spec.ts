@@ -62,7 +62,8 @@ test('shows empty state when all events are still in the future', async ({ world
   await expect(page.getByTestId('sunset-participant-empty')).toContainText('No finished events yet')
 })
 
-test('shows an error when the events fetch fails', async ({ page }) => {
+test('shows an error when the events fetch fails', async ({ world, page }) => {
+  world.givenEventsUnavailable()
   await page.goto('/sunset/participant/u-alice')
 
   await expect(page.getByTestId('sunset-participant-error')).toContainText('Failed to fetch events')

@@ -246,6 +246,7 @@ class World {
     registrations: [] as WorldRegistration[],
     matchTables: new Map<string, WorldMatchTable>(),
     profileStatus: 200,
+    eventsStatus: 200,
     user: defaultUser,
     auth: { ...defaultAuth },
   }
@@ -260,7 +261,10 @@ class World {
     const url = new URL(route.request().url())
 
     if (url.pathname.endsWith('/.netlify/functions/events')) {
-      await route.fulfill({ json: this.state.events })
+      await route.fulfill({
+        status: this.state.eventsStatus,
+        json: this.state.eventsStatus === 200 ? this.state.events : { error: 'events unavailable' },
+      })
     } else if (url.pathname.endsWith('/.netlify/functions/proxy/gql2')) {
       await route.fulfill({
         json: {
@@ -360,6 +364,11 @@ class World {
   givenProfileUnavailable() {
     this.state.profileStatus = 500
     this.state.registrations = []
+  }
+
+  givenEventsUnavailable() {
+    this.state.eventsStatus = 500
+    this.state.events = []
   }
 
   givenMatchTables(inputs: MatchTableInput[]): void {
