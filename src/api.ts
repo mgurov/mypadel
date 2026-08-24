@@ -128,8 +128,10 @@ export interface MatchTablePlayer {
   id: string
   name: string
   elo: number
+  isWinner?: boolean
   previousElo: number
-  newElo: number
+  newElo?: number
+  manualElo?: number
 }
 
 export interface MatchCourt {
@@ -178,9 +180,15 @@ export function matchTablePlayer(matchTable: EventMatchTable, userId: string): M
   return null
 }
 
+export function effectiveEloForPlayer(player: MatchTablePlayer): number | null {
+  return player.manualElo ?? player.newElo ?? null
+}
+
 export function eloDeltaForPlayer(matchTable: EventMatchTable, userId: string): number | null {
   const player = matchTablePlayer(matchTable, userId)
-  return player ? player.newElo - player.previousElo : null
+  if (!player) return null
+  const effective = effectiveEloForPlayer(player)
+  return effective != null ? effective - player.previousElo : null
 }
 
 export interface MeetupGraphqlResponse {

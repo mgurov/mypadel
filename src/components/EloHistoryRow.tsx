@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import { useQuery } from '@tanstack/react-query'
-import { fetchEventMatchTable, matchTablePlayer } from '../api'
+import { eloDeltaForPlayer, fetchEventMatchTable, matchTablePlayer } from '../api'
 import type { MatchTablePlayer, ProfileRegistration } from '../api'
 
 function formatDate(dateString: string): string {
@@ -35,7 +35,7 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
   })
 
   const player = matchTable ? matchTablePlayer(matchTable, userId) : null
-  const delta = player ? player.newElo - player.previousElo : null
+  const delta = matchTable ? eloDeltaForPlayer(matchTable, userId) : null
 
   return (
     <li className="table-row elo-history-row" data-testid="elo-history-row" onClick={() => setRevealed(true)}>

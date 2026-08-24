@@ -77,8 +77,10 @@ export interface WorldMatchPlayer {
   id: string
   name: string
   elo: number
+  isWinner?: boolean
   previousElo: number
-  newElo: number
+  newElo?: number
+  manualElo?: number
 }
 
 export interface WorldMatchTable {

@@ -123,6 +123,45 @@ test('omits the delta when the user is absent from the match table or it is miss
   await expect(appPage.eloHistoryPage.getByTestId('elo-history-details')).toHaveCount(0)
 })
 
+test('prefers manualElo over newElo and omits the delta when neither is present', async ({ world, appPage }) => {
+  world.givenRegistrations([
+    { id: 'reg-manual', event: { id: 'e-manual', title: 'MANUAL CUP', endDate: hoursFromNow(-30) } },
+    { id: 'reg-blank', event: { id: 'e-blank', title: 'BLANK CUP', endDate: hoursFromNow(-50) } },
+  ])
+  world.givenMatchTables([
+    {
+      eventId: 'e-manual',
+      players: [{ id: USER_ID, name: 'Player One', elo: 1393, manualElo: 1443, isWinner: false, previousElo: 1393, newElo: 1350 }],
+    },
+    {
+      eventId: 'e-blank',
+      players: [{ id: USER_ID, name: 'Player One', elo: 1393, previousElo: 1393 }],
+    },
+  ])
+  await appPage.goto()
+  await appPage.fetchEvents()
+
+  await appPage.openEloHistory()
+
+  await expect(appPage.eloHistoryRows).toHaveCount(2)
+
+  await appPage.clickEloHistoryRow(0)
+
+  const manualDelta = appPage.eloHistoryRows.nth(0).getByTestId('elo-history-delta')
+  await expect(manualDelta).toHaveText('+50')
+  const manualDetails = appPage.eloHistoryRows.nth(0).getByTestId('elo-history-detail')
+  await expect(manualDetails).toHaveCount(5)
+  await expect(manualDetails.nth(1)).toContainText('manualElo')
+  await expect(manualDetails.nth(1)).toContainText('1443')
+  await expect(appPage.eloHistoryRows.nth(0).getByTestId('elo-history-detail')).toContainText('false')
+
+  await appPage.clickEloHistoryRow(1)
+
+  await expect(appPage.eloHistoryRows.nth(1).getByTestId('elo-history-delta')).toHaveCount(0)
+  const blankDetails = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-detail')
+  await expect(blankDetails).toHaveCount(2)
+})
+
 test('shows empty state when there are no finished events yet', async ({ appPage }) => {
   await appPage.goto()
   await appPage.fetchEvents()
