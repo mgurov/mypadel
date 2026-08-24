@@ -83,6 +83,27 @@ export interface WorldMatchPlayer {
   manualElo?: number
 }
 
+export interface WorldRatingChange {
+  userId: string
+  before: number
+  delta: number
+  after: number
+}
+
+export interface WorldMatch {
+  id?: string
+  courtNumber?: number
+  round: number
+  pair1?: unknown[]
+  pair2?: unknown[]
+  score1?: number | null
+  score2?: number | null
+  status?: string
+  updatedAt?: string | null
+  updatedBy?: unknown
+  ratingChanges?: WorldRatingChange[]
+}
+
 export interface WorldMatchTable {
   eventId: string
   mode: string
@@ -90,12 +111,13 @@ export interface WorldMatchTable {
   generatedAt: string
   confirmedAt: string
   courts: { courtNumber: number; players: WorldMatchPlayer[]; isManual: boolean; manualOverride: boolean }[]
-  matches: unknown[]
+  matches: WorldMatch[]
 }
 
 export interface MatchTableInput {
   eventId: string
   players?: Partial<WorldMatchPlayer>[]
+  matches?: Partial<WorldMatch>[]
 }
 
 type WorldEventInput = Partial<WorldEvent> & {
@@ -341,7 +363,7 @@ class World {
   }
 
   givenMatchTables(inputs: MatchTableInput[]): void {
-    for (const { eventId, players } of inputs) {
+    for (const { eventId, players, matches } of inputs) {
       const table: WorldMatchTable = {
         eventId,
         mode: 'AUTO_COURTS',
@@ -349,7 +371,19 @@ class World {
         generatedAt: futureDate(-1, 18),
         confirmedAt: futureDate(-1, 20),
         courts: [{ courtNumber: 1, players: (players ?? []).map((player) => ({ ...player } as WorldMatchPlayer)), isManual: false, manualOverride: false }],
-        matches: [],
+        matches: (matches ?? []).map((match, i) => ({
+          id: match.id ?? `match-${i + 1}`,
+          courtNumber: match.courtNumber ?? 1,
+          round: match.round,
+          pair1: match.pair1 ?? [],
+          pair2: match.pair2 ?? [],
+          score1: match.score1 ?? null,
+          score2: match.score2 ?? null,
+          status: match.status ?? 'CONFIRMED',
+          updatedAt: match.updatedAt ?? null,
+          updatedBy: match.updatedBy ?? null,
+          ratingChanges: match.ratingChanges ?? [],
+        })),
       }
       this.state.matchTables.set(eventId, table)
     }
@@ -390,4 +424,4 @@ class World {
 }
 
 export { World, defaultUser }
-export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode, RegistrationInput, MatchTableInput }
+export type { WorldEvent, WorldEventDetail, WorldEventInput, WorldUser, WorldAuth, MeetupNode, RegistrationInput, MatchTableInput, WorldMatch, WorldRatingChange }

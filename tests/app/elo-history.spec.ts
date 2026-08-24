@@ -59,6 +59,7 @@ test('opens ELO history from the user chip and lists past events newest first', 
   await expect(recentDetails.nth(1)).toContainText('1461')
   await expect(recentDetails.nth(2)).toContainText('newElo')
   await expect(recentDetails.nth(2)).toContainText('1393')
+  await expect(appPage.eloHistoryRows.nth(0).getByTestId('elo-history-match')).toHaveCount(0)
 
   await appPage.clickEloHistoryRow(1)
 
@@ -68,6 +69,51 @@ test('opens ELO history from the user chip and lists past events newest first', 
   const oldDetails = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-detail')
   await expect(oldDetails).toHaveCount(3)
   await expect(oldDetails.nth(2)).toContainText('1550')
+})
+
+test('breaks the elo delta down per round for matches the user participated in', async ({ world, appPage }) => {
+  world.givenCurrentUser({ elo: 1498 })
+  world.givenRegistrations([
+    { id: 'reg-rounds', event: { id: 'e-rounds', title: 'ROUNDS CUP', endDate: hoursFromNow(-30) } },
+  ])
+  world.givenMatchTables([
+    {
+      eventId: 'e-rounds',
+      players: [{ id: USER_ID, name: 'Player One', elo: 1498, previousElo: 1500, newElo: 1498 }],
+      matches: [
+        {
+          round: 3,
+          ratingChanges: [
+            { userId: USER_ID, before: 1510, delta: -12, after: 1498 },
+            { userId: 'someone-else', before: 1475, delta: 8, after: 1483 },
+          ],
+        },
+        {
+          round: 1,
+          ratingChanges: [{ userId: USER_ID, before: 1500, delta: 10, after: 1510 }],
+        },
+        {
+          round: 2,
+          ratingChanges: [{ userId: 'someone-else', before: 1480, delta: -5, after: 1475 }],
+        },
+      ],
+    },
+  ])
+  await appPage.goto()
+  await appPage.fetchEvents()
+
+  await appPage.openEloHistory()
+  await appPage.clickEloHistoryRow(0)
+
+  const row = appPage.eloHistoryRows.nth(0)
+  const matchRows = row.getByTestId('elo-history-match')
+  await expect(matchRows).toHaveCount(2)
+  await expect(matchRows.nth(0)).toContainText('Round 1')
+  await expect(matchRows.nth(0).getByTestId('elo-history-match-delta')).toHaveText('+10')
+  await expect(matchRows.nth(0).getByTestId('elo-history-match-delta')).toHaveClass(/elo-delta-positive/)
+  await expect(matchRows.nth(1)).toContainText('Round 3')
+  await expect(matchRows.nth(1).getByTestId('elo-history-match-delta')).toHaveText('-12')
+  await expect(matchRows.nth(1).getByTestId('elo-history-match-delta')).toHaveClass(/elo-delta-negative/)
 })
 
 test('navigates back from the elo history page to the events view', async ({ world, appPage, page }) => {

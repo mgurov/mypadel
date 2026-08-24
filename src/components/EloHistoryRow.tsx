@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import { useQuery } from '@tanstack/react-query'
-import { eloDeltaForPlayer, fetchEventMatchTable, matchTablePlayer } from '../api'
+import { eloDeltaForPlayer, eloDeltasPerMatch, fetchEventMatchTable, matchTablePlayer } from '../api'
 import type { MatchTablePlayer, ProfileRegistration } from '../api'
 
 function formatDate(dateString: string): string {
@@ -36,6 +36,7 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
 
   const player = matchTable ? matchTablePlayer(matchTable, userId) : null
   const delta = matchTable ? eloDeltaForPlayer(matchTable, userId) : null
+  const matchDeltas = matchTable ? eloDeltasPerMatch(matchTable, userId) : []
 
   return (
     <li className="table-row elo-history-row" data-testid="elo-history-row" onClick={() => setRevealed(true)}>
@@ -63,6 +64,23 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
             </div>
           ))}
         </div>
+      )}
+      {matchDeltas.length > 0 && (
+        <ul className="elo-history-matches" data-testid="elo-history-matches">
+          {matchDeltas.map(({ round, delta: matchDelta }) => (
+            <li key={round} className="elo-history-match" data-testid="elo-history-match">
+              <span>Round {round}</span>
+              <strong
+                data-testid="elo-history-match-delta"
+                className={
+                  matchDelta > 0 ? 'elo-delta-positive' : matchDelta < 0 ? 'elo-delta-negative' : 'elo-delta-zero'
+                }
+              >
+                {formatDelta(matchDelta)}
+              </strong>
+            </li>
+          ))}
+        </ul>
       )}
     </li>
   )
