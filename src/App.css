@@ -545,7 +545,7 @@
   list-style: none;
   margin: 4px 0 0;
   padding: 0 0 0 8px;
-  border-left: 2px solid #e0e0e0;
+  border-left: 2px solid #1976d2;
 }
 
 .elo-history-match {
@@ -564,6 +564,7 @@
   list-style: none;
   margin: 2px 0 0;
   padding-left: 8px;
+  border-left: 2px solid #90caf9;
 }
 
 .elo-history-team {
