@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import { SunsetUserProvider } from './userContext'
 import { AuthProvider } from './authContext'
@@ -20,7 +21,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SunsetUserProvider>
-          <App />
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
         </SunsetUserProvider>
       </AuthProvider>
     </QueryClientProvider>

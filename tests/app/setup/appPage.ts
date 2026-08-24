@@ -3,8 +3,8 @@ import { expect, type Locator, type Page, type Response } from "@playwright/test
 export class AppPage {
   constructor(private readonly page: Page) {}
 
-  async goto() {
-    await this.page.goto('/')
+  async goto(path = '/') {
+    await this.page.goto(path)
   }
 
   get fetchButton(): Locator {
@@ -15,16 +15,16 @@ export class AppPage {
     return this.page.getByTestId('user-elo-chip')
   }
 
-  get eloHistoryDialog(): Locator {
-    return this.page.getByRole('dialog')
+  get eloHistoryPage(): Locator {
+    return this.page.getByTestId('elo-history-page')
   }
 
   get eloHistoryRows(): Locator {
-    return this.eloHistoryDialog.getByTestId('elo-history-row')
+    return this.eloHistoryPage.getByTestId('elo-history-row')
   }
 
   get eloHistoryDeltas(): Locator {
-    return this.eloHistoryDialog.getByTestId('elo-history-delta')
+    return this.eloHistoryPage.getByTestId('elo-history-delta')
   }
 
   get authError(): Locator {
@@ -37,6 +37,7 @@ export class AppPage {
 
   async openEloHistory() {
     await this.userChip.click()
+    await expect(this.page).toHaveURL(/\/elo-history$/)
   }
 
   async clickEloHistoryRow(index: number) {

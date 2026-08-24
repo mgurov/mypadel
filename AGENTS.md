@@ -7,11 +7,13 @@ Padel tennis event management SPA + Supabase Edge Functions backend proxy.
 ## Tech Stack
 
 - **Frontend:** React 19, TypeScript 6, Vite 8, MUI 9 (Material UI)
+- **Routing:** react-router-dom v7 (BrowserRouter); routes: `/` events view, `/elo-history` ELO history page; `public/_redirects` provides the Netlify SPA fallback
+- **Data fetching:** @tanstack/react-query
 - **Backend:** Supabase Edge Functions (Deno), proxying to `sunsetpadel.at` (Netlify)
 - **Linter:** Oxlint (not ESLint)
 - **Build:** `tsc -b && vite build`
 - **E2E tests:** Playwright (`@playwright/test`), Chromium only
-- **No router, no state management library, no data-fetching library (no React Query/SWR)**
+- **No state management library**
 
 ## Directory Structure
 
@@ -30,8 +32,8 @@ mypadel/
 │   ├── favicon.svg
 │   └── icons.svg
 ├── src/                        # Frontend source
-│   ├── main.tsx                # Entry: renders <App /> into #root
-│   ├── App.tsx                 # Top-level component: state + wiring (~90 lines)
+│   ├── main.tsx                # Entry: providers + BrowserRouter + <App />
+│   ├── App.tsx                 # Router shell: shared header row (credentials, fetch, ELO chip) + routes
 │   ├── api.ts                  # axios instance, proxy URLs, ensureCookieAuth, types
 │   ├── ics.ts                  # iCalendar (.ics) generation + filenames + download helper
 │   ├── eventTracking.ts        # IndexedDB known-event store (per-source keys like `sunset:`/`meetup:`) + first-fetch ack + new-id detection
@@ -39,10 +41,13 @@ mypadel/
 │   │   ├── CredentialsButton.tsx  # Credentials button + 3-field dialog
 │   │   ├── AckAllButton.tsx       # "Ack all N new events" button above a tab table
 │   │   ├── OnlyNewToggle.tsx      # "Only new" filter toggle next to the ack-all button
+│   │   ├── EventsView.tsx         # `/` route: events queries + filtering + alerts + tabs
 │   │   ├── EventsTable.tsx        # Events table rendering (sunset) + SunsetRow
 │   │   ├── EventDetailCell.tsx    # Per-event participation + Actions dropdown (Show JSON, Add to Calendar, Open Event)
 │   │   ├── MeetupTable.tsx        # Meetup table rendering + MeetupRow
 │   │   ├── CombinedTable.tsx      # Combined (sunset + meetup) chronological view
+│   │   ├── EloHistoryPage.tsx     # `/elo-history` route: profile summary + past events list
+│   │   ├── EloHistoryRow.tsx      # Past-event row; fetches match table on click to reveal ELO delta
 │   │   └── ParticipationCell.tsx  # participants/max formatting
 │   ├── meetup.ts               # Meetup helpers (wolfgang/visible/rsvp/attendance)
 │   ├── App.css                 # Events table styles
@@ -65,7 +70,7 @@ mypadel/
 ### Frontend (src/)
 
 - **Mobile-first:** the main audience uses a phone browser — iPhone 12 viewport (375×812, Safari). Keep layouts usable and readable at small widths.
-- **`App.tsx` holds state + wiring; UI is split into `src/components/`.** Credentials (auth key + email + password) are saved via the single `CredentialsButton` dialog; localStorage keys: `myko-auth-key`, `myko-cred-email`, `myko-cred-password`.
+- **`App.tsx` is the router shell** (shared header row: credentials, fetch, ELO chip); route views live in `src/components/` (`EventsView`, `EloHistoryPage`). Credentials (auth key + email + password) are saved via the single `CredentialsButton` dialog; localStorage keys: `myko-auth-key`, `myko-cred-email`, `myko-cred-password`.
 - **One fetch call** in the app: `fetchEvents()` hits the Supabase Edge Function proxy.
 - **Proxy base:** `PROXY_BASE` in `src/api.ts` — `/dev-proxy/` in dev (forwarded by the Vite dev-server proxy)
 - **Dev server** the default dev server port (5173) should be always be used by agents. Under no circumstances should the agent try accessing other ports, especially pointing browser to 9999. Agent should not try to start the dev server itself and should ask the user to do so if needed.

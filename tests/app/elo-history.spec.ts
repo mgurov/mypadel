@@ -35,13 +35,13 @@ test('opens ELO history from the user chip and lists past events newest first', 
 
   await appPage.openEloHistory()
 
-  const dialog = appPage.eloHistoryDialog
-  await expect(dialog).toBeVisible()
-  await expect(dialog).toContainText('Current ELO: 1393')
+  const page = appPage.eloHistoryPage
+  await expect(page).toBeVisible()
+  await expect(page).toContainText('Current ELO: 1393')
   await expect(appPage.eloHistoryRows).toHaveCount(2)
   await expect(appPage.eloHistoryRows.nth(0)).toContainText('RECENT CUP')
   await expect(appPage.eloHistoryRows.nth(1)).toContainText('OLD SLAM')
-  await expect(dialog).not.toContainText('FUTURE SLAM')
+  await expect(page).not.toContainText('FUTURE SLAM')
   await expect(appPage.eloHistoryDeltas).toHaveCount(0)
 
   await appPage.clickEloHistoryRow(0)
@@ -56,9 +56,34 @@ test('opens ELO history from the user chip and lists past events newest first', 
   const oldDelta = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-delta')
   await expect(oldDelta).toHaveText('+50')
   await expect(oldDelta).toHaveClass(/elo-delta-positive/)
+})
 
-  await dialog.getByRole('button', { name: 'Close' }).click()
-  await expect(dialog).toBeHidden()
+test('navigates back from the elo history page to the events view', async ({ world, appPage, page }) => {
+  world.givenCurrentUser({ elo: 1393 })
+  world.givenRegistrations([])
+  await appPage.goto()
+  await appPage.fetchEvents()
+
+  await appPage.openEloHistory()
+
+  await page.getByRole('button', { name: 'Back' }).click()
+
+  await expect(page).toHaveURL(/\/$/)
+})
+
+test('deep-links straight to the elo history page', async ({ world, appPage }) => {
+  world.givenCurrentUser({ elo: 1393 })
+  world.givenRegistrations([
+    { id: 'reg-old', event: { id: 'e-old', title: 'DEEP SLAM', endDate: hoursFromNow(-30) } },
+  ])
+
+  await appPage.goto('/elo-history')
+
+  const page = appPage.eloHistoryPage
+  await expect(page).toBeVisible()
+  await expect(page).toContainText('Current ELO: 1393')
+  await expect(appPage.eloHistoryRows).toHaveCount(1)
+  await expect(appPage.eloHistoryRows.nth(0)).toContainText('DEEP SLAM')
 })
 
 test('omits the delta when the user is absent from the match table or it is missing', async ({ world, appPage }) => {
@@ -74,7 +99,6 @@ test('omits the delta when the user is absent from the match table or it is miss
 
   await appPage.openEloHistory()
 
-  const dialog = appPage.eloHistoryDialog
   await expect(appPage.eloHistoryRows).toHaveCount(2)
   await expect(appPage.eloHistoryRows.nth(0)).toContainText('NO USER CUP')
   await expect(appPage.eloHistoryRows.nth(1)).toContainText('NO TABLE CUP')
@@ -82,7 +106,7 @@ test('omits the delta when the user is absent from the match table or it is miss
   await appPage.clickEloHistoryRow(0)
   await appPage.clickEloHistoryRow(1)
 
-  await expect(dialog.getByTestId('elo-history-row-loading')).toHaveCount(0)
+  await expect(appPage.eloHistoryPage.getByTestId('elo-history-row-loading')).toHaveCount(0)
   await expect(appPage.eloHistoryDeltas).toHaveCount(0)
 })
 
@@ -92,9 +116,7 @@ test('shows empty state when there are no finished events yet', async ({ appPage
 
   await appPage.openEloHistory()
 
-  const dialog = appPage.eloHistoryDialog
-  await expect(dialog).toBeVisible()
-  await expect(dialog.getByTestId('elo-history-empty')).toContainText('No finished events yet')
+  await expect(appPage.eloHistoryPage.getByTestId('elo-history-empty')).toContainText('No finished events yet')
 })
 
 test('shows an error when the profile fetch fails', async ({ world, appPage }) => {
@@ -104,6 +126,5 @@ test('shows an error when the profile fetch fails', async ({ world, appPage }) =
 
   await appPage.openEloHistory()
 
-  const dialog = appPage.eloHistoryDialog
-  await expect(dialog.getByTestId('elo-history-error')).toContainText('Failed to fetch profile')
+  await expect(appPage.eloHistoryPage.getByTestId('elo-history-error')).toContainText('Failed to fetch profile')
 })
