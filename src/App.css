@@ -559,11 +559,11 @@
 }
 
 .elo-history-match:nth-child(4n + 2) {
-  border-left-color: #2e7d32;
+  border-left-color: #b26a00;
 }
 
 .elo-history-match:nth-child(4n + 3) {
-  border-left-color: #b26a00;
+  border-left-color: #2e7d32;
 }
 
 .elo-history-match:nth-child(4n + 4) {
@@ -590,11 +590,11 @@
 }
 
 .elo-history-match:nth-child(4n + 2) .elo-history-teams {
-  border-left-color: #a5d6a7;
+  border-left-color: #ffcc80;
 }
 
 .elo-history-match:nth-child(4n + 3) .elo-history-teams {
-  border-left-color: #ffcc80;
+  border-left-color: #a5d6a7;
 }
 
 .elo-history-match:nth-child(4n + 4) .elo-history-teams {
