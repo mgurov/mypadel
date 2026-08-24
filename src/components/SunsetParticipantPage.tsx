@@ -4,7 +4,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 import { keepPreviousData, useQuery, useQueries } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ensureCookieAuth, fetchEventDetail, fetchEventsList, pastRegistrations, type Event, type ProfileRegistration } from '../api'
+import { ensureCookieAuth, fetchEventDetail, fetchProfile, pastRegistrations } from '../api'
 import { useAuth } from '../authContext'
 import { useSunsetUser } from '../userContext'
 import { EloHistoryRow } from './EloHistoryRow'
@@ -16,11 +16,11 @@ export function SunsetParticipantPage() {
   const { setUser } = useSunsetUser()
 
   const {
-    data: events,
+    data: profile,
     error,
     isFetching,
-  } = useQuery<Event[]>({
-    queryKey: ['events', authKey, credEmail],
+  } = useQuery({
+    queryKey: ['profile', authKey, credEmail],
     queryFn: async () => {
       try {
         if (hasCredentials) {
@@ -31,20 +31,13 @@ export function SunsetParticipantPage() {
         const msg = e instanceof Error ? e.message : String(e)
         throw new Error(`Cookie auth failed: ${msg}`)
       }
-      return fetchEventsList()
+      return fetchProfile()
     },
     placeholderData: keepPreviousData,
   })
 
   const userId = uid ?? ''
-  const registrations: ProfileRegistration[] = (events ?? []).map((event) => ({
-    id: event.id,
-    createdAt: event.createdAt,
-    eventId: event.id,
-    userId,
-    event: { id: event.id, title: event.title, date: event.date, endDate: event.endDate },
-  }))
-  const past = pastRegistrations(registrations)
+  const past = profile ? pastRegistrations(profile.registrations) : []
 
   const detailQueries = useQueries({
     queries: past.map((registration) => ({
@@ -79,15 +72,15 @@ export function SunsetParticipantPage() {
       </Typography>
       {error && (
         <Alert severity="error" data-testid="sunset-participant-error">
-          {`Failed to fetch events: ${error.message}`}
+          {`Failed to fetch profile: ${error.message}`}
         </Alert>
       )}
-      {!error && isFetching && !events && (
+      {!error && isFetching && !profile && (
         <div className="elo-history-loading" data-testid="sunset-participant-loading">
           <CircularProgress size={24} />
         </div>
       )}
-      {!error && events && (
+      {!error && profile && (
         <>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             {past.length} finished events
