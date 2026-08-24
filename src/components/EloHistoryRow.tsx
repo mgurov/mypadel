@@ -27,6 +27,19 @@ function detailEntries(player: MatchTablePlayer): [string, string][] {
 
 export function EloHistoryRow({ registration, userId }: { registration: ProfileRegistration; userId: string }) {
   const [revealed, setRevealed] = useState(false)
+  const [expandedRounds, setExpandedRounds] = useState<ReadonlySet<number>>(new Set())
+
+  const toggleRound = (round: number) => {
+    setExpandedRounds((prev) => {
+      const next = new Set(prev)
+      if (next.has(round)) {
+        next.delete(round)
+      } else {
+        next.add(round)
+      }
+      return next
+    })
+  }
 
   const { data: matchTable, isFetching } = useQuery({
     queryKey: ['eventMatchTable', registration.eventId],
@@ -67,17 +80,39 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
       )}
       {revealed && matchDeltas.length > 0 && (
         <ul className="elo-history-matches" data-testid="elo-history-matches">
-          {matchDeltas.map(({ round, delta: matchDelta }) => (
-            <li key={round} className="elo-history-match" data-testid="elo-history-match">
-              <span>Round {round}</span>
-              <strong
-                data-testid="elo-history-match-delta"
-                className={
-                  matchDelta > 0 ? 'elo-delta-positive' : matchDelta < 0 ? 'elo-delta-negative' : 'elo-delta-zero'
-                }
+          {matchDeltas.map(({ round, delta: matchDelta, pair1Names, pair2Names, score1, score2 }) => (
+            <li key={round} className="elo-history-match" data-testid="elo-history-match" data-round={round}>
+              <div
+                className="elo-history-match-row"
+                data-testid="elo-history-match-row"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  toggleRound(round)
+                }}
               >
-                {formatDelta(matchDelta)}
-              </strong>
+                <span>Round {round}</span>
+                <strong
+                  data-testid="elo-history-match-delta"
+                  className={
+                    matchDelta > 0 ? 'elo-delta-positive' : matchDelta < 0 ? 'elo-delta-negative' : 'elo-delta-zero'
+                  }
+                >
+                  {formatDelta(matchDelta)}
+                </strong>
+              </div>
+              {expandedRounds.has(round) && (
+                <ul className="elo-history-teams" data-testid="elo-history-teams">
+                  {[
+                    { names: pair1Names, score: score1 },
+                    { names: pair2Names, score: score2 },
+                  ].map(({ names, score }, index) => (
+                    <li key={index} className="elo-history-team" data-testid="elo-history-team">
+                      <span>{names.join(' & ')}</span>
+                      <strong data-testid="elo-history-team-score">{score ?? '-'}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>

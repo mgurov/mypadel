@@ -90,6 +90,10 @@ test('breaks the elo delta down per round for matches the user participated in',
         },
         {
           round: 1,
+          pair1: [{ name: 'Anna' }, { name: 'Ben' }],
+          pair2: [{ name: 'Cara' }, { name: 'Dan' }],
+          score1: 9,
+          score2: 7,
           ratingChanges: [{ userId: USER_ID, before: 1500, delta: 10, after: 1510 }],
         },
         {
@@ -114,6 +118,24 @@ test('breaks the elo delta down per round for matches the user participated in',
   await expect(matchRows.nth(1)).toContainText('Round 3')
   await expect(matchRows.nth(1).getByTestId('elo-history-match-delta')).toHaveText('-12')
   await expect(matchRows.nth(1).getByTestId('elo-history-match-delta')).toHaveClass(/elo-delta-negative/)
+
+  await expect(row.getByTestId('elo-history-team')).toHaveCount(0)
+
+  await matchRows.nth(0).getByTestId('elo-history-match-row').click()
+
+  const teams = row.getByTestId('elo-history-team')
+  await expect(teams).toHaveCount(2)
+  await expect(teams.nth(0)).toContainText('Anna & Ben')
+  await expect(teams.nth(0).getByTestId('elo-history-team-score')).toHaveText('9')
+  await expect(teams.nth(1)).toContainText('Cara & Dan')
+  await expect(teams.nth(1).getByTestId('elo-history-team-score')).toHaveText('7')
+  await expect(row.getByTestId('elo-history-details')).toHaveCount(1)
+  await expect(row.getByTestId('elo-history-delta')).toHaveCount(1)
+
+  await matchRows.nth(0).getByTestId('elo-history-match-row').click()
+
+  await expect(teams).toHaveCount(0)
+  await expect(row.getByTestId('elo-history-details')).toHaveCount(1)
 
   await appPage.clickEloHistoryRow(0)
 

@@ -194,17 +194,28 @@ export function eloDeltaForPlayer(matchTable: EventMatchTable, userId: string): 
 export interface MatchEloDelta {
   round: number
   delta: number
+  pair1Names: string[]
+  pair2Names: string[]
+  score1: number | null
+  score2: number | null
 }
 
 export function eloDeltasPerMatch(matchTable: EventMatchTable, userId: string): MatchEloDelta[] {
   return (matchTable.matches ?? [])
     .map((match) => ({
-      round: match.round,
+      match,
       change: match.ratingChanges?.find((change) => change.userId === userId),
     }))
-    .filter((entry): entry is { round: number; change: RatingChange } => entry.change != null)
-    .map(({ round, change }) => ({ round, delta: change.delta }))
-    .sort((a, b) => a.round - b.round)
+    .filter((entry): entry is { match: MatchTableMatch; change: RatingChange } => entry.change != null)
+    .sort((a, b) => a.match.round - b.match.round)
+    .map(({ match, change }) => ({
+      round: match.round,
+      delta: change.delta,
+      pair1Names: match.pair1?.map((player) => player.name) ?? [],
+      pair2Names: match.pair2?.map((player) => player.name) ?? [],
+      score1: match.score1,
+      score2: match.score2,
+    }))
 }
 
 export interface MeetupGraphqlResponse {
