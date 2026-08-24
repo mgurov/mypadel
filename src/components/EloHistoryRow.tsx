@@ -19,12 +19,10 @@ function formatDelta(delta: number): string {
   return delta > 0 ? `+${delta}` : `${delta}`
 }
 
-function detailEntries(player: MatchTablePlayer): { label: string; value: number }[] {
-  return [
-    { label: 'Previous ELO', value: player.previousElo },
-    { label: 'New ELO', value: player.newElo },
-    { label: 'Current ELO', value: player.elo },
-  ]
+function detailEntries(player: MatchTablePlayer): [string, string][] {
+  return Object.entries(player)
+    .filter(([key]) => key !== 'id' && key !== 'name')
+    .map(([key, value]) => [key, String(value)])
 }
 
 export function EloHistoryRow({ registration, userId }: { registration: ProfileRegistration; userId: string }) {
@@ -58,9 +56,9 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
       </div>
       {player && (
         <div className="elo-history-details" data-testid="elo-history-details">
-          {detailEntries(player).map(({ label, value }) => (
-            <div key={label} className="elo-history-detail" data-testid="elo-history-detail">
-              <span>{label}</span>
+          {detailEntries(player).map(([key, value]) => (
+            <div key={key} className="elo-history-detail" data-testid="elo-history-detail">
+              <span>{key}</span>
               <strong>{value}</strong>
             </div>
           ))}

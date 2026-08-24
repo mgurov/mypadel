@@ -53,12 +53,12 @@ test('opens ELO history from the user chip and lists past events newest first', 
 
   const recentDetails = appPage.eloHistoryRows.nth(0).getByTestId('elo-history-detail')
   await expect(recentDetails).toHaveCount(3)
-  await expect(recentDetails.nth(0)).toContainText('Previous ELO')
+  await expect(recentDetails.nth(0)).toContainText('elo')
   await expect(recentDetails.nth(0)).toContainText('1461')
-  await expect(recentDetails.nth(1)).toContainText('New ELO')
-  await expect(recentDetails.nth(1)).toContainText('1393')
-  await expect(recentDetails.nth(2)).toContainText('Current ELO')
-  await expect(recentDetails.nth(2)).toContainText('1461')
+  await expect(recentDetails.nth(1)).toContainText('previousElo')
+  await expect(recentDetails.nth(1)).toContainText('1461')
+  await expect(recentDetails.nth(2)).toContainText('newElo')
+  await expect(recentDetails.nth(2)).toContainText('1393')
 
   await appPage.clickEloHistoryRow(1)
 
@@ -67,7 +67,7 @@ test('opens ELO history from the user chip and lists past events newest first', 
   await expect(oldDelta).toHaveClass(/elo-delta-positive/)
   const oldDetails = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-detail')
   await expect(oldDetails).toHaveCount(3)
-  await expect(oldDetails.nth(1)).toContainText('1550')
+  await expect(oldDetails.nth(2)).toContainText('1550')
 })
 
 test('navigates back from the elo history page to the events view', async ({ world, appPage, page }) => {
