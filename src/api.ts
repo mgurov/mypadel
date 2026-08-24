@@ -243,6 +243,11 @@ export async function fetchEventDetail(id: string): Promise<EventDetail> {
   return data
 }
 
+export async function fetchEventsList(): Promise<Event[]> {
+  const { data } = await api.get<Event[]>(EVENTS_URL)
+  return data
+}
+
 export async function fetchEventMatchTable(eventId: string): Promise<EventMatchTable> {
   const { data } = await api.get<EventMatchTable>(`${EVENT_MATCH_TABLE_URL}?eventId=${eventId}`)
   return data

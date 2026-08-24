@@ -1,6 +1,6 @@
 import { useQueries, useQuery, keepPreviousData } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
-import { api, EVENTS_URL, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, type Event, type MeetupEvent, type MeetupGraphqlResponse } from '../api'
+import { api, MEETUP_URL, buildMeetupBody, ensureCookieAuth, fetchEventDetail, fetchEventsList, type Event, type MeetupEvent, type MeetupGraphqlResponse } from '../api'
 import { EventTables, type TabId } from './EventTables'
 import { useSunsetUser } from '../userContext'
 import { useAuth } from '../authContext'
@@ -23,8 +23,7 @@ export function EventsView() {
         setAuthError(msg)
         throw new Error(`Cookie auth failed: ${msg}`)
       }
-      const { data } = await api.get<Event[]>(EVENTS_URL)
-      return data
+      return fetchEventsList()
     },
     enabled: false,
     placeholderData: keepPreviousData,
