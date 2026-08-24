@@ -198,6 +198,9 @@ test('omits the delta when the user is absent from the match table or it is miss
   await expect(appPage.eloHistoryPage.getByTestId('elo-history-row-loading')).toHaveCount(0)
   await expect(appPage.eloHistoryDeltas).toHaveCount(0)
   await expect(appPage.eloHistoryPage.getByTestId('elo-history-details')).toHaveCount(0)
+
+  await expect(appPage.eloHistoryRows.nth(0).getByTestId('elo-history-no-record')).toHaveText('-')
+  await expect(appPage.eloHistoryRows.nth(1).getByTestId('elo-history-no-record')).toHaveCount(0)
 })
 
 test('prefers manualElo over newElo and omits the delta when neither is present', async ({ world, appPage }) => {

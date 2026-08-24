@@ -2,9 +2,9 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueries } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ensureCookieAuth, fetchEventsList, pastRegistrations, type Event, type ProfileRegistration } from '../api'
+import { ensureCookieAuth, fetchEventDetail, fetchEventsList, pastRegistrations, type Event, type ProfileRegistration } from '../api'
 import { useAuth } from '../authContext'
 import { useSunsetUser } from '../userContext'
 import { EloHistoryRow } from './EloHistoryRow'
@@ -46,12 +46,34 @@ export function SunsetParticipantPage() {
   }))
   const past = pastRegistrations(registrations)
 
+  const detailQueries = useQueries({
+    queries: past.map((registration) => ({
+      queryKey: ['eventDetail', registration.eventId],
+      queryFn: () => fetchEventDetail(registration.eventId),
+    })),
+  })
+
+  let participantSummary: { name: string; elo: number } | null = null
+  for (const query of detailQueries) {
+    const match = query.data?.participants.find((p) => p.userId === userId)
+    if (!match) continue
+    const full = match.user?.name?.trim()
+    const name = full || [match.user?.firstName, match.user?.lastName].filter(Boolean).join(' ').trim()
+    participantSummary = { name, elo: match.user.elo }
+    break
+  }
+
   return (
     <div data-testid="sunset-participant-page">
       <div className="elo-history-header">
         <Button onClick={() => navigate('/')}>Back</Button>
         <Typography variant="subtitle1">Participant</Typography>
       </div>
+      {participantSummary && (
+        <Typography variant="subtitle1" data-testid="sunset-participant-summary">
+          {participantSummary.name} &middot; ELO {participantSummary.elo}
+        </Typography>
+      )}
       <Typography variant="body2" color="text.secondary" data-testid="sunset-participant-uid">
         {userId}
       </Typography>

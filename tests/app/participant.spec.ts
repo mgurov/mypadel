@@ -12,13 +12,22 @@ test('lists past sunset events newest first and filters out future ones', async 
     { id: 'evt-old', title: 'OLD SLAM', date: hoursFromNow(-72), endDate: hoursFromNow(-70) },
     { id: 'evt-future', title: 'FUTURE SLAM', date: hoursFromNow(24), endDate: hoursFromNow(26) },
     { id: 'evt-live', title: 'LIVE CUP', date: hoursFromNow(-1), endDate: hoursFromNow(1) },
-    { id: 'evt-recent', title: 'RECENT CUP', date: hoursFromNow(-5), endDate: hoursFromNow(-4) },
+    {
+      id: 'evt-recent',
+      title: 'RECENT CUP',
+      date: hoursFromNow(-5),
+      endDate: hoursFromNow(-4),
+      participants: [
+        { id: 'p-alice', userId: UID, user: { id: UID, firstName: 'Alice', lastName: 'Wonderland', name: 'Alice Wonderland', elo: 1520 } },
+      ],
+    },
   ])
   await page.goto('/sunset/participant/u-alice')
 
   const participantPage = page.getByTestId('sunset-participant-page')
   await expect(participantPage).toBeVisible()
   await expect(page.getByTestId('sunset-participant-uid')).toHaveText('u-alice')
+  await expect(page.getByTestId('sunset-participant-summary')).toHaveText('Alice Wonderland · ELO 1520')
 
   const rows = page.getByTestId('elo-history-row')
   await expect(rows).toHaveCount(2)
@@ -60,6 +69,24 @@ test('shows empty state when all events are still in the future', async ({ world
   await page.goto('/sunset/participant/u-alice')
 
   await expect(page.getByTestId('sunset-participant-empty')).toContainText('No finished events yet')
+})
+
+test('hides the participant summary when no fetched event contains the uid', async ({ world, page }) => {
+  world.givenEvents([
+    {
+      id: 'evt-past',
+      title: 'OLD SLAM',
+      date: hoursFromNow(-72),
+      endDate: hoursFromNow(-70),
+      participants: [
+        { id: 'p-bob', userId: 'u-bob', user: { id: 'u-bob', firstName: 'Bob', lastName: 'Johnson', name: 'Bob Johnson', elo: 1600 } },
+      ],
+    },
+  ])
+  await page.goto('/sunset/participant/u-alice')
+
+  await expect(page.getByTestId('sunset-participant-page')).toBeVisible()
+  await expect(page.getByTestId('sunset-participant-summary')).toHaveCount(0)
 })
 
 test('shows an error when the events fetch fails', async ({ world, page }) => {

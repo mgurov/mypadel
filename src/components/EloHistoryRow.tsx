@@ -59,6 +59,7 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
       </div>
       <div className="column text-align-right no-grow margin-left-16">
         {isFetching && <CircularProgress size={14} data-testid="elo-history-row-loading" />}
+        {!isFetching && matchTable && !player && <span data-testid="elo-history-no-record">-</span>}
         {!isFetching && delta != null && (
           <span
             data-testid="elo-history-delta"
