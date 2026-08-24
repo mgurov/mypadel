@@ -42,10 +42,17 @@ test('opens ELO history from the user chip and lists past events newest first', 
   await expect(appPage.eloHistoryRows.nth(0)).toContainText('RECENT CUP')
   await expect(appPage.eloHistoryRows.nth(1)).toContainText('OLD SLAM')
   await expect(dialog).not.toContainText('FUTURE SLAM')
+  await expect(appPage.eloHistoryDeltas).toHaveCount(0)
+
+  await appPage.clickEloHistoryRow(0)
 
   const recentDelta = appPage.eloHistoryRows.nth(0).getByTestId('elo-history-delta')
   await expect(recentDelta).toHaveText('-68')
   await expect(recentDelta).toHaveClass(/elo-delta-negative/)
+  await expect(appPage.eloHistoryRows.nth(1).getByTestId('elo-history-delta')).toHaveCount(0)
+
+  await appPage.clickEloHistoryRow(1)
+
   const oldDelta = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-delta')
   await expect(oldDelta).toHaveText('+50')
   await expect(oldDelta).toHaveClass(/elo-delta-positive/)
@@ -71,7 +78,12 @@ test('omits the delta when the user is absent from the match table or it is miss
   await expect(appPage.eloHistoryRows).toHaveCount(2)
   await expect(appPage.eloHistoryRows.nth(0)).toContainText('NO USER CUP')
   await expect(appPage.eloHistoryRows.nth(1)).toContainText('NO TABLE CUP')
-  await expect(dialog.getByTestId('elo-history-delta')).toHaveCount(0)
+
+  await appPage.clickEloHistoryRow(0)
+  await appPage.clickEloHistoryRow(1)
+
+  await expect(dialog.getByTestId('elo-history-row-loading')).toHaveCount(0)
+  await expect(appPage.eloHistoryDeltas).toHaveCount(0)
 })
 
 test('shows empty state when there are no finished events yet', async ({ appPage }) => {

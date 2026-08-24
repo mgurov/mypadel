@@ -9,8 +9,9 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Typography from '@mui/material/Typography'
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { eloDeltaForPlayer, fetchEventMatchTable, fetchProfile, pastRegistrations } from '../api'
+import type { ProfileRegistration } from '../api'
 import { useAuth } from '../authContext'
 import { useSunsetUser } from '../userContext'
 
@@ -33,6 +34,38 @@ function formatDelta(delta: number): string {
   return delta > 0 ? `+${delta}` : `${delta}`
 }
 
+function EloHistoryRow({ registration, userId }: { registration: ProfileRegistration; userId: string }) {
+  const [revealed, setRevealed] = useState(false)
+
+  const { data: matchTable, isFetching } = useQuery({
+    queryKey: ['eventMatchTable', registration.eventId],
+    queryFn: () => fetchEventMatchTable(registration.eventId),
+    enabled: revealed,
+  })
+
+  const delta = matchTable ? eloDeltaForPlayer(matchTable, userId) : null
+
+  return (
+    <li className="table-row elo-history-row" data-testid="elo-history-row" onClick={() => setRevealed(true)}>
+      <div className="column">
+        {formatDate(registration.event.endDate)}
+        <div className="elo-history-title">{registration.event.title}</div>
+      </div>
+      <div className="column text-align-right no-grow margin-left-16">
+        {isFetching && <CircularProgress size={14} data-testid="elo-history-row-loading" />}
+        {!isFetching && delta != null && (
+          <span
+            data-testid="elo-history-delta"
+            className={delta > 0 ? 'elo-delta-positive' : delta < 0 ? 'elo-delta-negative' : 'elo-delta-zero'}
+          >
+            {formatDelta(delta)}
+          </span>
+        )}
+      </div>
+    </li>
+  )
+}
+
 export function EloHistoryChip() {
   const { user } = useSunsetUser()
   const { authKey } = useAuth()
@@ -50,14 +83,6 @@ export function EloHistoryChip() {
   })
 
   const past = pastRegistrations(profile?.registrations ?? [])
-
-  const matchTableQueries = useQueries({
-    queries: past.map((registration) => ({
-      queryKey: ['eventMatchTable', registration.eventId],
-      queryFn: () => fetchEventMatchTable(registration.eventId),
-      enabled: open && user != null,
-    })),
-  })
 
   if (!user) return null
 
@@ -101,30 +126,9 @@ export function EloHistoryChip() {
           )}
           {!error && past.length > 0 && (
             <ul className="elo-history-list" data-testid="elo-history-list">
-              {past.map((registration, i) => {
-                const matchTable = matchTableQueries[i]?.data
-                const delta = matchTable ? eloDeltaForPlayer(matchTable, user.id) : null
-                return (
-                  <li key={registration.id} className="table-row elo-history-row" data-testid="elo-history-row">
-                    <div className="column">
-                      {formatDate(registration.event.endDate)}
-                      <div className="elo-history-title">{registration.event.title}</div>
-                    </div>
-                    <div className="column text-align-right no-grow margin-left-16">
-                      {delta != null && (
-                        <span
-                          data-testid="elo-history-delta"
-                          className={
-                            delta > 0 ? 'elo-delta-positive' : delta < 0 ? 'elo-delta-negative' : 'elo-delta-zero'
-                          }
-                        >
-                          {formatDelta(delta)}
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
+              {past.map((registration) => (
+                <EloHistoryRow key={registration.id} registration={registration} userId={user.id} />
+              ))}
             </ul>
           )}
         </DialogContent>

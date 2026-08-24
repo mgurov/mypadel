@@ -23,6 +23,10 @@ export class AppPage {
     return this.eloHistoryDialog.getByTestId('elo-history-row')
   }
 
+  get eloHistoryDeltas(): Locator {
+    return this.eloHistoryDialog.getByTestId('elo-history-delta')
+  }
+
   get authError(): Locator {
     return this.page.getByRole('alert').filter({ hasText: /^Cookie auth failed/ })
   }
@@ -33,6 +37,10 @@ export class AppPage {
 
   async openEloHistory() {
     await this.userChip.click()
+  }
+
+  async clickEloHistoryRow(index: number) {
+    await this.eloHistoryRows.nth(index).click()
   }
 
   async fetchAndWaitFor(urlPart: string): Promise<Response> {
