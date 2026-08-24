@@ -114,6 +114,15 @@ test('breaks the elo delta down per round for matches the user participated in',
   await expect(matchRows.nth(1)).toContainText('Round 3')
   await expect(matchRows.nth(1).getByTestId('elo-history-match-delta')).toHaveText('-12')
   await expect(matchRows.nth(1).getByTestId('elo-history-match-delta')).toHaveClass(/elo-delta-negative/)
+
+  await appPage.clickEloHistoryRow(0)
+
+  await expect(row.getByTestId('elo-history-match')).toHaveCount(0)
+  await expect(row.getByTestId('elo-history-details')).toHaveCount(0)
+
+  await appPage.clickEloHistoryRow(0)
+
+  await expect(row.getByTestId('elo-history-match')).toHaveCount(2)
 })
 
 test('navigates back from the elo history page to the events view', async ({ world, appPage, page }) => {

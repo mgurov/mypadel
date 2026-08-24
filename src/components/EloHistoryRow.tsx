@@ -39,7 +39,7 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
   const matchDeltas = matchTable ? eloDeltasPerMatch(matchTable, userId) : []
 
   return (
-    <li className="table-row elo-history-row" data-testid="elo-history-row" onClick={() => setRevealed(true)}>
+    <li className="table-row elo-history-row" data-testid="elo-history-row" onClick={() => setRevealed((wasRevealed) => !wasRevealed)}>
       <div className="column">
         {formatDate(registration.event.endDate)}
         <div className="elo-history-title">{registration.event.title}</div>
