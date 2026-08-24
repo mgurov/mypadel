@@ -498,6 +498,16 @@
   border-bottom: none;
 }
 
+@media (max-width: 500px) {
+  /* The generic .table-row column wrapping targets the events tables; the
+     elo delta column must stay on the header line, flush right with the
+     numbers below (flex-basis: 100% + margin-left-16 would overflow). */
+  .elo-history-row > .column:nth-child(2) {
+    flex-basis: auto;
+    margin-top: 0;
+  }
+}
+
 .elo-history-loading {
   display: flex;
   justify-content: center;
