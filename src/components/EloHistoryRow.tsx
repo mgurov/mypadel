@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import { useQuery } from '@tanstack/react-query'
-import { fetchEventMatchTable, matchTablePlayer } from '../api'import type { MatchTablePlayer, ProfileRegistration } from '../api'
+import { fetchEventMatchTable, matchTablePlayer } from '../api'
+import type { MatchTablePlayer, ProfileRegistration } from '../api'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)

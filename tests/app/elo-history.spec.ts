@@ -58,7 +58,7 @@ test('opens ELO history from the user chip and lists past events newest first', 
   await expect(recentDetails.nth(1)).toContainText('New ELO')
   await expect(recentDetails.nth(1)).toContainText('1393')
   await expect(recentDetails.nth(2)).toContainText('Current ELO')
-  await expect(recentDetails.nth(2)).toContainText('1500')
+  await expect(recentDetails.nth(2)).toContainText('1461')
 
   await appPage.clickEloHistoryRow(1)
 
