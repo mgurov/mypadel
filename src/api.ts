@@ -170,12 +170,17 @@ export interface EventMatchTable {
   matches: MatchTableMatch[]
 }
 
-export function eloDeltaForPlayer(matchTable: EventMatchTable, userId: string): number | null {
+export function matchTablePlayer(matchTable: EventMatchTable, userId: string): MatchTablePlayer | null {
   for (const court of matchTable.courts ?? []) {
     const player = court.players?.find((p) => p.id === userId)
-    if (player) return player.newElo - player.previousElo
+    if (player) return player
   }
   return null
+}
+
+export function eloDeltaForPlayer(matchTable: EventMatchTable, userId: string): number | null {
+  const player = matchTablePlayer(matchTable, userId)
+  return player ? player.newElo - player.previousElo : null
 }
 
 export interface MeetupGraphqlResponse {

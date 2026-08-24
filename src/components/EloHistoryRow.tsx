@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress'
 import { useQuery } from '@tanstack/react-query'
-import { eloDeltaForPlayer, fetchEventMatchTable } from '../api'
-import type { ProfileRegistration } from '../api'
+import { fetchEventMatchTable, matchTablePlayer } from '../api'import type { MatchTablePlayer, ProfileRegistration } from '../api'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
@@ -19,6 +18,14 @@ function formatDelta(delta: number): string {
   return delta > 0 ? `+${delta}` : `${delta}`
 }
 
+function detailEntries(player: MatchTablePlayer): { label: string; value: number }[] {
+  return [
+    { label: 'Previous ELO', value: player.previousElo },
+    { label: 'New ELO', value: player.newElo },
+    { label: 'Current ELO', value: player.elo },
+  ]
+}
+
 export function EloHistoryRow({ registration, userId }: { registration: ProfileRegistration; userId: string }) {
   const [revealed, setRevealed] = useState(false)
 
@@ -28,7 +35,8 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
     enabled: revealed,
   })
 
-  const delta = matchTable ? eloDeltaForPlayer(matchTable, userId) : null
+  const player = matchTable ? matchTablePlayer(matchTable, userId) : null
+  const delta = player ? player.newElo - player.previousElo : null
 
   return (
     <li className="table-row elo-history-row" data-testid="elo-history-row" onClick={() => setRevealed(true)}>
@@ -47,6 +55,16 @@ export function EloHistoryRow({ registration, userId }: { registration: ProfileR
           </span>
         )}
       </div>
+      {player && (
+        <div className="elo-history-details" data-testid="elo-history-details">
+          {detailEntries(player).map(({ label, value }) => (
+            <div key={label} className="elo-history-detail" data-testid="elo-history-detail">
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+          ))}
+        </div>
+      )}
     </li>
   )
 }

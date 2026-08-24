@@ -51,11 +51,23 @@ test('opens ELO history from the user chip and lists past events newest first', 
   await expect(recentDelta).toHaveClass(/elo-delta-negative/)
   await expect(appPage.eloHistoryRows.nth(1).getByTestId('elo-history-delta')).toHaveCount(0)
 
+  const recentDetails = appPage.eloHistoryRows.nth(0).getByTestId('elo-history-detail')
+  await expect(recentDetails).toHaveCount(3)
+  await expect(recentDetails.nth(0)).toContainText('Previous ELO')
+  await expect(recentDetails.nth(0)).toContainText('1461')
+  await expect(recentDetails.nth(1)).toContainText('New ELO')
+  await expect(recentDetails.nth(1)).toContainText('1393')
+  await expect(recentDetails.nth(2)).toContainText('Current ELO')
+  await expect(recentDetails.nth(2)).toContainText('1500')
+
   await appPage.clickEloHistoryRow(1)
 
   const oldDelta = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-delta')
   await expect(oldDelta).toHaveText('+50')
   await expect(oldDelta).toHaveClass(/elo-delta-positive/)
+  const oldDetails = appPage.eloHistoryRows.nth(1).getByTestId('elo-history-detail')
+  await expect(oldDetails).toHaveCount(3)
+  await expect(oldDetails.nth(1)).toContainText('1550')
 })
 
 test('navigates back from the elo history page to the events view', async ({ world, appPage, page }) => {
@@ -108,6 +120,7 @@ test('omits the delta when the user is absent from the match table or it is miss
 
   await expect(appPage.eloHistoryPage.getByTestId('elo-history-row-loading')).toHaveCount(0)
   await expect(appPage.eloHistoryDeltas).toHaveCount(0)
+  await expect(appPage.eloHistoryPage.getByTestId('elo-history-details')).toHaveCount(0)
 })
 
 test('shows empty state when there are no finished events yet', async ({ appPage }) => {
