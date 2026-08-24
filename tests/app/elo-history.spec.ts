@@ -153,7 +153,7 @@ test('prefers manualElo over newElo and omits the delta when neither is present'
   await expect(manualDetails).toHaveCount(5)
   await expect(manualDetails.nth(1)).toContainText('manualElo')
   await expect(manualDetails.nth(1)).toContainText('1443')
-  await expect(appPage.eloHistoryRows.nth(0).getByTestId('elo-history-detail')).toContainText('false')
+  await expect(manualDetails.filter({ hasText: 'isWinner' })).toContainText('false')
 
   await appPage.clickEloHistoryRow(1)
 
