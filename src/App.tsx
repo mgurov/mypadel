@@ -5,6 +5,7 @@ import { FetchButton } from './components/FetchButton'
 import { EventsView } from './components/EventsView'
 import { EloHistoryChip } from './components/EloHistoryChip'
 import { EloHistoryPage } from './components/EloHistoryPage'
+import { SunsetParticipantPage } from './components/SunsetParticipantPage'
 import { useAuth } from './authContext'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Routes>
         <Route path="/" element={<EventsView />} />
         <Route path="/elo-history" element={<EloHistoryPage />} />
+        <Route path="/sunset/participant/:uid" element={<SunsetParticipantPage />} />
       </Routes>
     </section>
   )

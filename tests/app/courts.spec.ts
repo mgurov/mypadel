@@ -112,10 +112,11 @@ test('revealed participant name links to its sunset participant page', async ({ 
   await expect(alice.locator('.court-player-name-link')).toHaveCount(0)
 
   await alice.click()
-  await expect(alice.locator('.court-player-name-link')).toHaveAttribute(
-    'href',
-    'https://sunsetpadel.at/sunset/participant/u-alice',
-  )
+  await expect(alice.locator('.court-player-name-link')).toHaveAttribute('href', '/sunset/participant/u-alice')
+
+  await alice.locator('.court-player-name-link').click()
+  await expect(page).toHaveURL(/\/sunset\/participant\/u-alice$/)
+  await expect(page.getByTestId('sunset-participant-uid')).toHaveText('u-alice')
 })
 
 test('courts dialog marks premium participants with a badge', async ({ page, world }) => {

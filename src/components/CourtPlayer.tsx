@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Participant } from '../api'
 
 function participantName(p: Participant): string {
@@ -32,15 +33,13 @@ export function CourtPlayer({ participant }: { participant: Participant }) {
     >
       <span className="court-player-name">
         {showFullName ? (
-          <a
+          <Link
             className="court-player-name-link"
-            href={`https://sunsetpadel.at/sunset/participant/${participant.userId}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/sunset/participant/${participant.userId}`}
             onClick={(e) => e.stopPropagation()}
           >
             {participantFullName(participant)}
-          </a>
+          </Link>
         ) : participantName(participant)}
         {participant.premiumSubscriptionId != null && (
           <span className="premium-badge" data-testid="premium-badge" title="Premium subscription">&#9733;</span>
