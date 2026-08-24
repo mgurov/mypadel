@@ -470,6 +470,10 @@
   white-space: nowrap;
 }
 
+.court-player-name-link {
+  color: inherit;
+}
+
 .court-player-elo {
   font-weight: 600;
 }

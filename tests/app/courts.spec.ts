@@ -105,6 +105,19 @@ test('courts dialog reveals the participant full name on row click', async ({ pa
   await expect(alice.locator('.court-player-name')).toHaveText('Alice')
 })
 
+test('revealed participant name links to its sunset participant page', async ({ page, world }) => {
+  const dialog = await openCourts(page, world)
+
+  const alice = dialog.getByTestId('court-player-p-alice')
+  await expect(alice.locator('.court-player-name-link')).toHaveCount(0)
+
+  await alice.click()
+  await expect(alice.locator('.court-player-name-link')).toHaveAttribute(
+    'href',
+    'https://sunsetpadel.at/sunset/participant/u-alice',
+  )
+})
+
 test('courts dialog marks premium participants with a badge', async ({ page, world }) => {
   const withPremium = [
     { id: 'p-alice', userId: 'u-alice', premiumSubscriptionId: 'sub-1', user: { name: 'Alice', firstName: 'Alice', lastName: '', elo: 1500 } },

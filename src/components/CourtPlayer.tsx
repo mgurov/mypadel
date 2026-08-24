@@ -31,7 +31,17 @@ export function CourtPlayer({ participant }: { participant: Participant }) {
       }}
     >
       <span className="court-player-name">
-        {showFullName ? participantFullName(participant) : participantName(participant)}
+        {showFullName ? (
+          <a
+            className="court-player-name-link"
+            href={`https://sunsetpadel.at/sunset/participant/${participant.userId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {participantFullName(participant)}
+          </a>
+        ) : participantName(participant)}
         {participant.premiumSubscriptionId != null && (
           <span className="premium-badge" data-testid="premium-badge" title="Premium subscription">&#9733;</span>
         )}
