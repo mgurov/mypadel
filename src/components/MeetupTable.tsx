@@ -1,5 +1,6 @@
 import Button from '@mui/material/Button'
 import type { MeetupEvent } from '../api'
+import { groupByDate } from '../dateGrouping'
 import { eventKey } from '../eventTracking'
 import { isMyRsvp, formatAttendance } from '../meetup'
 import { hasEnded, isLive } from '../timing'
@@ -58,11 +59,17 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }:
 }
 
 export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void; selectedKey?: string; onSelect?: (key: string) => void }) {
+  const groups = groupByDate(events, (e) => e.dateTime)
   return (
     <div className="events-table">
-      {events.map((event) => (
-        <div key={event.id} className="table-row-group">
-          <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
+      {groups.map((group) => (
+        <div key={group.key}>
+          <div className="date-group-header">{group.header}</div>
+          {group.items.map((event) => (
+            <div key={event.id} className="table-row-group">
+              <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
+            </div>
+          ))}
         </div>
       ))}
     </div>

@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import type { Event, EventDetail } from '../api'
 import { fetchEventDetail } from '../api'
 import { cancellationDeadline, isCancellationUrgent } from '../cancellation'
+import { groupByDate } from '../dateGrouping'
 import { ackCancellation, eventKey, isCancellationAcked } from '../eventTracking'
 import { hasEnded, isLive } from '../timing'
 import { useSunsetUser } from '../userContext'
@@ -127,11 +128,17 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }:
 }
 
 export function EventsTable({ events, newIds, onAck, selectedKey, onSelect }: { events: Event[]; newIds: ReadonlySet<string>; onAck: (event: Event) => void; selectedKey?: string; onSelect?: (key: string) => void }) {
+  const groups = groupByDate(events, (e) => e.date)
   return (
     <div className="events-table">
-      {events.map((event) => (
-        <div key={event.id} className="table-row-group">
-          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
+      {groups.map((group) => (
+        <div key={group.key}>
+          <div className="date-group-header">{group.header}</div>
+          {group.items.map((event) => (
+            <div key={event.id} className="table-row-group">
+              <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
+            </div>
+          ))}
         </div>
       ))}
     </div>
