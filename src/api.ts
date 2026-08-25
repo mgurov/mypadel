@@ -48,8 +48,8 @@ export interface Participant {
   premiumSubscriptionId: string | null
   user: {
     id: string
-    firstName: string
-    lastName: string
+    firstName?: string
+    lastName?: string
     elo: number
     name: string
   }

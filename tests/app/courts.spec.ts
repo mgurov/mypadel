@@ -119,6 +119,38 @@ test('revealed participant name links to its sunset participant page', async ({ 
   await expect(page.getByTestId('sunset-participant-uid')).toHaveText('u-alice')
 })
 
+test('revealed participant name falls back to the display name when the full name is unavailable', async ({ page, world }) => {
+  const abbreviated = [
+    { id: 'p-mykola', userId: 'u-mykola', user: { name: 'Mykola G.', elo: 1416 } },
+  ]
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: abbreviated }])
+  await page.goto('/')
+  await page.getByTestId('fetch-events-button').click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Courts' }).click()
+
+  const mykola = page.getByRole('dialog').getByTestId('court-player-p-mykola')
+  await expect(mykola.locator('.court-player-name')).toHaveText('Mykola G.')
+
+  await mykola.click()
+  await expect(mykola.locator('.court-player-name-link')).toHaveText('Mykola G.')
+})
+
+test('participant history link is keyboard accessible', async ({ page, world }) => {
+  const dialog = await openCourts(page, world)
+
+  const alice = dialog.getByTestId('court-player-p-alice')
+  await alice.getByRole('button', { name: 'Alice' }).press('Enter')
+
+  const link = alice.getByRole('link', { name: 'Alice Wonderland' })
+  await expect(link).toBeVisible()
+
+  await link.press('Enter')
+  await expect(page).toHaveURL(/\/sunset\/participant\/u-alice$/)
+})
+
 test('courts dialog marks premium participants with a badge', async ({ page, world }) => {
   const withPremium = [
     { id: 'p-alice', userId: 'u-alice', premiumSubscriptionId: 'sub-1', user: { name: 'Alice', firstName: 'Alice', lastName: '', elo: 1500 } },

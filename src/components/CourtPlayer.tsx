@@ -17,19 +17,15 @@ export function CourtPlayer({ participant }: { participant: Participant }) {
 
   const toggle = () => setShowFullName((v) => !v)
 
+  const displayName = participantName(participant)
+  // The API no longer always provides firstName/lastName — never reveal a blank name.
+  const revealedName = participantFullName(participant) || displayName
+
   return (
     <li
       className={`court-player${showFullName ? ' court-player-revealed' : ''}`}
       data-testid={`court-player-${participant.id}`}
-      role="button"
-      tabIndex={0}
       onClick={toggle}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          toggle()
-        }
-      }}
     >
       <span className="court-player-name">
         {showFullName ? (
@@ -38,9 +34,20 @@ export function CourtPlayer({ participant }: { participant: Participant }) {
             to={`/sunset/participant/${participant.userId}`}
             onClick={(e) => e.stopPropagation()}
           >
-            {participantFullName(participant)}
+            {revealedName}
           </Link>
-        ) : participantName(participant)}
+        ) : (
+          <button
+            type="button"
+            className="court-player-name-toggle"
+            onClick={(e) => {
+              e.stopPropagation()
+              toggle()
+            }}
+          >
+            {displayName}
+          </button>
+        )}
         {participant.premiumSubscriptionId != null && (
           <span className="premium-badge" data-testid="premium-badge" title="Premium subscription">&#9733;</span>
         )}

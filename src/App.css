@@ -436,9 +436,28 @@
   border-radius: 4px;
 }
 
-.court-player:focus-visible {
+.court-player-name-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.court-player-name-toggle:focus-visible,
+.court-player-name-link:focus-visible {
   outline: 2px solid #aa3bff;
   outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.court-player-revealed .court-player-name-link:focus-visible {
+  outline-color: #fff;
 }
 
 .court-player-revealed {
