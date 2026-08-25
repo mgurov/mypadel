@@ -227,6 +227,15 @@
   background-color: transparent;
 }
 
+.table-row-selected {
+  background-color: #e3f2fd;
+  box-shadow: inset 3px 0 0 #1976d2;
+}
+
+.table-row-selected:hover {
+  background-color: #bbdefb;
+}
+
 .column {
   flex: 1;
 }

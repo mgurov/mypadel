@@ -16,15 +16,19 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function MeetupRow({ event, label, isNew, onAck }: { event: MeetupEvent; label?: string; isNew?: boolean; onAck: () => void }) {
+export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }: { event: MeetupEvent; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void }) {
   const ended = hasEnded(event.endTime)
   const live = isLive(event.dateTime, event.endTime)
   const attending = isMyRsvp(event)
+
+  const myKey = eventKey('meetup', event.id)
+  const isSelected = selectedKey === myKey
 
   const rowClass = [
     'table-row',
     live && attending ? 'table-row-live' : '',
     ended ? 'table-row-ended' : '',
+    isSelected ? 'table-row-selected' : '',
   ].filter(Boolean).join(' ')
 
   return (
@@ -48,17 +52,17 @@ export function MeetupRow({ event, label, isNew, onAck }: { event: MeetupEvent; 
       </div>
       <div className="column">{event.title}</div>
       <div className="column text-align-right margin-right-16 no-grow">{formatAttendance(event)}</div>
-      <MeetupDetailCell event={event} />
+      <MeetupDetailCell event={event} onSelect={() => onSelect?.(myKey)} />
     </div>
   )
 }
 
-export function MeetupTable({ events, newIds, onAck }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void }) {
+export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void; selectedKey?: string; onSelect?: (key: string) => void }) {
   return (
     <div className="events-table">
       {events.map((event) => (
         <div key={event.id} className="table-row-group">
-          <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} />
+          <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
         </div>
       ))}
     </div>

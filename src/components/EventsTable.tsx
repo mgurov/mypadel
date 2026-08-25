@@ -38,7 +38,7 @@ function useCancellationAck(key: string) {
   return { acked, ack }
 }
 
-export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?: string; isNew?: boolean; onAck: () => void }) {
+export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }: { event: Event; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void }) {
   const { user } = useSunsetUser()
   const key = eventKey('sunset', event.id)
   const { acked: cancellationAcked, ack: ackCancellationNow } = useCancellationAck(key)
@@ -59,11 +59,15 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
     dayjs(event.date).startOf('day').diff(dayjs().startOf('day'), 'day') <= 1 &&
     detail?.currentUserPayment?.status !== 'PAID'
 
+  const myKey = eventKey('sunset', event.id)
+  const isSelected = selectedKey === myKey
+
   const rowClass = [
     'table-row',
     urgentUnpaid ? 'table-row-highlight' : '',
     live && attends ? 'table-row-live' : '',
     ended ? 'table-row-ended' : '',
+    isSelected ? 'table-row-selected' : '',
   ].filter(Boolean).join(' ')
 
   return (
@@ -98,7 +102,7 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
           </Button>
         )}
       </div>
-      <EventDetailCell event={event} />
+      <EventDetailCell event={event} onSelect={() => onSelect?.(myKey)} />
       <div className="column text-align-right">{event.title}</div>
       <div className="column text-align-right no-grow width-56">
         <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
@@ -122,12 +126,12 @@ export function SunsetRow({ event, label, isNew, onAck }: { event: Event; label?
   )
 }
 
-export function EventsTable({ events, newIds, onAck }: { events: Event[]; newIds: ReadonlySet<string>; onAck: (event: Event) => void }) {
+export function EventsTable({ events, newIds, onAck, selectedKey, onSelect }: { events: Event[]; newIds: ReadonlySet<string>; onAck: (event: Event) => void; selectedKey?: string; onSelect?: (key: string) => void }) {
   return (
     <div className="events-table">
       {events.map((event) => (
         <div key={event.id} className="table-row-group">
-          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} />
+          <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
         </div>
       ))}
     </div>

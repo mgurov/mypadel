@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -40,10 +41,19 @@ interface EventTablesProps {
 }
 
 export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetIds, tabHasData, tabFetching }: EventTablesProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabId>('sunset')
   const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
   const [showOnlyAttending, setShowOnlyAttending] = useState(false)
+
+  const selectedKey = searchParams.get('selected') ?? undefined
+  const selectEvent = (key: string) => {
+    setSearchParams((prev) => {
+      prev.set('selected', key)
+      return prev
+    }, { replace: true })
+  }
 
   useEffect(() => {
     if (sunsetEvents === undefined || meetupEvents === undefined) return
@@ -195,19 +205,19 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
       </div>
 
       {activeTab === 'combined' && combinedEntries.length > 0 && (
-        <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} />
+        <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} selectedKey={selectedKey} onSelect={selectEvent} />
       )}
 
       {activeTab === 'sunset' && sunsetList.length > 0 && (
-        <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} onAck={ackSunsetEvent} />
+        <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} onAck={ackSunsetEvent} selectedKey={selectedKey} onSelect={selectEvent} />
       )}
 
       {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
-        <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} />
+        <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} />
       )}
 
       {activeTab === 'meetup' && meetupList.length > 0 && (
-        <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} />
+        <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} />
       )}
     </>
   )

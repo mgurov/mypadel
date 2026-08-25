@@ -5,7 +5,7 @@ import MenuItem from '@mui/material/MenuItem'
 import type { MeetupEvent } from '../api'
 import { downloadMeetupEventIcs } from '../ics'
 
-export function MeetupDetailCell({ event }: { event: MeetupEvent }) {
+export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSelect?: () => void }) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
 
   const closeMenu = () => setMenuAnchor(null)
@@ -18,7 +18,7 @@ export function MeetupDetailCell({ event }: { event: MeetupEvent }) {
         aria-haspopup="true"
         aria-expanded={Boolean(menuAnchor)}
         data-testid="event-actions-button"
-        onClick={(e) => setMenuAnchor(e.currentTarget)}
+        onClick={(e) => { onSelect?.(); setMenuAnchor(e.currentTarget) }}
       >
         More...
       </Button>

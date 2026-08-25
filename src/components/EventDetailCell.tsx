@@ -14,7 +14,7 @@ import { downloadEventIcs } from '../ics'
 import { useSunsetUser } from '../userContext'
 import { CourtsDialog } from './CourtsDialog'
 
-export function EventDetailCell({ event }: { event: Event }) {
+export function EventDetailCell({ event, onSelect }: { event: Event; onSelect?: () => void }) {
   const { user } = useSunsetUser()
   const [jsonOpen, setJsonOpen] = useState(false)
   const [errorOpen, setErrorOpen] = useState(false)
@@ -85,7 +85,7 @@ export function EventDetailCell({ event }: { event: Event }) {
           aria-haspopup="true"
           aria-expanded={Boolean(menuAnchor)}
           data-testid="event-actions-button"
-          onClick={(e) => setMenuAnchor(e.currentTarget)}
+          onClick={(e) => { onSelect?.(); setMenuAnchor(e.currentTarget) }}
         >
           More...
         </Button>
