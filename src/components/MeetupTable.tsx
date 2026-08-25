@@ -8,10 +8,7 @@ import { MeetupDetailCell } from './MeetupDetailCell'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-UK', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  return date.toLocaleTimeString('en-UK', {
     hour: '2-digit',
     minute: '2-digit',
   })

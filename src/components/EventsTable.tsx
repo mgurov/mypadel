@@ -15,10 +15,7 @@ import { ParticipationCell } from './ParticipationCell'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-UK', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  return date.toLocaleTimeString('en-UK', {
     hour: '2-digit',
     minute: '2-digit'
   })
@@ -116,7 +113,7 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }:
       >
         <div className="cancel-popover">
           <span className="cancel-deadline" data-testid="cancel-deadline">
-            free cancel until {formatDate(new Date(cancellationDeadline(event)).toISOString())}
+            free cancel until {new Date(cancellationDeadline(event)).toLocaleString('en-UK', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </span>
           <Button size="small" data-testid="cancel-ack-button" onClick={() => { ackCancellationNow(); setCancelAnchor(null) }}>
             ack
