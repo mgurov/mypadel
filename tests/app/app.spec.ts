@@ -172,7 +172,7 @@ test('show json action opens event details dialog', async ({ page, world }) => {
 })
 
 test('show json action opens dialog with meetup event details', async ({ page, world }) => {
-  world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', venue: { id: '28170985', name: 'Floridsdorf' } }])
+  world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', venue: { id: 'venue-9', name: 'Prater Court' } }])
   await page.goto('/')
   await fetchButton(page).click()
   await tab(page, 'meetup').click()
@@ -184,7 +184,7 @@ test('show json action opens dialog with meetup event details', async ({ page, w
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await expect(dialog.getByText('"title": "Padel Meetup"')).toBeVisible()
-  await expect(dialog.getByText('"name": "Floridsdorf"')).toBeVisible()
+  await expect(dialog.getByText('"name": "Prater Court"')).toBeVisible()
 })
 
 test('shows error alert when fetch fails', async ({ page }) => {
