@@ -91,6 +91,7 @@ export interface MeetupEvent {
       node: {
         member: {
           id: string
+          name: string
         }
       }
     }[]

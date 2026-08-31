@@ -187,6 +187,37 @@ test('show json action opens dialog with meetup event details', async ({ page, w
   await expect(dialog.getByText('"name": "Prater Court"')).toBeVisible()
 })
 
+test('participants menu item shows rsvp names for meetup events', async ({ page, world }) => {
+  world.givenMeetupEvents([
+    {
+      id: 'meetup-1',
+      title: 'Padel Meetup',
+      rsvps: {
+        totalCount: 3,
+        edges: [
+          { node: { member: { id: 'mem-1', name: 'Wolfgang' } } },
+          { node: { member: { id: 'mem-2', name: 'Anna' } } },
+          { node: { member: { id: 'mem-3', name: 'Boris' } } },
+        ],
+      },
+    },
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await tab(page, 'meetup').click()
+  await expect(page.getByText('Padel Meetup')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Participants' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('Participants (3)')).toBeVisible()
+  await expect(dialog.getByText('Wolfgang')).toBeVisible()
+  await expect(dialog.getByText('Anna')).toBeVisible()
+  await expect(dialog.getByText('Boris')).toBeVisible()
+})
+
 test('shows error alert when fetch fails', async ({ page }) => {
   await page.route('**/.netlify/functions/events', (route) =>
     route.fulfill({ status: 401, json: { error: 'unauthorized' } }),
@@ -504,7 +535,7 @@ test('meetup events are split into wolfgang and meetup tabs', async ({ page, wor
       title: 'Casual Padel',
       eventUrl: 'https://www.meetup.com/casual',
       eventHosts: [{ memberId: 'other-host' }],
-      rsvps: { totalCount: 3, edges: [{ node: { member: { id: '176325322' } } }] },
+      rsvps: { totalCount: 3, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] },
     },
     {
       id: 'meetup-cancelled',

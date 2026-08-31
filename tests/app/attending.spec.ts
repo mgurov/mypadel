@@ -85,7 +85,7 @@ test('attending toggle includes waitlisted events', async ({ page, world }) => {
 
 test('attending toggle shows only meetup events the user RSVPs to', async ({ page, world }) => {
   world.givenMeetupEvents([
-    { id: 'm1', title: 'Going Meetup', rsvps: { totalCount: 1, edges: [{ node: { member: { id: '176325322' } } }] } },
+    { id: 'm1', title: 'Going Meetup', rsvps: { totalCount: 1, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] } },
     { id: 'm2', title: 'Not Going', rsvps: { totalCount: 0, edges: [] } },
   ])
   await page.goto('/')
@@ -107,7 +107,7 @@ test('attending toggle filters the combined tab across sources', async ({ page, 
     { id: 'sunset-2', title: 'Sunset Not Going' },
   ])
   world.givenMeetupEvents([
-    { id: 'meetup-1', title: 'Meetup Going', rsvps: { totalCount: 1, edges: [{ node: { member: { id: '176325322' } } }] } },
+    { id: 'meetup-1', title: 'Meetup Going', rsvps: { totalCount: 1, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] } },
     { id: 'meetup-2', title: 'Meetup Not Going', rsvps: { totalCount: 0, edges: [] } },
   ])
   await page.goto('/')

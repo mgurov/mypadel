@@ -53,7 +53,7 @@ interface MeetupNode {
   eventHosts: { memberId: string }[]
   maxTickets: number
   going: { totalCount: number }
-  rsvps: { totalCount: number; edges: { node: { member: { id: string } } }[] }
+  rsvps: { totalCount: number; edges: { node: { member: { id: string; name: string } } }[] }
 }
 
 interface ProfileEvent {
@@ -176,7 +176,7 @@ const defaultMeetupNode = (): MeetupNode => ({
   eventHosts: [{ memberId: 'host-1' }],
   maxTickets: 8,
   going: { totalCount: 5 },
-  rsvps: { totalCount: 5, edges: [{ node: { member: { id: 'member-1' } } }] },
+  rsvps: { totalCount: 5, edges: [{ node: { member: { id: 'member-1', name: 'Member One' } } }] },
 })
 
 export const defaultAuth = {

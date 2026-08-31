@@ -12,7 +12,9 @@ import { downloadMeetupEventIcs } from '../ics'
 export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSelect?: () => void }) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [jsonOpen, setJsonOpen] = useState(false)
+  const [participantsOpen, setParticipantsOpen] = useState(false)
 
+  const participantNames = event.rsvps.edges.map((edge) => edge.node.member.name)
   const closeMenu = () => setMenuAnchor(null)
 
   return (
@@ -47,7 +49,23 @@ export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSe
         <MenuItem onClick={() => { setJsonOpen(true); closeMenu() }}>
           Show JSON
         </MenuItem>
+        <MenuItem onClick={() => { setParticipantsOpen(true); closeMenu() }}>
+          Participants
+        </MenuItem>
       </Menu>
+      <Dialog open={participantsOpen} onClose={() => setParticipantsOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Participants ({event.rsvps.totalCount})</DialogTitle>
+        <DialogContent>
+          <ul className="participants-list">
+            {participantNames.map((name, i) => (
+              <li key={i}>{name}</li>
+            ))}
+          </ul>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setParticipantsOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>
         <DialogContent>

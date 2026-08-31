@@ -84,7 +84,7 @@ test('tones down an ended meetup event', async ({ page, world }) => {
 
 test('highlights a live meetup event the user RSVPs to', async ({ page, world }) => {
   world.givenMeetupEvents([
-    { id: 'meetup-1', title: 'Live Meetup', dateTime: hoursFromNow(-1), endTime: hoursFromNow(1), rsvps: { totalCount: 1, edges: [{ node: { member: { id: '176325322' } } }] } },
+    { id: 'meetup-1', title: 'Live Meetup', dateTime: hoursFromNow(-1), endTime: hoursFromNow(1), rsvps: { totalCount: 1, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] } },
   ])
   await showMeetup(page, 'Live Meetup')
 

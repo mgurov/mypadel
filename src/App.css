@@ -325,6 +325,11 @@
   margin: 0;
 }
 
+.participants-list {
+  margin: 0;
+  padding: 0 0 0 20px;
+}
+
 .participating-yes {
   color: #2e7d32;
   font-weight: bold;
