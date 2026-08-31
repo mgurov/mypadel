@@ -214,8 +214,9 @@ test('participants menu item shows rsvp names for meetup events', async ({ page,
   await expect(dialog.getByText('Participants (2)')).toBeVisible()
   await expect(dialog.getByText('Wolfgang')).toBeVisible()
   await expect(dialog.getByText('Anna')).toBeVisible()
-  await expect(dialog.getByRole('img', { name: 'Wolfgang' })).toHaveAttribute('src', 'https://example.com/wolfgang.jpg')
-  await expect(dialog.getByRole('img')).toHaveCount(1)
+  await expect(dialog.getByTestId('participants-photo')).toHaveAttribute('src', 'https://example.com/wolfgang.jpg')
+  await expect(dialog.getByTestId('participants-photo')).toHaveAttribute('alt', 'Wolfgang')
+  await expect(dialog.getByTestId('participants-photo')).toHaveCount(1)
 })
 
 test('clicking a participant photo opens it enlarged', async ({ page, world }) => {
