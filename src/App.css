@@ -355,8 +355,7 @@
 
 .participants-photo-large {
   width: 100%;
-  max-height: 70vh;
-  height: auto;
+  height: 60vh;
   object-fit: contain;
   border-radius: 8px;
 }
