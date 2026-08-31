@@ -92,6 +92,10 @@ export interface MeetupEvent {
         member: {
           id: string
           name: string
+          memberPhoto?: {
+            id: string
+            source: string
+          } | null
         }
       }
     }[]

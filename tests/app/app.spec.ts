@@ -193,11 +193,10 @@ test('participants menu item shows rsvp names for meetup events', async ({ page,
       id: 'meetup-1',
       title: 'Padel Meetup',
       rsvps: {
-        totalCount: 3,
+        totalCount: 2,
         edges: [
-          { node: { member: { id: 'mem-1', name: 'Wolfgang' } } },
+          { node: { member: { id: 'mem-1', name: 'Wolfgang', memberPhoto: { id: 'photo-1', source: 'https://example.com/wolfgang.jpg' } } } },
           { node: { member: { id: 'mem-2', name: 'Anna' } } },
-          { node: { member: { id: 'mem-3', name: 'Boris' } } },
         ],
       },
     },
@@ -212,10 +211,11 @@ test('participants menu item shows rsvp names for meetup events', async ({ page,
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  await expect(dialog.getByText('Participants (3)')).toBeVisible()
+  await expect(dialog.getByText('Participants (2)')).toBeVisible()
   await expect(dialog.getByText('Wolfgang')).toBeVisible()
   await expect(dialog.getByText('Anna')).toBeVisible()
-  await expect(dialog.getByText('Boris')).toBeVisible()
+  await expect(dialog.getByRole('img', { name: 'Wolfgang' })).toHaveAttribute('src', 'https://example.com/wolfgang.jpg')
+  await expect(dialog.getByRole('img')).toHaveCount(1)
 })
 
 test('shows error alert when fetch fails', async ({ page }) => {

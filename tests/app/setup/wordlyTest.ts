@@ -53,7 +53,7 @@ interface MeetupNode {
   eventHosts: { memberId: string }[]
   maxTickets: number
   going: { totalCount: number }
-  rsvps: { totalCount: number; edges: { node: { member: { id: string; name: string } } }[] }
+  rsvps: { totalCount: number; edges: { node: { member: { id: string; name: string; memberPhoto?: { id: string; source: string } | null } } }[] }
 }
 
 interface ProfileEvent {
