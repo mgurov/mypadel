@@ -171,6 +171,22 @@ test('show json action opens event details dialog', async ({ page, world }) => {
   await expect(dialog.getByText('"participants": []')).toBeVisible()
 })
 
+test('show json action opens dialog with meetup event details', async ({ page, world }) => {
+  world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', venue: { id: '28170985', name: 'Floridsdorf' } }])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await tab(page, 'meetup').click()
+  await expect(page.getByText('Padel Meetup')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Show JSON' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByText('"title": "Padel Meetup"')).toBeVisible()
+  await expect(dialog.getByText('"name": "Floridsdorf"')).toBeVisible()
+})
+
 test('shows error alert when fetch fails', async ({ page }) => {
   await page.route('**/.netlify/functions/events', (route) =>
     route.fulfill({ status: 401, json: { error: 'unauthorized' } }),

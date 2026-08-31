@@ -2,11 +2,16 @@ import { useState } from 'react'
 import Button from '@mui/material/Button'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
 import type { MeetupEvent } from '../api'
 import { downloadMeetupEventIcs } from '../ics'
 
 export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSelect?: () => void }) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const [jsonOpen, setJsonOpen] = useState(false)
 
   const closeMenu = () => setMenuAnchor(null)
 
@@ -39,7 +44,19 @@ export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSe
         >
           Open Event
         </MenuItem>
+        <MenuItem onClick={() => { setJsonOpen(true); closeMenu() }}>
+          Show JSON
+        </MenuItem>
       </Menu>
+      <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Event Details</DialogTitle>
+        <DialogContent>
+          <pre className="dialog-json">{JSON.stringify(event, null, 2)}</pre>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setJsonOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }
