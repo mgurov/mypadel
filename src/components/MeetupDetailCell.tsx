@@ -13,6 +13,7 @@ export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSe
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [jsonOpen, setJsonOpen] = useState(false)
   const [participantsOpen, setParticipantsOpen] = useState(false)
+  const [photoSource, setPhotoSource] = useState<string | null>(null)
 
   const closeMenu = () => setMenuAnchor(null)
 
@@ -63,6 +64,11 @@ export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSe
                     className="participants-photo"
                     src={edge.node.member.memberPhoto.source}
                     alt={edge.node.member.name}
+                    data-testid="participants-photo"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setPhotoSource(edge.node.member.memberPhoto?.source ?? null)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPhotoSource(edge.node.member.memberPhoto?.source ?? null) } }}
                   />
                 )}
                 <span>{edge.node.member.name}</span>
@@ -72,6 +78,21 @@ export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSe
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setParticipantsOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={photoSource != null} onClose={() => setPhotoSource(null)} maxWidth="md" fullWidth>
+        <DialogContent className="participants-photo-dialog-content">
+          {photoSource && (
+            <img
+              className="participants-photo-large"
+              src={photoSource}
+              alt=""
+              data-testid="participants-photo-large"
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPhotoSource(null)}>Close</Button>
         </DialogActions>
       </Dialog>
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>

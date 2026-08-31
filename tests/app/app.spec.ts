@@ -218,6 +218,34 @@ test('participants menu item shows rsvp names for meetup events', async ({ page,
   await expect(dialog.getByRole('img')).toHaveCount(1)
 })
 
+test('clicking a participant photo opens it enlarged', async ({ page, world }) => {
+  world.givenMeetupEvents([
+    {
+      id: 'meetup-1',
+      title: 'Padel Meetup',
+      rsvps: {
+        totalCount: 1,
+        edges: [
+          { node: { member: { id: 'mem-1', name: 'Wolfgang', memberPhoto: { id: 'photo-1', source: 'https://example.com/wolfgang.jpg' } } } },
+        ],
+      },
+    },
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await tab(page, 'meetup').click()
+  await expect(page.getByText('Padel Meetup')).toBeVisible()
+
+  await page.getByTestId('event-actions-button').first().click()
+  await page.getByRole('menuitem', { name: 'Participants' }).click()
+
+  await page.getByTestId('participants-photo').click()
+
+  const large = page.getByTestId('participants-photo-large')
+  await expect(large).toBeVisible()
+  await expect(large).toHaveAttribute('src', 'https://example.com/wolfgang.jpg')
+})
+
 test('shows error alert when fetch fails', async ({ page }) => {
   await page.route('**/.netlify/functions/events', (route) =>
     route.fulfill({ status: 401, json: { error: 'unauthorized' } }),
