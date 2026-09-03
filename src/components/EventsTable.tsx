@@ -73,6 +73,7 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }:
       <div className="column margin-right-16">
         {label && <span className={`source-label source-label-${label.toLowerCase()}`}>{label}</span>}
         {isNew && <span className="new-label">new</span>}
+        {event.status === "SCHEDULED" && <span className="scheduled-icon" role="img" aria-label="scheduled">⌛️</span>}
         {event.status === "ARCHIVED" && <span className="archived-label">archived</span>}
         {urgentUnpaid && <span className="unpaid-label">unpaid</span>}
         {showCancelLabel && (
