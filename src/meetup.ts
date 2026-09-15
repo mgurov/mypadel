@@ -7,6 +7,8 @@ export const FLORIDSDORF_VENUE_ID = '28170985'
 export const RSVP_STATE_JOIN_OPEN = 'JOIN_OPEN'
 export const RSVP_STATE_NOT_OPEN_YET = 'NOT_OPEN_YET'
 
+export const ATTENDANCE_CERTAINTY_MAX = 5
+
 export function formatRsvpState(state: string): string {
   return state.toLowerCase().replaceAll('_', ' ')
 }
@@ -21,6 +23,14 @@ export function isVisibleMeetup(event: MeetupEvent): boolean {
 
 export function isMyRsvp(event: MeetupEvent): boolean {
   return event.rsvps.edges.some((edge) => edge.node.member.id === MY_MEMBER_ID)
+}
+
+export type AttendanceState = 'yes' | 'no' | 'uncertain'
+
+export function attendanceState(event: MeetupEvent): AttendanceState {
+  if (isMyRsvp(event)) return 'yes'
+  if (event.rsvps.totalCount > ATTENDANCE_CERTAINTY_MAX) return 'uncertain'
+  return 'no'
 }
 
 export function formatAttendance(event: MeetupEvent): string {

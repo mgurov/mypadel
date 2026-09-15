@@ -394,6 +394,12 @@
   font-size: 18px;
 }
 
+.participating-question {
+  color: #b26a00;
+  font-weight: bold;
+  font-size: 18px;
+}
+
 .participating-waitlist {
   /* display: inline-flex; */
   /* align-items: center; */

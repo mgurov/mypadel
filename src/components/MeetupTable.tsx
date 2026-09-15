@@ -2,7 +2,7 @@ import Button from '@mui/material/Button'
 import type { MeetupEvent } from '../api'
 import { groupByDate } from '../dateGrouping'
 import { eventKey } from '../eventTracking'
-import { isMyRsvp, formatAttendance, formatRsvpState, RSVP_STATE_JOIN_OPEN } from '../meetup'
+import { isMyRsvp, formatAttendance, formatRsvpState, RSVP_STATE_JOIN_OPEN, attendanceState } from '../meetup'
 import { hasEnded, isLive } from '../timing'
 import { MeetupDetailCell } from './MeetupDetailCell'
 
@@ -18,6 +18,7 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }:
   const ended = hasEnded(event.endTime)
   const live = isLive(event.dateTime, event.endTime)
   const attending = isMyRsvp(event)
+  const attendance = attendanceState(event)
   const rsvpClosed = event.rsvpState !== undefined && event.rsvpState !== RSVP_STATE_JOIN_OPEN
 
   const myKey = eventKey('meetup', event.id)
@@ -44,8 +45,10 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }:
         )}
       </div>
       <div className="column no-grow width-28">
-        {isMyRsvp(event) ? (
+        {attendance === 'yes' ? (
           <span className="participating-yes">&#10003;</span>
+        ) : attendance === 'uncertain' ? (
+          <span className="participating-question">?</span>
         ) : (
           <span className="participating-no">&mdash;</span>
         )}
