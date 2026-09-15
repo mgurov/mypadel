@@ -10,6 +10,7 @@ import { groupByDate } from '../dateGrouping'
 import { ackCancellation, eventKey, isCancellationAcked } from '../eventTracking'
 import { hasEnded, isLive } from '../timing'
 import { useSunsetUser } from '../userContext'
+import { DateGroupHeader } from './DateGroupHeader'
 import { EventDetailCell } from './EventDetailCell'
 import { ParticipationCell } from './ParticipationCell'
 
@@ -36,7 +37,7 @@ function useCancellationAck(key: string) {
   return { acked, ack }
 }
 
-export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }: { event: Event; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void }) {
+export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect, unavailable }: { event: Event; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void; unavailable?: boolean }) {
   const { user } = useSunsetUser()
   const key = eventKey('sunset', event.id)
   const { acked: cancellationAcked, ack: ackCancellationNow } = useCancellationAck(key)
@@ -65,6 +66,7 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }:
     urgentUnpaid ? 'table-row-highlight' : '',
     live && attends ? 'table-row-live' : '',
     ended ? 'table-row-ended' : '',
+    unavailable ? 'table-row-unavailable' : '',
     isSelected ? 'table-row-selected' : '',
   ].filter(Boolean).join(' ')
 
@@ -125,16 +127,16 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect }:
   )
 }
 
-export function EventsTable({ events, newIds, onAck, selectedKey, onSelect }: { events: Event[]; newIds: ReadonlySet<string>; onAck: (event: Event) => void; selectedKey?: string; onSelect?: (key: string) => void }) {
+export function EventsTable({ events, newIds, onAck, selectedKey, onSelect, unavailableDates, onToggleUnavailable }: { events: Event[]; newIds: ReadonlySet<string>; onAck: (event: Event) => void; selectedKey?: string; onSelect?: (key: string) => void; unavailableDates: ReadonlySet<string>; onToggleUnavailable: (dateKey: string) => void }) {
   const groups = groupByDate(events, (e) => e.date)
   return (
     <div className="events-table">
       {groups.map((group) => (
         <div key={group.key}>
-          <div className="date-group-header">{group.header}</div>
+          <DateGroupHeader header={group.header} dateKey={group.key} unavailable={unavailableDates.has(group.key)} onToggleUnavailable={onToggleUnavailable} />
           {group.items.map((event) => (
             <div key={event.id} className="table-row-group">
-              <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
+              <SunsetRow event={event} isNew={newIds.has(eventKey('sunset', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} unavailable={unavailableDates.has(group.key)} />
             </div>
           ))}
         </div>

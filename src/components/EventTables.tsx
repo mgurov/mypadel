@@ -5,6 +5,7 @@ import Tab from '@mui/material/Tab'
 import CircularProgress from '@mui/material/CircularProgress'
 import type { Event, MeetupEvent, User } from '../api'
 import { addKnownKeys, eventKey, loadForcedAttendance, setForcedAttendance as persistForcedAttendance, trackFetchedKeys, type FetchedKey, type ForcedAttendance } from '../eventTracking'
+import { loadUnavailableDates, setUnavailableDate } from '../unavailableDates'
 import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from '../meetup'
 import { AckAllButton } from './AckAllButton'
 import { CombinedTable, type CombinedEntry } from './CombinedTable'
@@ -47,6 +48,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
   const [showOnlyAttending, setShowOnlyAttending] = useState(false)
   const [forcedAttendance, setForcedAttendance] = useState<ReadonlyMap<string, ForcedAttendance>>(() => new Map())
+  const [unavailableDates, setUnavailableDates] = useState<ReadonlySet<string>>(() => new Set())
 
   const selectedKey = searchParams.get('selected') ?? undefined
   const selectEvent = (key: string) => {
@@ -60,6 +62,16 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
     let active = true
     void loadForcedAttendance().then((found) => {
       if (active) setForcedAttendance(found)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    void loadUnavailableDates().then((found) => {
+      if (active) setUnavailableDates(found)
     })
     return () => {
       active = false
@@ -167,6 +179,17 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
     void persistForcedAttendance(key, value)
   }
 
+  const toggleUnavailableDate = (dateKey: string) => {
+    const turningOff = unavailableDates.has(dateKey)
+    void setUnavailableDate(dateKey, !turningOff)
+    setUnavailableDates((prev) => {
+      const next = new Set(prev)
+      if (turningOff) next.delete(dateKey)
+      else next.add(dateKey)
+      return next
+    })
+  }
+
   const toggleOnlyNew = (id: TabId) => {
     setShowOnlyNew((prev) => {
       const next = new Set(prev)
@@ -239,19 +262,19 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
       </div>
 
       {activeTab === 'combined' && combinedEntries.length > 0 && (
-        <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} />
+        <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} unavailableDates={unavailableDates} onToggleUnavailable={toggleUnavailableDate} />
       )}
 
       {activeTab === 'sunset' && sunsetList.length > 0 && (
-        <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} onAck={ackSunsetEvent} selectedKey={selectedKey} onSelect={selectEvent} />
+        <EventsTable events={filterActive('sunset') ? newSunset : sunsetList} newIds={newIds} onAck={ackSunsetEvent} selectedKey={selectedKey} onSelect={selectEvent} unavailableDates={unavailableDates} onToggleUnavailable={toggleUnavailableDate} />
       )}
 
       {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
-        <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} />
+        <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} unavailableDates={unavailableDates} onToggleUnavailable={toggleUnavailableDate} />
       )}
 
       {activeTab === 'meetup' && meetupList.length > 0 && (
-        <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} />
+        <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} unavailableDates={unavailableDates} onToggleUnavailable={toggleUnavailableDate} />
       )}
     </>
   )

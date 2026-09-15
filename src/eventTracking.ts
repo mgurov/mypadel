@@ -1,8 +1,5 @@
 import { RSVP_STATE_NOT_OPEN_YET } from './meetup'
-
-const DB_NAME = 'mypadel'
-const DB_VERSION = 2
-const STORE_NAME = 'known-events'
+import { getDb, KNOWN_EVENTS_STORE } from './db'
 
 export type EventSource = 'sunset' | 'meetup'
 
@@ -24,37 +21,12 @@ export function eventKey(source: EventSource, id: string): string {
   return `${source}:${id}`
 }
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME)
-      } else {
-        request.transaction?.objectStore(STORE_NAME).delete('event-ids')
-      }
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
-let dbPromise: Promise<IDBDatabase> | null = null
-
-function getDb(): Promise<IDBDatabase> {
-  if (!dbPromise) {
-    dbPromise = openDb()
-  }
-  return dbPromise
-}
-
 export async function loadKnownKeys(): Promise<string[]> {
   try {
     const db = await getDb()
     return await new Promise<string[]>((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly')
-      const store = transaction.objectStore(STORE_NAME)
+      const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readonly')
+      const store = transaction.objectStore(KNOWN_EVENTS_STORE)
       const request = store.openCursor()
       const keys: string[] = []
       request.onsuccess = () => {
@@ -86,8 +58,8 @@ export async function loadForcedAttendance(): Promise<Map<string, ForcedAttendan
   try {
     const db = await getDb()
     const result = await new Promise<Map<string, ForcedAttendance>>((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly')
-      const store = transaction.objectStore(STORE_NAME)
+      const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readonly')
+      const store = transaction.objectStore(KNOWN_EVENTS_STORE)
       const request = store.openCursor()
       const found = new Map<string, ForcedAttendance>()
       request.onsuccess = () => {
@@ -112,8 +84,8 @@ export async function loadForcedAttendance(): Promise<Map<string, ForcedAttendan
 
 export async function setForcedAttendance(key: string, value: ForcedAttendance | undefined): Promise<void> {
   const db = await getDb()
-  const transaction = db.transaction(STORE_NAME, 'readwrite')
-  const store = transaction.objectStore(STORE_NAME)
+  const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readwrite')
+  const store = transaction.objectStore(KNOWN_EVENTS_STORE)
   const existing = (await getRecord(store, key)) ?? {}
   const record: KnownEventRecord = {
     ackedAt: existing.ackedAt,
@@ -132,8 +104,8 @@ export async function setForcedAttendance(key: string, value: ForcedAttendance |
 export async function addKnownKeys(records: FetchedKey[]): Promise<void> {
   if (records.length === 0) return
   const db = await getDb()
-  const transaction = db.transaction(STORE_NAME, 'readwrite')
-  const store = transaction.objectStore(STORE_NAME)
+  const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readwrite')
+  const store = transaction.objectStore(KNOWN_EVENTS_STORE)
   for (const { key, rsvpState } of records) {
     const existing = await getRecord(store, key)
     store.put(
@@ -155,8 +127,8 @@ export async function addKnownKeys(records: FetchedKey[]): Promise<void> {
 export async function isCancellationAcked(key: string): Promise<boolean> {
   try {
     const db = await getDb()
-    const transaction = db.transaction(STORE_NAME, 'readonly')
-    const record = await getRecord(transaction.objectStore(STORE_NAME), key)
+    const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readonly')
+    const record = await getRecord(transaction.objectStore(KNOWN_EVENTS_STORE), key)
     return record?.cancellationAckedAt != null
   } catch {
     return false
@@ -165,8 +137,8 @@ export async function isCancellationAcked(key: string): Promise<boolean> {
 
 export async function ackCancellation(key: string): Promise<void> {
   const db = await getDb()
-  const transaction = db.transaction(STORE_NAME, 'readwrite')
-  const store = transaction.objectStore(STORE_NAME)
+  const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readwrite')
+  const store = transaction.objectStore(KNOWN_EVENTS_STORE)
   const existing = await getRecord(store, key)
   store.put(
     {
@@ -191,8 +163,8 @@ export async function trackFetchedKeys(fetchedKeys: FetchedKey[]): Promise<strin
   }
   const knownSet = new Set(known)
   const db = await getDb()
-  const transaction = db.transaction(STORE_NAME, 'readonly')
-  const store = transaction.objectStore(STORE_NAME)
+  const transaction = db.transaction(KNOWN_EVENTS_STORE, 'readonly')
+  const store = transaction.objectStore(KNOWN_EVENTS_STORE)
   const found: string[] = []
   for (const { key, rsvpState } of fetchedKeys) {
     if (!knownSet.has(key)) {

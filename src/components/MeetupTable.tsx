@@ -4,6 +4,7 @@ import { groupByDate } from '../dateGrouping'
 import { eventKey, type ForcedAttendance } from '../eventTracking'
 import { formatAttendance, formatRsvpState, RSVP_STATE_JOIN_OPEN, attendanceState } from '../meetup'
 import { hasEnded, isLive } from '../timing'
+import { DateGroupHeader } from './DateGroupHeader'
 import { MeetupDetailCell } from './MeetupDetailCell'
 
 function formatDate(dateString: string): string {
@@ -14,7 +15,7 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect, forcedAttendance, onForcedAttendance }: { event: MeetupEvent; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void; forcedAttendance?: ReadonlyMap<string, ForcedAttendance>; onForcedAttendance?: (key: string, value: ForcedAttendance | undefined) => void }) {
+export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect, forcedAttendance, onForcedAttendance, unavailable }: { event: MeetupEvent; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void; forcedAttendance?: ReadonlyMap<string, ForcedAttendance>; onForcedAttendance?: (key: string, value: ForcedAttendance | undefined) => void; unavailable?: boolean }) {
   const ended = hasEnded(event.endTime)
   const live = isLive(event.dateTime, event.endTime)
   const myKey = eventKey('meetup', event.id)
@@ -26,6 +27,7 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect, f
     'table-row',
     live && attendance === 'yes' ? 'table-row-live' : '',
     ended ? 'table-row-ended' : '',
+    unavailable ? 'table-row-unavailable' : '',
     isSelected ? 'table-row-selected' : '',
   ].filter(Boolean).join(' ')
 
@@ -58,16 +60,16 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect, f
   )
 }
 
-export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect, forcedAttendance, onForcedAttendance }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void; selectedKey?: string; onSelect?: (key: string) => void; forcedAttendance?: ReadonlyMap<string, ForcedAttendance>; onForcedAttendance?: (key: string, value: ForcedAttendance | undefined) => void }) {
+export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect, forcedAttendance, onForcedAttendance, unavailableDates, onToggleUnavailable }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void; selectedKey?: string; onSelect?: (key: string) => void; forcedAttendance?: ReadonlyMap<string, ForcedAttendance>; onForcedAttendance?: (key: string, value: ForcedAttendance | undefined) => void; unavailableDates: ReadonlySet<string>; onToggleUnavailable: (dateKey: string) => void }) {
   const groups = groupByDate(events, (e) => e.dateTime)
   return (
     <div className="events-table">
       {groups.map((group) => (
         <div key={group.key}>
-          <div className="date-group-header">{group.header}</div>
+          <DateGroupHeader header={group.header} dateKey={group.key} unavailable={unavailableDates.has(group.key)} onToggleUnavailable={onToggleUnavailable} />
           {group.items.map((event) => (
             <div key={event.id} className="table-row-group">
-              <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} forcedAttendance={forcedAttendance} onForcedAttendance={onForcedAttendance} />
+              <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} forcedAttendance={forcedAttendance} onForcedAttendance={onForcedAttendance} unavailable={unavailableDates.has(group.key)} />
             </div>
           ))}
         </div>
