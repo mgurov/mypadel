@@ -187,6 +187,44 @@ test('only-new toggle filters the table to new events', async ({ page, world }) 
   await expect(page.getByTestId('only-new-toggle')).toHaveCount(0)
 })
 
+test('shows a label for meetup events whose RSVPs are not open', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenMeetupEvents([
+    { id: 'meetup-1', title: 'Open Padel', rsvpState: 'JOIN_OPEN' },
+    { id: 'meetup-2', title: 'Not Yet Padel', rsvpState: 'NOT_OPEN_YET', eventHosts: [{ memberId: 'other-host' }] },
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await tab(page, 'meetup').click()
+  const labels = page.getByTestId('rsvp-state-label')
+  await expect(labels).toHaveCount(1)
+  await expect(labels.first()).toHaveText('not open yet')
+})
+
+test('re-flags a meetup event that opens RSVPs after being acked while not open', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', rsvpState: 'NOT_OPEN_YET' }])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+
+  world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', rsvpState: 'JOIN_OPEN' }])
+  await fetchButton(page).click()
+  await expect(newBadge(page, 'meetup')).toHaveText('1')
+  await expect(newBadge(page, 'combined')).toHaveText('1')
+
+  await tab(page, 'meetup').click()
+  await expect(ackButton(page)).toHaveCount(1)
+  await ackButton(page).click()
+  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+
+  await fetchButton(page).click()
+  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+})
+
 test('new-event badges stay fully visible inside their tabs on narrow mobile layouts', async ({ page, world }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   world.givenEvents(Array.from({ length: 8 }, (_, i) => ({ id: `evt-${i + 1}`, title: `Morning Padel ${i + 1}` })))

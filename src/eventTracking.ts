@@ -1,3 +1,5 @@
+import { RSVP_STATE_NOT_OPEN_YET } from './meetup'
+
 const DB_NAME = 'mypadel'
 const DB_VERSION = 2
 const STORE_NAME = 'known-events'
@@ -7,6 +9,12 @@ export type EventSource = 'sunset' | 'meetup'
 export interface KnownEventRecord {
   ackedAt?: number
   cancellationAckedAt?: number
+  rsvpState?: string
+}
+
+export interface FetchedKey {
+  key: string
+  rsvpState?: string
 }
 
 export function eventKey(source: EventSource, id: string): string {
@@ -71,14 +79,21 @@ function getRecord(store: IDBObjectStore, key: string): Promise<KnownEventRecord
   })
 }
 
-export async function addKnownKeys(keys: string[]): Promise<void> {
-  if (keys.length === 0) return
+export async function addKnownKeys(records: FetchedKey[]): Promise<void> {
+  if (records.length === 0) return
   const db = await getDb()
   const transaction = db.transaction(STORE_NAME, 'readwrite')
   const store = transaction.objectStore(STORE_NAME)
-  for (const key of keys) {
+  for (const { key, rsvpState } of records) {
     const existing = await getRecord(store, key)
-    store.put({ ackedAt: Date.now(), cancellationAckedAt: existing?.cancellationAckedAt } satisfies KnownEventRecord, key)
+    store.put(
+      {
+        ackedAt: Date.now(),
+        cancellationAckedAt: existing?.cancellationAckedAt,
+        rsvpState: rsvpState ?? existing?.rsvpState,
+      } satisfies KnownEventRecord,
+      key,
+    )
   }
   await new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => resolve()
@@ -109,12 +124,27 @@ export async function ackCancellation(key: string): Promise<void> {
   })
 }
 
-export async function trackFetchedKeys(fetchedKeys: string[]): Promise<string[]> {
+export async function trackFetchedKeys(fetchedKeys: FetchedKey[]): Promise<string[]> {
   const known = await loadKnownKeys()
   if (known.length === 0) {
     await addKnownKeys(fetchedKeys)
     return []
   }
   const knownSet = new Set(known)
-  return fetchedKeys.filter((key) => !knownSet.has(key))
+  const db = await getDb()
+  const transaction = db.transaction(STORE_NAME, 'readonly')
+  const store = transaction.objectStore(STORE_NAME)
+  const found: string[] = []
+  for (const { key, rsvpState } of fetchedKeys) {
+    if (!knownSet.has(key)) {
+      found.push(key)
+      continue
+    }
+    if (rsvpState === undefined) continue
+    const record = await getRecord(store, key)
+    if (record?.rsvpState === RSVP_STATE_NOT_OPEN_YET && rsvpState !== RSVP_STATE_NOT_OPEN_YET) {
+      found.push(key)
+    }
+  }
+  return found
 }

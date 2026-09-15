@@ -4,7 +4,7 @@ import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import CircularProgress from '@mui/material/CircularProgress'
 import type { Event, MeetupEvent, User } from '../api'
-import { addKnownKeys, eventKey, trackFetchedKeys } from '../eventTracking'
+import { addKnownKeys, eventKey, trackFetchedKeys, type FetchedKey } from '../eventTracking'
 import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from '../meetup'
 import { AckAllButton } from './AckAllButton'
 import { CombinedTable, type CombinedEntry } from './CombinedTable'
@@ -57,9 +57,9 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
 
   useEffect(() => {
     if (sunsetEvents === undefined || meetupEvents === undefined) return
-    const fetchedKeys = [
-      ...sunsetEvents.map((event) => eventKey('sunset', event.id)),
-      ...meetupEvents.filter(isVisibleMeetup).map((event) => eventKey('meetup', event.id)),
+    const fetchedKeys: FetchedKey[] = [
+      ...sunsetEvents.map((event) => ({ key: eventKey('sunset', event.id) })),
+      ...meetupEvents.filter(isVisibleMeetup).map((event) => ({ key: eventKey('meetup', event.id), rsvpState: event.rsvpState })),
     ]
     if (fetchedKeys.length === 0) return
     void trackFetchedKeys(fetchedKeys).then((found) => {
@@ -125,15 +125,16 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
     meetup: newOtherMeetup.length,
   }
 
-  const ackKeys = (keys: string[]) => {
-    if (keys.length === 0) return
+  const ackItems = (items: FetchedKey[]) => {
+    if (items.length === 0) return
+    const keys = items.map(({ key }) => key)
     setNewIds((prev) => {
       if (!keys.some((key) => prev.has(key))) return prev
       const next = new Set(prev)
       keys.forEach((key) => next.delete(key))
       return next
     })
-    void addKnownKeys(keys)
+    void addKnownKeys(items)
   }
 
   const toggleOnlyNew = (id: TabId) => {
@@ -150,9 +151,12 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const entryKey = (entry: CombinedEntry): string =>
     eventKey(entry.source === 'sunset' ? 'sunset' : 'meetup', entry.event.id)
 
-  const ackEntry = (entry: CombinedEntry) => ackKeys([entryKey(entry)])
-  const ackSunsetEvent = (event: Event) => ackKeys([eventKey('sunset', event.id)])
-  const ackMeetupEvent = (event: MeetupEvent) => ackKeys([eventKey('meetup', event.id)])
+  const entryRsvpState = (entry: CombinedEntry): string | undefined =>
+    entry.source === 'sunset' ? undefined : entry.event.rsvpState
+
+  const ackEntry = (entry: CombinedEntry) => ackItems([{ key: entryKey(entry), rsvpState: entryRsvpState(entry) }])
+  const ackSunsetEvent = (event: Event) => ackItems([{ key: eventKey('sunset', event.id) }])
+  const ackMeetupEvent = (event: MeetupEvent) => ackItems([{ key: eventKey('meetup', event.id), rsvpState: event.rsvpState }])
 
   return (
     <>
@@ -199,7 +203,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
         {tabNewCounts[activeTab] > 0 && (
           <>
             <OnlyNewToggle active={filterActive(activeTab)} onToggle={() => toggleOnlyNew(activeTab)} />
-            <AckAllButton count={tabNewCounts[activeTab]} onAckAll={() => ackKeys(newEntries[activeTab].map(entryKey))} />
+            <AckAllButton count={tabNewCounts[activeTab]} onAckAll={() => ackItems(newEntries[activeTab].map((entry) => ({ key: entryKey(entry), rsvpState: entryRsvpState(entry) })))} />
           </>
         )}
       </div>

@@ -118,6 +118,21 @@
   vertical-align: middle;
 }
 
+.rsvp-state-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #455a64;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
 .scheduled-icon {
   display: inline-block;
   font-size: 14px;

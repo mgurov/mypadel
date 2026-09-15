@@ -2,7 +2,7 @@ import Button from '@mui/material/Button'
 import type { MeetupEvent } from '../api'
 import { groupByDate } from '../dateGrouping'
 import { eventKey } from '../eventTracking'
-import { isMyRsvp, formatAttendance } from '../meetup'
+import { isMyRsvp, formatAttendance, formatRsvpState, RSVP_STATE_JOIN_OPEN } from '../meetup'
 import { hasEnded, isLive } from '../timing'
 import { MeetupDetailCell } from './MeetupDetailCell'
 
@@ -18,6 +18,7 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }:
   const ended = hasEnded(event.endTime)
   const live = isLive(event.dateTime, event.endTime)
   const attending = isMyRsvp(event)
+  const rsvpClosed = event.rsvpState !== undefined && event.rsvpState !== RSVP_STATE_JOIN_OPEN
 
   const myKey = eventKey('meetup', event.id)
   const isSelected = selectedKey === myKey
@@ -34,6 +35,7 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }:
       <div className="column margin-right-16">
         {label && <span className={`source-label source-label-${label.toLowerCase()}`}>{label}</span>}
         {isNew && <span className="new-label">new</span>}
+        {rsvpClosed && <span className="rsvp-state-label" data-testid="rsvp-state-label">{formatRsvpState(event.rsvpState)}</span>}
         {formatDate(event.dateTime)}
         {isNew && (
           <Button data-testid="ack-button" size="small" sx={{ ml: 1 }} onClick={onAck}>

@@ -4,6 +4,13 @@ export const WOLFGANG_MEMBER_ID = '456811393'
 export const MY_MEMBER_ID = '176325322'
 export const FLORIDSDORF_VENUE_ID = '28170985'
 
+export const RSVP_STATE_JOIN_OPEN = 'JOIN_OPEN'
+export const RSVP_STATE_NOT_OPEN_YET = 'NOT_OPEN_YET'
+
+export function formatRsvpState(state: string): string {
+  return state.toLowerCase().replaceAll('_', ' ')
+}
+
 export function isHostedByWolfgang(event: MeetupEvent): boolean {
   return event.eventHosts.some((host) => host.memberId === WOLFGANG_MEMBER_ID)
 }

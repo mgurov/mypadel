@@ -48,6 +48,7 @@ interface MeetupNode {
   dateTime: string
   endTime: string
   status: string
+  rsvpState: string
   eventUrl: string
   venue: { id: string; name: string }
   eventHosts: { memberId: string }[]
@@ -171,6 +172,7 @@ const defaultMeetupNode = (): MeetupNode => ({
   dateTime: futureDate(1, 10),
   endTime: futureDate(1, 12),
   status: 'ACTIVE',
+  rsvpState: 'JOIN_OPEN',
   eventUrl: 'https://www.meetup.com/vienna-sports-meetup/events/1/',
   venue: { id: 'venue-1', name: 'Vienna Court' },
   eventHosts: [{ memberId: 'host-1' }],
