@@ -118,6 +118,42 @@ test('shows a question mark for a meetup event with more than five attendees tha
   await expect(page.locator('.table-row').filter({ hasText: 'My Meetup' }).locator('.participating-yes')).toHaveText('\u2713')
 })
 
+test('force-marks meetup attendance via the actions menu and persists it', async ({ page, world }) => {
+  world.givenMeetupEvents([
+    { id: 'm1', title: 'Big Meetup', rsvps: { totalCount: 6, edges: [] } },
+    { id: 'm2', title: 'Joined Meetup', rsvps: { totalCount: 6, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] } },
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await tab(page, 'meetup').click()
+
+  const bigRow = page.locator('.table-row').filter({ hasText: 'Big Meetup' })
+  const joinedRow = page.locator('.table-row').filter({ hasText: 'Joined Meetup' })
+  await expect(bigRow.locator('.participating-question')).toHaveText('?')
+  await expect(joinedRow.locator('.participating-yes')).toHaveText('\u2713')
+
+  await bigRow.getByTestId('event-actions-button').click()
+  await page.getByTestId('mark-attending').click()
+  await expect(bigRow.locator('.participating-yes')).toHaveText('\u2713')
+  await expect(bigRow.locator('.participating-question')).toHaveCount(0)
+
+  await joinedRow.getByTestId('event-actions-button').click()
+  await page.getByTestId('mark-not-attending').click()
+  await expect(joinedRow.locator('.participating-no')).toHaveText('\u2014')
+
+  const toggle = attendingToggle(page)
+  await toggle.click()
+  await expect(page.getByText('Big Meetup')).toBeVisible()
+  await expect(page.getByText('Joined Meetup')).toHaveCount(0)
+  await toggle.click()
+
+  await page.reload()
+  await fetchButton(page).click()
+  await tab(page, 'meetup').click()
+  await expect(page.locator('.table-row').filter({ hasText: 'Big Meetup' }).locator('.participating-yes')).toHaveText('\u2713')
+  await expect(page.locator('.table-row').filter({ hasText: 'Joined Meetup' }).locator('.participating-no')).toHaveText('\u2014')
+})
+
 test('attending toggle filters the combined tab across sources', async ({ page, world }) => {
   world.givenEvents([
     { id: 'sunset-1', title: 'Sunset Going', participants: [{ userId: 'user-1' }] },

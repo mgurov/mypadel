@@ -6,10 +6,13 @@ const STORE_NAME = 'known-events'
 
 export type EventSource = 'sunset' | 'meetup'
 
+export type ForcedAttendance = 'yes' | 'no'
+
 export interface KnownEventRecord {
   ackedAt?: number
   cancellationAckedAt?: number
   rsvpState?: string
+  forcedAttendance?: ForcedAttendance
 }
 
 export interface FetchedKey {
@@ -79,6 +82,53 @@ function getRecord(store: IDBObjectStore, key: string): Promise<KnownEventRecord
   })
 }
 
+export async function loadForcedAttendance(): Promise<Map<string, ForcedAttendance>> {
+  try {
+    const db = await getDb()
+    const result = await new Promise<Map<string, ForcedAttendance>>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly')
+      const store = transaction.objectStore(STORE_NAME)
+      const request = store.openCursor()
+      const found = new Map<string, ForcedAttendance>()
+      request.onsuccess = () => {
+        const cursor = request.result
+        if (cursor) {
+          const record = cursor.value as KnownEventRecord | undefined
+          if (record?.forcedAttendance && typeof cursor.key === 'string') {
+            found.set(cursor.key, record.forcedAttendance)
+          }
+          cursor.continue()
+        } else {
+          resolve(found)
+        }
+      }
+      request.onerror = () => reject(request.error)
+    })
+    return result
+  } catch {
+    return new Map()
+  }
+}
+
+export async function setForcedAttendance(key: string, value: ForcedAttendance | undefined): Promise<void> {
+  const db = await getDb()
+  const transaction = db.transaction(STORE_NAME, 'readwrite')
+  const store = transaction.objectStore(STORE_NAME)
+  const existing = (await getRecord(store, key)) ?? {}
+  const record: KnownEventRecord = {
+    ackedAt: existing.ackedAt,
+    cancellationAckedAt: existing.cancellationAckedAt,
+    rsvpState: existing.rsvpState,
+    forcedAttendance: value,
+  }
+  if (record.forcedAttendance === undefined) delete record.forcedAttendance
+  store.put(record, key)
+  await new Promise<void>((resolve, reject) => {
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = () => reject(transaction.error)
+  })
+}
+
 export async function addKnownKeys(records: FetchedKey[]): Promise<void> {
   if (records.length === 0) return
   const db = await getDb()
@@ -91,6 +141,7 @@ export async function addKnownKeys(records: FetchedKey[]): Promise<void> {
         ackedAt: Date.now(),
         cancellationAckedAt: existing?.cancellationAckedAt,
         rsvpState: rsvpState ?? existing?.rsvpState,
+        forcedAttendance: existing?.forcedAttendance,
       } satisfies KnownEventRecord,
       key,
     )
@@ -117,7 +168,15 @@ export async function ackCancellation(key: string): Promise<void> {
   const transaction = db.transaction(STORE_NAME, 'readwrite')
   const store = transaction.objectStore(STORE_NAME)
   const existing = await getRecord(store, key)
-  store.put({ ackedAt: existing?.ackedAt, cancellationAckedAt: Date.now() } satisfies KnownEventRecord, key)
+  store.put(
+    {
+      ackedAt: existing?.ackedAt,
+      cancellationAckedAt: Date.now(),
+      rsvpState: existing?.rsvpState,
+      forcedAttendance: existing?.forcedAttendance,
+    } satisfies KnownEventRecord,
+    key,
+  )
   await new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => resolve()
     transaction.onerror = () => reject(transaction.error)

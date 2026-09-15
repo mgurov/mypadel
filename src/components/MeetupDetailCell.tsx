@@ -7,15 +7,21 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import type { MeetupEvent } from '../api'
+import type { ForcedAttendance } from '../eventTracking'
 import { downloadMeetupEventIcs } from '../ics'
 
-export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSelect?: () => void }) {
+export function MeetupDetailCell({ event, onSelect, forcedAttendance, onForcedAttendance }: { event: MeetupEvent; onSelect?: () => void; forcedAttendance?: ForcedAttendance; onForcedAttendance?: (value: ForcedAttendance | undefined) => void }) {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [jsonOpen, setJsonOpen] = useState(false)
   const [participantsOpen, setParticipantsOpen] = useState(false)
   const [photoSource, setPhotoSource] = useState<string | null>(null)
 
   const closeMenu = () => setMenuAnchor(null)
+
+  const toggleAttending = (value: 'yes' | 'no') => {
+    closeMenu()
+    onForcedAttendance?.(forcedAttendance === value ? undefined : value)
+  }
 
   return (
     <div className="column no-grow">
@@ -36,6 +42,12 @@ export function MeetupDetailCell({ event, onSelect }: { event: MeetupEvent; onSe
       >
         <MenuItem onClick={() => { downloadMeetupEventIcs(event); closeMenu() }}>
           Add to Calendar
+        </MenuItem>
+        <MenuItem selected={forcedAttendance === 'yes'} data-testid="mark-attending" onClick={() => toggleAttending('yes')}>
+          Mark as attending
+        </MenuItem>
+        <MenuItem selected={forcedAttendance === 'no'} data-testid="mark-not-attending" onClick={() => toggleAttending('no')}>
+          Mark as not attending
         </MenuItem>
         <MenuItem
           component="a"

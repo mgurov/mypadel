@@ -1,8 +1,8 @@
 import Button from '@mui/material/Button'
 import type { MeetupEvent } from '../api'
 import { groupByDate } from '../dateGrouping'
-import { eventKey } from '../eventTracking'
-import { isMyRsvp, formatAttendance, formatRsvpState, RSVP_STATE_JOIN_OPEN, attendanceState } from '../meetup'
+import { eventKey, type ForcedAttendance } from '../eventTracking'
+import { formatAttendance, formatRsvpState, RSVP_STATE_JOIN_OPEN, attendanceState } from '../meetup'
 import { hasEnded, isLive } from '../timing'
 import { MeetupDetailCell } from './MeetupDetailCell'
 
@@ -14,19 +14,17 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }: { event: MeetupEvent; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void }) {
+export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect, forcedAttendance, onForcedAttendance }: { event: MeetupEvent; label?: string; isNew?: boolean; onAck: () => void; selectedKey?: string; onSelect?: (key: string) => void; forcedAttendance?: ReadonlyMap<string, ForcedAttendance>; onForcedAttendance?: (key: string, value: ForcedAttendance | undefined) => void }) {
   const ended = hasEnded(event.endTime)
   const live = isLive(event.dateTime, event.endTime)
-  const attending = isMyRsvp(event)
-  const attendance = attendanceState(event)
-  const rsvpClosed = event.rsvpState !== undefined && event.rsvpState !== RSVP_STATE_JOIN_OPEN
-
   const myKey = eventKey('meetup', event.id)
+  const attendance = forcedAttendance?.get(myKey) ?? attendanceState(event)
+  const rsvpClosed = event.rsvpState !== undefined && event.rsvpState !== RSVP_STATE_JOIN_OPEN
   const isSelected = selectedKey === myKey
 
   const rowClass = [
     'table-row',
-    live && attending ? 'table-row-live' : '',
+    live && attendance === 'yes' ? 'table-row-live' : '',
     ended ? 'table-row-ended' : '',
     isSelected ? 'table-row-selected' : '',
   ].filter(Boolean).join(' ')
@@ -55,12 +53,12 @@ export function MeetupRow({ event, label, isNew, onAck, selectedKey, onSelect }:
       </div>
       <div className="column">{event.title}</div>
       <div className="column text-align-right margin-right-16 no-grow">{formatAttendance(event)}</div>
-      <MeetupDetailCell event={event} onSelect={() => onSelect?.(myKey)} />
+      <MeetupDetailCell event={event} onSelect={() => onSelect?.(myKey)} forcedAttendance={forcedAttendance?.get(myKey)} onForcedAttendance={onForcedAttendance ? (value) => onForcedAttendance(myKey, value) : undefined} />
     </div>
   )
 }
 
-export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void; selectedKey?: string; onSelect?: (key: string) => void }) {
+export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect, forcedAttendance, onForcedAttendance }: { events: MeetupEvent[]; newIds: ReadonlySet<string>; onAck: (event: MeetupEvent) => void; selectedKey?: string; onSelect?: (key: string) => void; forcedAttendance?: ReadonlyMap<string, ForcedAttendance>; onForcedAttendance?: (key: string, value: ForcedAttendance | undefined) => void }) {
   const groups = groupByDate(events, (e) => e.dateTime)
   return (
     <div className="events-table">
@@ -69,7 +67,7 @@ export function MeetupTable({ events, newIds, onAck, selectedKey, onSelect }: { 
           <div className="date-group-header">{group.header}</div>
           {group.items.map((event) => (
             <div key={event.id} className="table-row-group">
-              <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} />
+              <MeetupRow event={event} isNew={newIds.has(eventKey('meetup', event.id))} onAck={() => onAck(event)} selectedKey={selectedKey} onSelect={onSelect} forcedAttendance={forcedAttendance} onForcedAttendance={onForcedAttendance} />
             </div>
           ))}
         </div>

@@ -4,7 +4,7 @@ import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import CircularProgress from '@mui/material/CircularProgress'
 import type { Event, MeetupEvent, User } from '../api'
-import { addKnownKeys, eventKey, trackFetchedKeys, type FetchedKey } from '../eventTracking'
+import { addKnownKeys, eventKey, loadForcedAttendance, setForcedAttendance as persistForcedAttendance, trackFetchedKeys, type FetchedKey, type ForcedAttendance } from '../eventTracking'
 import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from '../meetup'
 import { AckAllButton } from './AckAllButton'
 import { CombinedTable, type CombinedEntry } from './CombinedTable'
@@ -46,6 +46,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
   const [showOnlyAttending, setShowOnlyAttending] = useState(false)
+  const [forcedAttendance, setForcedAttendance] = useState<ReadonlyMap<string, ForcedAttendance>>(() => new Map())
 
   const selectedKey = searchParams.get('selected') ?? undefined
   const selectEvent = (key: string) => {
@@ -54,6 +55,16 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
       return prev
     }, { replace: true })
   }
+
+  useEffect(() => {
+    let active = true
+    void loadForcedAttendance().then((found) => {
+      if (active) setForcedAttendance(found)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     if (sunsetEvents === undefined || meetupEvents === undefined) return
@@ -75,9 +86,18 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const visibleMeetup = (meetupEvents ?? []).filter(isVisibleMeetup)
   const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
   const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
+
+  const forcedAttendanceFor = (event: MeetupEvent): ForcedAttendance | undefined =>
+    forcedAttendance.get(eventKey('meetup', event.id))
+
+  const isEffectiveAttending = (event: MeetupEvent): boolean => {
+    const forced = forcedAttendanceFor(event)
+    return forced !== undefined ? forced === 'yes' : isMyRsvp(event)
+  }
+
   const sunsetList = showOnlyAttending ? (sunsetEvents ?? []).filter((event) => attendingSunsetIds.has(event.id)) : (sunsetEvents ?? [])
-  const wolfgangList = showOnlyAttending ? wolfgangEvents.filter(isMyRsvp) : wolfgangEvents
-  const meetupList = showOnlyAttending ? otherMeetupEvents.filter(isMyRsvp) : otherMeetupEvents
+  const wolfgangList = showOnlyAttending ? wolfgangEvents.filter(isEffectiveAttending) : wolfgangEvents
+  const meetupList = showOnlyAttending ? otherMeetupEvents.filter(isEffectiveAttending) : otherMeetupEvents
 
   const tabCounts: Record<TabId, number> = {
     combined: sunsetList.length + wolfgangList.length + meetupList.length,
@@ -97,8 +117,8 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const newOtherMeetup = meetupList.filter((event) => newIds.has(eventKey('meetup', event.id)))
 
   const joinedSunset = (sunsetEvents ?? []).filter((event) => attendingSunsetIds.has(event.id))
-  const joinedWolfgang = wolfgangEvents.filter(isMyRsvp)
-  const joinedMeetup = otherMeetupEvents.filter(isMyRsvp)
+  const joinedWolfgang = wolfgangEvents.filter(isEffectiveAttending)
+  const joinedMeetup = otherMeetupEvents.filter(isEffectiveAttending)
 
   const joinedCounts: Record<TabId, number> = {
     combined: joinedSunset.length + joinedWolfgang.length + joinedMeetup.length,
@@ -135,6 +155,16 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
       return next
     })
     void addKnownKeys(items)
+  }
+
+  const setForcedAttendanceFor = (key: string, value: ForcedAttendance | undefined) => {
+    setForcedAttendance((prev) => {
+      const next = new Map(prev)
+      if (value === undefined) next.delete(key)
+      else next.set(key, value)
+      return next
+    })
+    void persistForcedAttendance(key, value)
   }
 
   const toggleOnlyNew = (id: TabId) => {
@@ -209,7 +239,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
       </div>
 
       {activeTab === 'combined' && combinedEntries.length > 0 && (
-        <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} selectedKey={selectedKey} onSelect={selectEvent} />
+        <CombinedTable entries={filterActive('combined') ? newEntries.combined : combinedEntries} newIds={newIds} onAck={ackEntry} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} />
       )}
 
       {activeTab === 'sunset' && sunsetList.length > 0 && (
@@ -217,11 +247,11 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
       )}
 
       {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
-        <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} />
+        <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} />
       )}
 
       {activeTab === 'meetup' && meetupList.length > 0 && (
-        <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} />
+        <MeetupTable events={filterActive('meetup') ? newOtherMeetup : meetupList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} />
       )}
     </>
   )
