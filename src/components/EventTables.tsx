@@ -296,6 +296,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
         anchorEl={moreAnchor}
         open={moreOpen}
         onClose={() => setMoreAnchor(null)}
+        transitionDuration={0}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
@@ -310,6 +311,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
             <span className="menu-tab-color" style={{ backgroundColor: TAB_COLORS[id] }} />
             <span className="tab-label-text">{`${TAB_LABELS[id]}${tabHasData[id] ? ` (${tabCounts[id]})` : ''}`}</span>
             {tabNewCounts[id] > 0 && <span className="new-badge">{tabNewCounts[id]}</span>}
+            {tabFetching[id] && <CircularProgress className="tab-spinner" size={12} />}
           </MenuItem>
         ))}
       </Menu>
