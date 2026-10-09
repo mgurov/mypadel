@@ -467,13 +467,15 @@ test('does not show a (0) counter on tabs whose source has not loaded yet', asyn
 
   await expect(tab(page, 'sunset')).toContainText('(1)')
   await expect(tab(page, 'wolfgang')).not.toContainText('(0)')
+  await expect(tab(page, 'floridsdorf')).not.toContainText('(0)')
   await expect(tab(page, 'meetup')).not.toContainText('(0)')
   await expect(tab(page, 'combined')).not.toContainText('(')
 
   releaseMeetup()
 
-  await expect(tab(page, 'combined')).toContainText('(2)')
+  await expect(tab(page, 'combined')).toContainText('(1)')
   await expect(tab(page, 'wolfgang')).toContainText('(0)')
+  await expect(tab(page, 'floridsdorf')).toContainText('(0)')
   await expect(tab(page, 'meetup')).toContainText('(1)')
 })
 
@@ -502,9 +504,10 @@ test('tabs show the number of fetched entries', async ({ page, world }) => {
 
   await fetchButton(page).click()
 
-  await expect(tab(page, 'combined')).toContainText('(4)')
+  await expect(tab(page, 'combined')).toContainText('(3)')
   await expect(tab(page, 'sunset')).toContainText('(2)')
   await expect(tab(page, 'wolfgang')).toContainText('(1)')
+  await expect(tab(page, 'floridsdorf')).toContainText('(0)')
   await expect(tab(page, 'meetup')).toContainText('(1)')
 })
 
@@ -521,16 +524,17 @@ test('tabs use the same colors as the source labels', async ({ page, world }) =>
   await expect(tab(page, 'combined')).toHaveCSS('background-color', 'rgb(107, 99, 117)')
   await expect(tab(page, 'sunset')).toHaveCSS('background-color', 'rgb(170, 59, 255)')
   await expect(tab(page, 'wolfgang')).toHaveCSS('background-color', 'rgb(46, 125, 50)')
+  await expect(tab(page, 'floridsdorf')).toHaveCSS('background-color', 'rgb(0, 131, 143)')
   await expect(tab(page, 'meetup')).toHaveCSS('background-color', 'rgb(25, 118, 210)')
   await expect(tab(page, 'sunset')).toHaveCSS('color', 'rgb(255, 255, 255)')
 })
 
-test('combined tab merges sunset and meetup events chronologically', async ({ page, world }) => {
+test('combined tab merges sunset and wolfgang events chronologically', async ({ page, world }) => {
   world.givenEvents([
     { id: 'sunset-later', title: 'Sunset Later', date: futureDate(3, 18) },
   ])
   world.givenMeetupEvents([
-    { id: 'meetup-earlier', title: 'Meetup Earlier', dateTime: futureDate(2, 9) },
+    { id: 'meetup-earlier', title: 'Adina Earlier', dateTime: futureDate(2, 9) },
     { id: 'meetup-wolfgang', title: 'Wolfgang Meetup', dateTime: futureDate(3, 9), eventHosts: [{ memberId: '456811393' }] },
   ])
   await page.goto('/')
@@ -539,17 +543,16 @@ test('combined tab merges sunset and meetup events chronologically', async ({ pa
   await tab(page, 'combined').click()
 
   const rows = page.locator('.table-row-group')
-  await expect(rows).toHaveCount(3)
-  await expect(rows.nth(0)).toContainText('Meetup Earlier')
-  await expect(rows.nth(1)).toContainText('Wolfgang Meetup')
-  await expect(rows.nth(2)).toContainText('Sunset Later')
+  await expect(rows).toHaveCount(2)
+  await expect(rows.nth(0)).toContainText('Wolfgang Meetup')
+  await expect(rows.nth(1)).toContainText('Sunset Later')
+  await expect(page.getByText('Adina Earlier')).toHaveCount(0)
 
-  await expect(rows.nth(0).locator('.source-label')).toHaveText('Meetup')
-  await expect(rows.nth(1).locator('.source-label')).toHaveText('Wolfgang')
-  await expect(rows.nth(2).locator('.source-label')).toHaveText('Sunset')
+  await expect(rows.nth(0).locator('.source-label')).toHaveText('Wolfgang')
+  await expect(rows.nth(1).locator('.source-label')).toHaveText('Sunset')
 })
 
-test('meetup events are split into wolfgang and meetup tabs', async ({ page, world }) => {
+test('meetup events are split into wolfgang, floridsdorf, and adina tabs', async ({ page, world }) => {
   world.givenMeetupEvents([
     {
       id: 'meetup-wolfgang',
@@ -565,6 +568,12 @@ test('meetup events are split into wolfgang and meetup tabs', async ({ page, wor
       eventUrl: 'https://www.meetup.com/casual',
       eventHosts: [{ memberId: 'other-host' }],
       rsvps: { totalCount: 3, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] },
+    },
+    {
+      id: 'meetup-floridsdorf-wolfgang',
+      title: 'Wolfgang Floridsdorf',
+      venue: { id: '28170985', name: 'Floridsdorf' },
+      eventHosts: [{ memberId: '456811393' }],
     },
     {
       id: 'meetup-cancelled',
@@ -585,16 +594,21 @@ test('meetup events are split into wolfgang and meetup tabs', async ({ page, wor
 
   await expect(tab(page, 'wolfgang')).toContainText('(1)')
   await expect(tab(page, 'meetup')).toContainText('(1)')
+  await expect(tab(page, 'floridsdorf')).toContainText('(1)')
 
   await tab(page, 'wolfgang').click()
   await expect(page.getByText('Wolfgang Padel')).toBeVisible()
   await expect(page.getByText('full')).toBeVisible()
+  await expect(page.getByText('Wolfgang Floridsdorf')).toHaveCount(0)
   await page.getByTestId('event-actions-button').first().click()
   const openEvent = page.getByRole('menuitem', { name: 'Open Event' })
   await expect(openEvent).toHaveAttribute('href', 'https://www.meetup.com/wolfgang')
   await page.keyboard.press('Escape')
   await expect(page.getByRole('menuitem')).toHaveCount(0)
   await expect(page.getByText('Cancelled Padel')).toHaveCount(0)
+
+  await tab(page, 'floridsdorf').click()
+  await expect(page.getByText('Wolfgang Floridsdorf')).toBeVisible()
   await expect(page.getByText('Floridsdorf Padel')).toHaveCount(0)
 
   await tab(page, 'meetup').click()

@@ -75,6 +75,7 @@ export function EventsView() {
     combined: filteredEvents !== undefined && meetupEvents !== undefined,
     sunset: filteredEvents !== undefined,
     wolfgang: meetupEvents !== undefined,
+    floridsdorf: meetupEvents !== undefined,
     meetup: meetupEvents !== undefined,
   }
 
@@ -82,6 +83,7 @@ export function EventsView() {
     combined: isFetching || meetupIsFetching,
     sunset: isFetching,
     wolfgang: meetupIsFetching,
+    floridsdorf: meetupIsFetching,
     meetup: meetupIsFetching,
   }
 

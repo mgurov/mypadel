@@ -6,7 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import type { Event, MeetupEvent, User } from '../api'
 import { addKnownKeys, eventKey, loadForcedAttendance, setForcedAttendance as persistForcedAttendance, trackFetchedKeys, type FetchedKey, type ForcedAttendance } from '../eventTracking'
 import { loadUnavailableDates, setUnavailableDate } from '../unavailableDates'
-import { isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from '../meetup'
+import { isFloridsdorfEvent, isHostedByWolfgang, isMyRsvp, isVisibleMeetup } from '../meetup'
 import { AckAllButton } from './AckAllButton'
 import { CombinedTable, type CombinedEntry } from './CombinedTable'
 import { EventsTable } from './EventsTable'
@@ -14,21 +14,23 @@ import { MeetupTable } from './MeetupTable'
 import { OnlyAttendingToggle } from './OnlyAttendingToggle'
 import { OnlyNewToggle } from './OnlyNewToggle'
 
-export type TabId = 'combined' | 'sunset' | 'wolfgang' | 'meetup'
+export type TabId = 'combined' | 'sunset' | 'wolfgang' | 'floridsdorf' | 'meetup'
 
-const TAB_IDS: TabId[] = ['combined', 'sunset', 'wolfgang', 'meetup']
+const TAB_IDS: TabId[] = ['combined', 'sunset', 'wolfgang', 'floridsdorf', 'meetup']
 
 const TAB_LABELS: Record<TabId, string> = {
   combined: 'Combined',
   sunset: 'Sunset',
   wolfgang: 'Wolfgang',
-  meetup: 'Meetup',
+  floridsdorf: 'Floridsdorf',
+  meetup: 'Adina',
 }
 
 const TAB_COLORS: Record<TabId, string> = {
   combined: '#6b6375',
   sunset: '#aa3bff',
   wolfgang: '#2e7d32',
+  floridsdorf: '#00838f',
   meetup: '#1976d2',
 }
 
@@ -82,7 +84,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
     if (sunsetEvents === undefined || meetupEvents === undefined) return
     const fetchedKeys: FetchedKey[] = [
       ...sunsetEvents.map((event) => ({ key: eventKey('sunset', event.id) })),
-      ...meetupEvents.filter(isVisibleMeetup).map((event) => ({ key: eventKey('meetup', event.id), rsvpState: event.rsvpState })),
+      ...meetupEvents.filter((event) => event.status !== 'CANCELLED').map((event) => ({ key: eventKey('meetup', event.id), rsvpState: event.rsvpState })),
     ]
     if (fetchedKeys.length === 0) return
     void trackFetchedKeys(fetchedKeys).then((found) => {
@@ -98,6 +100,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const visibleMeetup = (meetupEvents ?? []).filter(isVisibleMeetup)
   const wolfgangEvents = visibleMeetup.filter(isHostedByWolfgang)
   const otherMeetupEvents = visibleMeetup.filter((event) => !isHostedByWolfgang(event))
+  const floridsdorfEvents = (meetupEvents ?? []).filter((event) => isHostedByWolfgang(event) && isFloridsdorfEvent(event))
 
   const forcedAttendanceFor = (event: MeetupEvent): ForcedAttendance | undefined =>
     forcedAttendance.get(eventKey('meetup', event.id))
@@ -109,33 +112,37 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
 
   const sunsetList = showOnlyAttending ? (sunsetEvents ?? []).filter((event) => attendingSunsetIds.has(event.id)) : (sunsetEvents ?? [])
   const wolfgangList = showOnlyAttending ? wolfgangEvents.filter(isEffectiveAttending) : wolfgangEvents
+  const floridsdorfList = showOnlyAttending ? floridsdorfEvents.filter(isEffectiveAttending) : floridsdorfEvents
   const meetupList = showOnlyAttending ? otherMeetupEvents.filter(isEffectiveAttending) : otherMeetupEvents
 
   const tabCounts: Record<TabId, number> = {
-    combined: sunsetList.length + wolfgangList.length + meetupList.length,
+    combined: sunsetList.length + wolfgangList.length,
     sunset: sunsetList.length,
     wolfgang: wolfgangList.length,
+    floridsdorf: floridsdorfList.length,
     meetup: meetupList.length,
   }
 
   const combinedEntries: CombinedEntry[] = [
     ...sunsetList.map((event) => ({ source: 'sunset' as const, event })),
     ...wolfgangList.map((event) => ({ source: 'wolfgang' as const, event })),
-    ...meetupList.map((event) => ({ source: 'meetup' as const, event })),
   ]
 
   const newSunset = sunsetList.filter((event) => newIds.has(eventKey('sunset', event.id)))
   const newWolfgang = wolfgangList.filter((event) => newIds.has(eventKey('meetup', event.id)))
+  const newFloridsdorf = floridsdorfList.filter((event) => newIds.has(eventKey('meetup', event.id)))
   const newOtherMeetup = meetupList.filter((event) => newIds.has(eventKey('meetup', event.id)))
 
   const joinedSunset = (sunsetEvents ?? []).filter((event) => attendingSunsetIds.has(event.id))
   const joinedWolfgang = wolfgangEvents.filter(isEffectiveAttending)
+  const joinedFloridsdorf = floridsdorfEvents.filter(isEffectiveAttending)
   const joinedMeetup = otherMeetupEvents.filter(isEffectiveAttending)
 
   const joinedCounts: Record<TabId, number> = {
-    combined: joinedSunset.length + joinedWolfgang.length + joinedMeetup.length,
+    combined: joinedSunset.length + joinedWolfgang.length,
     sunset: joinedSunset.length,
     wolfgang: joinedWolfgang.length,
+    floridsdorf: joinedFloridsdorf.length,
     meetup: joinedMeetup.length,
   }
 
@@ -143,17 +150,18 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
     combined: [
       ...newSunset.map((event) => ({ source: 'sunset' as const, event })),
       ...newWolfgang.map((event) => ({ source: 'wolfgang' as const, event })),
-      ...newOtherMeetup.map((event) => ({ source: 'meetup' as const, event })),
     ],
     sunset: newSunset.map((event) => ({ source: 'sunset' as const, event })),
     wolfgang: newWolfgang.map((event) => ({ source: 'wolfgang' as const, event })),
+    floridsdorf: newFloridsdorf.map((event) => ({ source: 'wolfgang' as const, event })),
     meetup: newOtherMeetup.map((event) => ({ source: 'meetup' as const, event })),
   }
 
   const tabNewCounts: Record<TabId, number> = {
-    combined: newSunset.length + newWolfgang.length + newOtherMeetup.length,
+    combined: newSunset.length + newWolfgang.length,
     sunset: newSunset.length,
     wolfgang: newWolfgang.length,
+    floridsdorf: newFloridsdorf.length,
     meetup: newOtherMeetup.length,
   }
 
@@ -271,6 +279,10 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
 
       {activeTab === 'wolfgang' && wolfgangList.length > 0 && (
         <MeetupTable events={filterActive('wolfgang') ? newWolfgang : wolfgangList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} unavailableDates={unavailableDates} onToggleUnavailable={toggleUnavailableDate} />
+      )}
+
+      {activeTab === 'floridsdorf' && floridsdorfList.length > 0 && (
+        <MeetupTable events={filterActive('floridsdorf') ? newFloridsdorf : floridsdorfList} newIds={newIds} onAck={ackMeetupEvent} selectedKey={selectedKey} onSelect={selectEvent} forcedAttendance={forcedAttendance} onForcedAttendance={setForcedAttendanceFor} unavailableDates={unavailableDates} onToggleUnavailable={toggleUnavailableDate} />
       )}
 
       {activeTab === 'meetup' && meetupList.length > 0 && (

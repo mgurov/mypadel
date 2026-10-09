@@ -167,13 +167,13 @@ test('attending toggle filters the combined tab across sources', async ({ page, 
   await fetchButton(page).click()
   await tab(page, 'combined').click()
   await expect(page.getByText('Sunset Going')).toBeVisible()
-  await expect(page.getByText('Meetup Not Going')).toBeVisible()
+  await expect(page.getByText('Sunset Not Going')).toBeVisible()
+  await expect(page.getByText('Meetup Not Going')).toHaveCount(0)
 
   await attendingToggle(page).click()
 
   await expect(page.getByText('Sunset Going')).toBeVisible()
-  await expect(page.getByText('Meetup Going')).toBeVisible()
   await expect(page.getByText('Sunset Not Going')).toHaveCount(0)
-  await expect(page.getByText('Meetup Not Going')).toHaveCount(0)
-  await expect(tab(page, 'combined')).toContainText('(2)')
+  await expect(page.getByText('Meetup Going')).toHaveCount(0)
+  await expect(tab(page, 'combined')).toContainText('(1)')
 })

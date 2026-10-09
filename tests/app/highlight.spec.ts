@@ -112,5 +112,5 @@ test('highlights an unpaid sunset row in the combined tab', async ({ page, world
 
   await expect(rowFor(page, 'Combined Unpaid')).toHaveClass(/table-row-highlight/)
   await expect(rowFor(page, 'Combined Unpaid')).toContainText('unpaid')
-  await expect(page.getByText('Padel Meetup')).toBeVisible()
+  await expect(page.getByText('Padel Meetup')).toHaveCount(0)
 })

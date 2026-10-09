@@ -21,6 +21,10 @@ export function isVisibleMeetup(event: MeetupEvent): boolean {
   return event.status !== 'CANCELLED' && event.venue.id !== FLORIDSDORF_VENUE_ID
 }
 
+export function isFloridsdorfEvent(event: MeetupEvent): boolean {
+  return event.status !== 'CANCELLED' && event.venue.id === FLORIDSDORF_VENUE_ID
+}
+
 export function isMyRsvp(event: MeetupEvent): boolean {
   return event.rsvps.edges.some((edge) => edge.node.member.id === MY_MEMBER_ID)
 }

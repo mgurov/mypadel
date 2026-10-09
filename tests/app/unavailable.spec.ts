@@ -67,7 +67,7 @@ test('a marked date stays unavailable across tabs and survives a reload', async 
 
   await tab(page, 'combined').click()
   await expect(unavailableHeader(page)).toHaveCount(1)
-  await expect(page.locator('.table-row-unavailable')).toHaveCount(2)
+  await expect(page.locator('.table-row-unavailable')).toHaveCount(1)
 
   await page.reload()
   await fetchButton(page).click()
