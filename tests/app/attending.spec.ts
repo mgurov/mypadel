@@ -3,6 +3,10 @@ import { test } from './setup/ourTest'
 
 const fetchButton = (page: Page) => page.getByTestId('fetch-events-button')
 const tab = (page: Page, name: string) => page.getByTestId(`tab-${name}`)
+const openTab = async (page: Page, name: string) => {
+  await tab(page, 'more').click()
+  await tab(page, name).click()
+}
 const attendingToggle = (page: Page) => page.getByTestId('only-attending-toggle')
 
 test('attending toggle sits under the tab header', async ({ page, world }) => {
@@ -38,7 +42,7 @@ test('attending toggle appears on tabs that have joined events and hides on thos
 
   await expect(attendingToggle(page)).toBeVisible()
 
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Meetup One')).toBeVisible()
   await expect(attendingToggle(page)).toHaveCount(0)
 })
@@ -90,7 +94,7 @@ test('attending toggle shows only meetup events the user RSVPs to', async ({ pag
   ])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Going Meetup')).toBeVisible()
   await expect(page.getByText('Not Going')).toBeVisible()
 
@@ -98,7 +102,7 @@ test('attending toggle shows only meetup events the user RSVPs to', async ({ pag
 
   await expect(page.getByText('Going Meetup')).toBeVisible()
   await expect(page.getByText('Not Going')).toHaveCount(0)
-  await expect(tab(page, 'meetup')).toContainText('(1)')
+  await expect(tab(page, 'more')).toContainText('Adina (1)')
 })
 
 test('shows a question mark for a meetup event with more than five attendees that may hide the user', async ({ page, world }) => {
@@ -110,7 +114,7 @@ test('shows a question mark for a meetup event with more than five attendees tha
   ])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
 
   await expect(page.locator('.table-row').filter({ hasText: 'Big Meetup' }).locator('.participating-question')).toHaveText('?')
   await expect(page.locator('.table-row').filter({ hasText: 'Small Meetup' }).locator('.participating-question')).toHaveCount(0)
@@ -125,7 +129,7 @@ test('force-marks meetup attendance via the actions menu and persists it', async
   ])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
 
   const bigRow = page.locator('.table-row').filter({ hasText: 'Big Meetup' })
   const joinedRow = page.locator('.table-row').filter({ hasText: 'Joined Meetup' })
@@ -149,7 +153,7 @@ test('force-marks meetup attendance via the actions menu and persists it', async
 
   await page.reload()
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.locator('.table-row').filter({ hasText: 'Big Meetup' }).locator('.participating-yes')).toHaveText('\u2713')
   await expect(page.locator('.table-row').filter({ hasText: 'Joined Meetup' }).locator('.participating-no')).toHaveText('\u2014')
 })

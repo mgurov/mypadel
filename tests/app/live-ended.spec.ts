@@ -24,6 +24,7 @@ async function fetch(page: Page) {
 
 async function showMeetup(page: Page, title: string) {
   await fetch(page)
+  await tab(page, 'more').click()
   await tab(page, 'meetup').click()
   await expect(page.getByText(title)).toBeVisible()
 }

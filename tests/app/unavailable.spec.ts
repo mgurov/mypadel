@@ -3,6 +3,10 @@ import { test } from './setup/ourTest'
 
 const fetchButton = (page: Page) => page.getByTestId('fetch-events-button')
 const tab = (page: Page, name: string) => page.getByTestId(`tab-${name}`)
+const openTab = async (page: Page, name: string) => {
+  await tab(page, 'more').click()
+  await tab(page, name).click()
+}
 const toggle = (page: Page) => page.getByTestId('unavailable-date-toggle')
 const unavailableHeader = (page: Page) => page.locator('.date-group-header.date-group-header-unavailable')
 
@@ -74,7 +78,7 @@ test('a marked date stays unavailable across tabs and survives a reload', async 
   await expect(page.getByText('Sunset Event')).toBeVisible()
   await expect(unavailableHeader(page)).toHaveCount(1)
 
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Meetup Event')).toBeVisible()
   await expect(unavailableHeader(page)).toHaveCount(1)
 })
@@ -87,7 +91,7 @@ test('marks a meetup event date unavailable on its tab', async ({ page, world })
   ])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Meetup One')).toBeVisible()
 
   await toggle(page).click()

@@ -112,6 +112,7 @@ test('downloads an ics file for a meetup event', async ({ page, world }) => {
   ])
   await page.goto('/')
   await page.getByTestId('fetch-events-button').click()
+  await page.getByTestId('tab-more').click()
   await page.getByTestId('tab-meetup').click()
   await expect(page.getByText('Padel Meetup')).toBeVisible()
 

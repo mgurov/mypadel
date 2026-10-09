@@ -6,6 +6,10 @@ const tab = (page: Page, name: string) => page.getByTestId(`tab-${name}`)
 const newBadge = (page: Page, name: string) => tab(page, name).locator('.new-badge')
 const ackAllButton = (page: Page) => page.getByTestId('ack-all-button')
 const ackButton = (page: Page) => page.getByTestId('ack-button')
+const openTab = async (page: Page, name: string) => {
+  await tab(page, 'more').click()
+  await tab(page, name).click()
+}
 
 test('first fetch treats every event as already known', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
@@ -16,10 +20,14 @@ test('first fetch treats every event as already known', async ({ page, world }) 
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
   await expect(newBadge(page, 'sunset')).toHaveCount(0)
-  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+  await expect(newBadge(page, 'more')).toHaveCount(0)
   await expect(ackAllButton(page)).toHaveCount(0)
   await expect(page.getByTestId('only-new-toggle')).toHaveCount(0)
   await expect(page.locator('.new-label')).toHaveCount(0)
+
+  await tab(page, 'more').click()
+  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+  await expect(newBadge(page, 'floridsdorf')).toHaveCount(0)
 })
 
 test('marks a newly fetched event with a badge, ack-all button, and row ack', async ({ page, world }) => {
@@ -97,14 +105,16 @@ test('keeps sunset and meetup ids distinct in storage', async ({ page, world }) 
   world.givenMeetupEvents([{ id: '42', title: 'Padel Meetup' }])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Padel Meetup')).toBeVisible()
 
   world.givenEvents([{ id: '42', title: 'Morning Padel' }])
   await fetchButton(page).click()
   await expect(newBadge(page, 'sunset')).toHaveText('1')
-  await expect(newBadge(page, 'meetup')).toHaveCount(0)
   await expect(newBadge(page, 'combined')).toHaveText('1')
+
+  await tab(page, 'more').click()
+  await expect(newBadge(page, 'meetup')).toHaveCount(0)
 })
 
 test('tracks new meetup events on their tab', async ({ page, world }) => {
@@ -119,6 +129,10 @@ test('tracks new meetup events on their tab', async ({ page, world }) => {
     { id: 'meetup-2', title: 'Casual Padel', eventHosts: [{ memberId: 'other-host' }] },
   ])
   await fetchButton(page).click()
+  await openTab(page, 'meetup')
+  await expect(newBadge(page, 'more')).toHaveText('1')
+
+  await tab(page, 'more').click()
   await expect(newBadge(page, 'meetup')).toHaveText('1')
 
   await tab(page, 'meetup').click()
@@ -196,7 +210,7 @@ test('shows a label for meetup events whose RSVPs are not open', async ({ page, 
   await fetchButton(page).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
 
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   const labels = page.getByTestId('rsvp-state-label')
   await expect(labels).toHaveCount(1)
   await expect(labels.first()).toHaveText('not open yet')
@@ -208,19 +222,23 @@ test('re-flags a meetup event that opens RSVPs after being acked while not open'
   await page.goto('/')
   await fetchButton(page).click()
   await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  await tab(page, 'more').click()
   await expect(newBadge(page, 'meetup')).toHaveCount(0)
+  await page.keyboard.press('Escape')
 
   world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', rsvpState: 'JOIN_OPEN' }])
   await fetchButton(page).click()
+  await tab(page, 'more').click()
   await expect(newBadge(page, 'meetup')).toHaveText('1')
 
   await tab(page, 'meetup').click()
   await expect(ackButton(page)).toHaveCount(1)
   await ackButton(page).click()
-  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+  await expect(tab(page, 'more').locator('.new-badge')).toHaveCount(0)
 
   await fetchButton(page).click()
-  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+  await expect(tab(page, 'more').locator('.new-badge')).toHaveCount(0)
 })
 
 test('new-event badges stay fully visible inside their tabs on narrow mobile layouts', async ({ page, world }) => {
@@ -246,7 +264,7 @@ test('new-event badges stay fully visible inside their tabs on narrow mobile lay
   ])
   await fetchButton(page).click()
 
-  for (const name of ['combined', 'sunset', 'wolfgang', 'meetup']) {
+  for (const name of ['combined', 'sunset', 'wolfgang', 'more']) {
     const badge = newBadge(page, name)
     await expect(badge).toBeVisible()
     await expect(badge).toHaveText(name === 'combined' ? '2' : '1')

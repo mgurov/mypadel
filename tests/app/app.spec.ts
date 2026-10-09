@@ -6,6 +6,10 @@ const credentialsButton = (page: Page) => page.getByTestId('credentials-button')
 const credentialsSetButton = (page: Page) => page.getByTestId('credentials-button')
 const fetchButton = (page: Page) => page.getByTestId('fetch-events-button')
 const tab = (page: Page, name: string) => page.getByTestId(`tab-${name}`)
+const openTab = async (page: Page, name: string) => {
+  await tab(page, 'more').click()
+  await tab(page, name).click()
+}
 
 function futureDate(daysAhead: number, hour: number): string {
   const d = new Date()
@@ -175,7 +179,7 @@ test('show json action opens dialog with meetup event details', async ({ page, w
   world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup', venue: { id: 'venue-9', name: 'Prater Court' } }])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Padel Meetup')).toBeVisible()
 
   await page.getByTestId('event-actions-button').first().click()
@@ -203,7 +207,7 @@ test('participants menu item shows rsvp names for meetup events', async ({ page,
   ])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Padel Meetup')).toBeVisible()
 
   await page.getByTestId('event-actions-button').first().click()
@@ -234,7 +238,7 @@ test('clicking a participant photo opens it enlarged', async ({ page, world }) =
   ])
   await page.goto('/')
   await fetchButton(page).click()
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Padel Meetup')).toBeVisible()
 
   await page.getByTestId('event-actions-button').first().click()
@@ -440,7 +444,11 @@ test('shows a fetch indicator on tabs while their source is fetched', async ({ p
   await expect(tab(page, 'combined').locator('.MuiCircularProgress-root')).toHaveCount(1)
   await expect(tab(page, 'sunset').locator('.MuiCircularProgress-root')).toHaveCount(1)
   await expect(tab(page, 'wolfgang').locator('.MuiCircularProgress-root')).toHaveCount(1)
+
+  await tab(page, 'more').click()
+  await expect(tab(page, 'floridsdorf').locator('.MuiCircularProgress-root')).toHaveCount(1)
   await expect(tab(page, 'meetup').locator('.MuiCircularProgress-root')).toHaveCount(1)
+  await page.keyboard.press('Escape')
 
   releaseSunset()
   releaseMeetup()
@@ -467,9 +475,11 @@ test('does not show a (0) counter on tabs whose source has not loaded yet', asyn
 
   await expect(tab(page, 'sunset')).toContainText('(1)')
   await expect(tab(page, 'wolfgang')).not.toContainText('(0)')
+  await expect(tab(page, 'combined')).not.toContainText('(')
+
+  await tab(page, 'more').click()
   await expect(tab(page, 'floridsdorf')).not.toContainText('(0)')
   await expect(tab(page, 'meetup')).not.toContainText('(0)')
-  await expect(tab(page, 'combined')).not.toContainText('(')
 
   releaseMeetup()
 
@@ -507,6 +517,8 @@ test('tabs show the number of fetched entries', async ({ page, world }) => {
   await expect(tab(page, 'combined')).toContainText('(3)')
   await expect(tab(page, 'sunset')).toContainText('(2)')
   await expect(tab(page, 'wolfgang')).toContainText('(1)')
+
+  await tab(page, 'more').click()
   await expect(tab(page, 'floridsdorf')).toContainText('(0)')
   await expect(tab(page, 'meetup')).toContainText('(1)')
 })
@@ -524,8 +536,12 @@ test('tabs use the same colors as the source labels', async ({ page, world }) =>
   await expect(tab(page, 'combined')).toHaveCSS('background-color', 'rgb(107, 99, 117)')
   await expect(tab(page, 'sunset')).toHaveCSS('background-color', 'rgb(170, 59, 255)')
   await expect(tab(page, 'wolfgang')).toHaveCSS('background-color', 'rgb(46, 125, 50)')
-  await expect(tab(page, 'floridsdorf')).toHaveCSS('background-color', 'rgb(0, 131, 143)')
-  await expect(tab(page, 'meetup')).toHaveCSS('background-color', 'rgb(25, 118, 210)')
+
+  await tab(page, 'more').click()
+  await expect(tab(page, 'floridsdorf').locator('.menu-tab-color')).toHaveCSS('background-color', 'rgb(0, 131, 143)')
+  await expect(tab(page, 'meetup').locator('.menu-tab-color')).toHaveCSS('background-color', 'rgb(25, 118, 210)')
+  await page.keyboard.press('Escape')
+
   await expect(tab(page, 'sunset')).toHaveCSS('color', 'rgb(255, 255, 255)')
 })
 
@@ -593,8 +609,11 @@ test('meetup events are split into wolfgang, floridsdorf, and adina tabs', async
   await fetchButton(page).click()
 
   await expect(tab(page, 'wolfgang')).toContainText('(1)')
+
+  await tab(page, 'more').click()
   await expect(tab(page, 'meetup')).toContainText('(1)')
   await expect(tab(page, 'floridsdorf')).toContainText('(1)')
+  await page.keyboard.press('Escape')
 
   await tab(page, 'wolfgang').click()
   await expect(page.getByText('Wolfgang Padel')).toBeVisible()
@@ -607,11 +626,11 @@ test('meetup events are split into wolfgang, floridsdorf, and adina tabs', async
   await expect(page.getByRole('menuitem')).toHaveCount(0)
   await expect(page.getByText('Cancelled Padel')).toHaveCount(0)
 
-  await tab(page, 'floridsdorf').click()
+  await openTab(page, 'floridsdorf')
   await expect(page.getByText('Wolfgang Floridsdorf')).toBeVisible()
   await expect(page.getByText('Floridsdorf Padel')).toHaveCount(0)
 
-  await tab(page, 'meetup').click()
+  await openTab(page, 'meetup')
   await expect(page.getByText('Casual Padel')).toBeVisible()
   await expect(page.getByText('3 free of 8')).toBeVisible()
   await expect(page.getByText('✓')).toHaveCount(1)

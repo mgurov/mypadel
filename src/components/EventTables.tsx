@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
 import CircularProgress from '@mui/material/CircularProgress'
 import type { Event, MeetupEvent, User } from '../api'
 import { addKnownKeys, eventKey, loadForcedAttendance, setForcedAttendance as persistForcedAttendance, trackFetchedKeys, type FetchedKey, type ForcedAttendance } from '../eventTracking'
@@ -16,7 +18,8 @@ import { OnlyNewToggle } from './OnlyNewToggle'
 
 export type TabId = 'combined' | 'sunset' | 'wolfgang' | 'floridsdorf' | 'meetup'
 
-const TAB_IDS: TabId[] = ['combined', 'sunset', 'wolfgang', 'floridsdorf', 'meetup']
+const VISIBLE_TAB_IDS: TabId[] = ['combined', 'sunset', 'wolfgang']
+const HIDDEN_TAB_IDS: TabId[] = ['floridsdorf', 'meetup']
 
 const TAB_LABELS: Record<TabId, string> = {
   combined: 'Combined',
@@ -46,6 +49,7 @@ interface EventTablesProps {
 export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetIds, tabHasData, tabFetching }: EventTablesProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabId>('sunset')
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
   const [showOnlyAttending, setShowOnlyAttending] = useState(false)
@@ -209,6 +213,10 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
 
   const filterActive = (id: TabId) => showOnlyNew.has(id) && tabNewCounts[id] > 0
 
+  const moreOpen = Boolean(moreAnchor)
+  const moreActive = !VISIBLE_TAB_IDS.includes(activeTab)
+  const hiddenNewCount = HIDDEN_TAB_IDS.reduce((sum, id) => sum + tabNewCounts[id], 0)
+
   const entryKey = (entry: CombinedEntry): string =>
     eventKey(entry.source === 'sunset' ? 'sunset' : 'meetup', entry.event.id)
 
@@ -222,8 +230,10 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   return (
     <>
       <Tabs
-        value={activeTab}
-        onChange={(_e, value: TabId) => setActiveTab(value)}
+        value={VISIBLE_TAB_IDS.includes(activeTab) ? activeTab : 'more'}
+        onChange={(_e, value: string) => {
+          if (value !== 'more') setActiveTab(value as TabId)
+        }}
         variant="fullWidth"
         sx={{
           width: '100%',
@@ -231,7 +241,7 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
           '& .MuiTabs-indicator': { display: 'none' },
         }}
       >
-        {TAB_IDS.map((id) => (
+        {VISIBLE_TAB_IDS.map((id) => (
           <Tab
             key={id}
             value={id}
@@ -255,7 +265,54 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
             }
           />
         ))}
+        <Tab
+          value="more"
+          data-testid="tab-more"
+          onClick={(e) => setMoreAnchor((cur) => (cur ? null : e.currentTarget))}
+          sx={{
+            backgroundColor: moreActive ? TAB_COLORS[activeTab] : '#616161',
+            color: '#fff',
+            opacity: moreActive || moreOpen ? 1 : 0.65,
+            '&:hover': { color: '#fff', opacity: 1 },
+            '&.Mui-selected': { color: '#fff', backgroundColor: moreActive ? TAB_COLORS[activeTab] : '#616161' },
+            '@media (max-width: 480px)': { padding: '6px 2px' },
+          }}
+          label={
+            <span className="tab-label">
+              <span className="tab-label-text">{moreActive ? `${TAB_LABELS[activeTab]}${tabHasData[activeTab] ? ` (${tabCounts[activeTab]})` : ''}` : 'More'}</span>
+              {moreActive && tabNewCounts[activeTab] > 0 ? (
+                <span data-testid={`tab-new-${activeTab}`} className="new-badge">{tabNewCounts[activeTab]}</span>
+              ) : hiddenNewCount > 0 ? (
+                <span data-testid="tab-new-more" className="new-badge">{hiddenNewCount}</span>
+              ) : null}
+              {moreActive && tabFetching[activeTab] && <CircularProgress className="tab-spinner" size={12} sx={{ color: 'rgba(255, 255, 255, 0.9)' }} />}
+              <span className="tab-more-caret">▾</span>
+            </span>
+          }
+        />
       </Tabs>
+
+      <Menu
+        anchorEl={moreAnchor}
+        open={moreOpen}
+        onClose={() => setMoreAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        {HIDDEN_TAB_IDS.map((id) => (
+          <MenuItem
+            key={id}
+            data-testid={`tab-${id}`}
+            selected={activeTab === id}
+            onClick={() => { setActiveTab(id); setMoreAnchor(null) }}
+            sx={{ minWidth: 180 }}
+          >
+            <span className="menu-tab-color" style={{ backgroundColor: TAB_COLORS[id] }} />
+            <span className="tab-label-text">{`${TAB_LABELS[id]}${tabHasData[id] ? ` (${tabCounts[id]})` : ''}`}</span>
+            {tabNewCounts[id] > 0 && <span className="new-badge">{tabNewCounts[id]}</span>}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <div className="tab-controls">
         {joinedCounts[activeTab] > 0 && (
