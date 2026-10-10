@@ -122,7 +122,7 @@ test('shows a question mark for a meetup event with more than five attendees tha
   await expect(page.locator('.table-row').filter({ hasText: 'My Meetup' }).locator('.participating-yes')).toHaveText('\u2713')
 })
 
-test('force-marks meetup attendance via the actions menu and persists it', async ({ page, world }) => {
+test('force-marks meetup attendance via the actions menu', async ({ page, world }) => {
   world.givenMeetupEvents([
     { id: 'm1', title: 'Big Meetup', rsvps: { totalCount: 6, edges: [] } },
     { id: 'm2', title: 'Joined Meetup', rsvps: { totalCount: 6, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] } },
@@ -145,11 +145,24 @@ test('force-marks meetup attendance via the actions menu and persists it', async
   await page.getByTestId('mark-not-attending').click()
   await expect(joinedRow.locator('.participating-no')).toHaveText('\u2014')
 
-  const toggle = attendingToggle(page)
-  await toggle.click()
+  await attendingToggle(page).click()
   await expect(page.getByText('Big Meetup')).toBeVisible()
   await expect(page.getByText('Joined Meetup')).toHaveCount(0)
-  await toggle.click()
+})
+
+test('persists forced meetup attendance across a reload', async ({ page, world }) => {
+  world.givenMeetupEvents([
+    { id: 'm1', title: 'Big Meetup', rsvps: { totalCount: 6, edges: [] } },
+    { id: 'm2', title: 'Joined Meetup', rsvps: { totalCount: 6, edges: [{ node: { member: { id: '176325322', name: 'My Member' } } }] } },
+  ])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await openTab(page, 'meetup')
+
+  await page.locator('.table-row').filter({ hasText: 'Big Meetup' }).getByTestId('event-actions-button').click()
+  await page.getByTestId('mark-attending').click()
+  await page.locator('.table-row').filter({ hasText: 'Joined Meetup' }).getByTestId('event-actions-button').click()
+  await page.getByTestId('mark-not-attending').click()
 
   await page.reload()
   await fetchButton(page).click()
