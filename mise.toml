@@ -3,4 +3,4 @@ node = "24"
 
 [tasks]
 dev = "npm run dev:proxy"
-vpush = "npm run validate && npm run deploy && push origin HEAD:main"
+vpush = "npm run validate && npm run deploy && git push origin HEAD:main"
