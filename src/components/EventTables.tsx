@@ -4,6 +4,7 @@ import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
+import Divider from '@mui/material/Divider'
 import CircularProgress from '@mui/material/CircularProgress'
 import type { Event, MeetupEvent, User } from '../api'
 import { addKnownKeys, eventKey, loadForcedAttendance, setForcedAttendance as persistForcedAttendance, trackFetchedKeys, type FetchedKey, type ForcedAttendance } from '../eventTracking'
@@ -226,6 +227,10 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
   const ackEntry = (entry: CombinedEntry) => ackItems([{ key: entryKey(entry), rsvpState: entryRsvpState(entry) }])
   const ackSunsetEvent = (event: Event) => ackItems([{ key: eventKey('sunset', event.id) }])
   const ackMeetupEvent = (event: MeetupEvent) => ackItems([{ key: eventKey('meetup', event.id), rsvpState: event.rsvpState }])
+  const ackHiddenNew = () => {
+    const entries = [...newEntries.floridsdorf, ...newEntries.meetup]
+    ackItems(entries.map((entry) => ({ key: entryKey(entry), rsvpState: entryRsvpState(entry) })))
+  }
 
   return (
     <>
@@ -314,6 +319,16 @@ export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetI
             {tabFetching[id] && <CircularProgress className="tab-spinner" size={12} />}
           </MenuItem>
         ))}
+        {hiddenNewCount > 0 && <Divider sx={{ my: 0.5 }} />}
+        {hiddenNewCount > 0 && (
+          <MenuItem
+            data-testid="ack-all-more"
+            onClick={() => { ackHiddenNew(); setMoreAnchor(null) }}
+            sx={{ color: 'error.main', fontWeight: 600 }}
+          >
+            Ack all {hiddenNewCount} new events
+          </MenuItem>
+        )}
       </Menu>
 
       <div className="tab-controls">

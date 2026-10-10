@@ -101,6 +101,34 @@ test('ack all acknowledges every new event and survives refetch', async ({ page,
   await expect(ackAllButton(page)).toHaveCount(0)
 })
 
+test('acks all new events in collapsed tabs from the more menu', async ({ page, world }) => {
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
+  world.givenMeetupEvents([{ id: 'mt-1', title: 'Known Meetup' }])
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Morning Padel')).toBeVisible()
+
+  world.givenMeetupEvents([
+    { id: 'mt-1', title: 'Known Meetup' },
+    { id: 'mt-fd', title: 'Floridsdorf Padel', venue: { id: '28170985', name: 'Floridsdorf' } },
+    { id: 'mt-new', title: 'Casual Meetup' },
+  ])
+  await fetchButton(page).click()
+  await expect(newBadge(page, 'more')).toHaveText('2')
+
+  await tab(page, 'more').click()
+  await expect(newBadge(page, 'floridsdorf')).toHaveText('1')
+  await expect(newBadge(page, 'meetup')).toHaveText('1')
+
+  await page.getByTestId('ack-all-more').click()
+
+  await expect(tab(page, 'more').locator('.new-badge')).toHaveCount(0)
+  await tab(page, 'more').click()
+  await expect(newBadge(page, 'floridsdorf')).toHaveCount(0)
+  await expect(newBadge(page, 'meetup')).toHaveCount(0)
+  await expect(page.getByTestId('ack-all-more')).toHaveCount(0)
+})
+
 test('keeps sunset and meetup ids distinct in storage', async ({ page, world }) => {
   world.givenMeetupEvents([{ id: '42', title: 'Padel Meetup' }])
   await page.goto('/')
