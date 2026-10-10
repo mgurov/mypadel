@@ -489,14 +489,14 @@ test('does not show a (0) counter on tabs whose source has not loaded yet', asyn
   await expect(tab(page, 'meetup')).toContainText('(1)')
 })
 
-test('sunset tab is open by default after fetching', async ({ page, world }) => {
+test('combined tab is open by default after fetching', async ({ page, world }) => {
   world.givenEvents([{ id: 'evt-1', title: 'Morning Padel' }])
   world.givenMeetupEvents([{ id: 'meetup-1', title: 'Padel Meetup' }])
   await page.goto('/')
 
   await fetchButton(page).click()
 
-  await expect(tab(page, 'sunset')).toHaveAttribute('aria-selected', 'true')
+  await expect(tab(page, 'combined')).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('Morning Padel')).toBeVisible()
   await expect(page.getByText('Padel Meetup')).toHaveCount(0)
 })
