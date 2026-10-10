@@ -48,7 +48,7 @@ interface EventTablesProps {
 
 export function EventTables({ user, sunsetEvents, meetupEvents, attendingSunsetIds, tabHasData, tabFetching }: EventTablesProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState<TabId>('sunset')
+  const [activeTab, setActiveTab] = useState<TabId>('combined')
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const [newIds, setNewIds] = useState<ReadonlySet<string>>(() => new Set())
   const [showOnlyNew, setShowOnlyNew] = useState<ReadonlySet<TabId>>(() => new Set())
