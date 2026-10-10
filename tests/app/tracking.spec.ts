@@ -110,7 +110,7 @@ test('acks all new events in collapsed tabs from the more menu', async ({ page, 
 
   world.givenMeetupEvents([
     { id: 'mt-1', title: 'Known Meetup' },
-    { id: 'mt-fd', title: 'Floridsdorf Padel', venue: { id: '28170985', name: 'Floridsdorf' } },
+    { id: 'mt-fd', title: 'Floridsdorf Padel', venue: { id: '28170985', name: 'Floridsdorf' }, eventHosts: [{ memberId: '456811393' }] },
     { id: 'mt-new', title: 'Casual Meetup' },
   ])
   await fetchButton(page).click()
