@@ -1,2 +1,6 @@
 [tools]
 node = "24"
+
+[tasks]
+dev = "npm run dev:proxy"
+vpush = "npm run validate && npm deploy && push origin HEAD:main"
