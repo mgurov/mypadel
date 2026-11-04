@@ -380,6 +380,13 @@
   font-size: 0.85em;
 }
 
+.location-label {
+  display: block;
+  font-size: 0.85em;
+  color: #757575;
+  margin-top: 2px;
+}
+
 .width-auto {
   width: auto;
   min-width: 28px;

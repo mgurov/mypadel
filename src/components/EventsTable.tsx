@@ -107,6 +107,7 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect, u
       <div className="column text-align-right">
         {event.title.replace(/\s+\d{2}\.\d{2}$/, '')}
         {event.price ? <span className="price-label">€{event.price}</span> : null}
+        {event.location && <span className="location-label">{event.location}</span>}
       </div>
       <div className="column text-align-right no-grow width-56">
         <ParticipationCell participants={event._count?.participants} maxParticipants={event.maxParticipants} />
