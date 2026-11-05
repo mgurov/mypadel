@@ -56,7 +56,10 @@ export function EloHistoryPage() {
       {!error && profile && (
         <>
           <Typography variant="body2" color="text.secondary">
-            Current ELO: <strong>{profile.elo}</strong> · {past.length} past events
+            Current ELO: <strong>{profile.elo}</strong> · {past.length} past events · 
+            <a href={`https://sunsetpadel.at/players/${profile.id}`} target="_blank" rel="noopener noreferrer">
+              My profile
+            </a>
           </Typography>
           {past.length === 0 ? (
             <Typography sx={{ mt: 1 }} data-testid="elo-history-empty">
