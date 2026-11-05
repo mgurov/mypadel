@@ -92,34 +92,21 @@ test('courts dialog shows a zero waitlist size when there is no waitlist', async
   await expect(dialog.getByTestId('waitlist-count')).toHaveText('Waitlist: 0')
 })
 
-test('courts dialog reveals the participant full name on row click', async ({ page, world }) => {
+test('courts dialog shows participant name directly', async ({ page, world }) => {
   const dialog = await openCourts(page, world)
 
   const alice = dialog.getByTestId('court-player-p-alice')
   await expect(alice.locator('.court-player-name')).toHaveText('Alice')
-
-  await alice.click()
-  await expect(alice.locator('.court-player-name')).toHaveText('Alice Wonderland')
-
-  await alice.locator('.court-player-elo').click()
-  await expect(alice.locator('.court-player-name')).toHaveText('Alice')
 })
 
-test('revealed participant name links to its sunset participant page', async ({ page, world }) => {
+test('participant name links to its sunsetpadel profile', async ({ page, world }) => {
   const dialog = await openCourts(page, world)
 
   const alice = dialog.getByTestId('court-player-p-alice')
-  await expect(alice.locator('.court-player-name-link')).toHaveCount(0)
-
-  await alice.click()
-  await expect(alice.locator('.court-player-name-link')).toHaveAttribute('href', '/sunset/participant/u-alice')
-
-  await alice.locator('.court-player-name-link').click()
-  await expect(page).toHaveURL(/\/sunset\/participant\/u-alice$/)
-  await expect(page.getByTestId('sunset-participant-uid')).toHaveText('u-alice')
+  await expect(alice.locator('.court-player-name-link')).toHaveAttribute('href', 'https://sunsetpadel.at/players/u-alice')
 })
 
-test('revealed participant name falls back to the display name when the full name is unavailable', async ({ page, world }) => {
+test('participant name displays the user name directly', async ({ page, world }) => {
   const abbreviated = [
     { id: 'p-mykola', userId: 'u-mykola', user: { name: 'Mykola G.', elo: 1416 } },
   ]
@@ -132,23 +119,21 @@ test('revealed participant name falls back to the display name when the full nam
   await page.getByRole('menuitem', { name: 'Courts' }).click()
 
   const mykola = page.getByRole('dialog').getByTestId('court-player-p-mykola')
-  await expect(mykola.locator('.court-player-name')).toHaveText('Mykola G.')
-
-  await mykola.click()
   await expect(mykola.locator('.court-player-name-link')).toHaveText('Mykola G.')
 })
 
-test('participant history link is keyboard accessible', async ({ page, world }) => {
+test('participant profile link is keyboard accessible', async ({ page, world, context }) => {
   const dialog = await openCourts(page, world)
 
   const alice = dialog.getByTestId('court-player-p-alice')
-  await alice.getByRole('button', { name: 'Alice' }).press('Enter')
-
-  const link = alice.getByRole('link', { name: 'Alice Wonderland' })
+  const link = alice.getByRole('link', { name: 'Alice' })
   await expect(link).toBeVisible()
 
-  await link.press('Enter')
-  await expect(page).toHaveURL(/\/sunset\/participant\/u-alice$/)
+  const [newPage] = await Promise.all([
+    context.waitForEvent('page'),
+    link.press('Enter'),
+  ])
+  await expect(newPage).toHaveURL('https://sunsetpadel.at/players/u-alice')
 })
 
 test('courts dialog marks premium participants with a badge', async ({ page, world }) => {
