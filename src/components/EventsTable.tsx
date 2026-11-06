@@ -53,17 +53,19 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect, u
   const live = isLive(event.date, event.endDate)
   const urgentCancellation = attends && isCancellationUrgent(event)
   const showCancelLabel = urgentCancellation && !cancellationAcked
-  const urgentUnpaid =
-    attends &&
-    dayjs(event.date).startOf('day').diff(dayjs().startOf('day'), 'day') <= 1 &&
-    detail?.currentUserPayment?.status !== 'PAID'
+  const now = dayjs()
+  const eventDay = dayjs(event.date).startOf('day')
+  const daysUntilEvent = eventDay.diff(now.startOf('day'), 'day')
+  const unpaid = attends && daysUntilEvent <= 0 && detail?.currentUserPayment?.status !== 'PAID'
+  const passedCancellationDeadline = attends && now.isAfter(dayjs(cancellationDeadline(event)))
+  const showNonCancelLabel = passedCancellationDeadline && !cancellationAcked
 
   const myKey = eventKey('sunset', event.id)
   const isSelected = selectedKey === myKey
 
   const rowClass = [
     'table-row',
-    urgentUnpaid ? 'table-row-highlight' : '',
+    unpaid ? 'table-row-highlight' : '',
     live && attends ? 'table-row-live' : '',
     ended ? 'table-row-ended' : '',
     unavailable ? 'table-row-unavailable' : '',
@@ -77,7 +79,8 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect, u
         {isNew && <span className="new-label">new</span>}
         {event.status === "SCHEDULED" && <span className="scheduled-icon" role="img" aria-label="scheduled">🔒</span>}
         {event.status === "ARCHIVED" && <span className="archived-label">archived</span>}
-        {urgentUnpaid && <span className="unpaid-label">unpaid</span>}
+        {unpaid && <span className="unpaid-label">unpaid</span>}
+        {showNonCancelLabel && <span className="non-cancel-label">non-cancel</span>}
         {showCancelLabel && (
           <span
             className="cancel-label"
