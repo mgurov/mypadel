@@ -144,3 +144,53 @@ test('acknowledging the cancellation does not ack the event newness', async ({ p
   await expect(rowFor(page, 'New Urgent').getByTestId('cancel-label')).toHaveCount(0)
   await expect(rowFor(page, 'New Urgent').locator('.new-label')).toBeVisible()
 })
+
+test('shows the non-cancel badge when the cancellation deadline has passed', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Past Deadline', date: '2026-09-05T12:00:00Z', participants: ME },
+  ])
+  await showEvents(page, 'Past Deadline')
+
+  await expect(rowFor(page, 'Past Deadline')).toContainText('non-cancel')
+})
+
+test('does not show the non-cancel badge when the cancellation deadline has not passed', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Not Passed', date: '2026-09-06T12:00:00Z', participants: ME },
+  ])
+  await showEvents(page, 'Not Passed')
+
+  await expect(rowFor(page, 'Not Passed')).not.toContainText('non-cancel')
+})
+
+test('does not show the non-cancel badge for an event the user does not participate in', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Not Attending Past', date: '2026-09-05T12:00:00Z' },
+  ])
+  await showEvents(page, 'Not Attending Past')
+
+  await expect(rowFor(page, 'Not Attending Past')).not.toContainText('non-cancel')
+})
+
+test('hides the non-cancel badge after acknowledging', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Past Deadline', date: '2026-09-05T12:00:00Z', participants: ME },
+  ])
+  await showEvents(page, 'Past Deadline')
+
+  await expect(rowFor(page, 'Past Deadline')).toContainText('non-cancel')
+
+  await page.getByTestId('cancel-label').click()
+  await page.getByTestId('cancel-ack-button').click()
+
+  await expect(page.getByText('non-cancel')).toHaveCount(0)
+})
+
+test('shows the non-cancel badge with an explicit deadline that has passed', async ({ page, world }) => {
+  world.givenEvents([
+    { id: 'evt-1', title: 'Explicit Past', date: '2026-09-05T18:00:00Z', freeCancellationUntil: '2026-09-04T10:00:00Z', participants: ME },
+  ])
+  await showEvents(page, 'Explicit Past')
+
+  await expect(rowFor(page, 'Explicit Past')).toContainText('non-cancel')
+})

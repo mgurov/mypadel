@@ -40,14 +40,14 @@ test('highlights an unpaid sunset event starting today', async ({ page, world })
   await expect(rowFor(page, 'Today Unpaid')).toContainText('unpaid')
 })
 
-test('highlights an unpaid sunset event starting tomorrow', async ({ page, world }) => {
+test('does not highlight an unpaid sunset event starting tomorrow', async ({ page, world }) => {
   world.givenEvents([
     { id: 'evt-1', title: 'Tomorrow Unpaid', date: futureDate(1, 10), participants: [{ userId: 'user-1' }], currentUserPayment: { id: 'pay-1', status: 'PENDING' } },
   ])
   await fetchAndShow(page, 'Tomorrow Unpaid')
 
-  await expect(rowFor(page, 'Tomorrow Unpaid')).toHaveClass(/table-row-highlight/)
-  await expect(rowFor(page, 'Tomorrow Unpaid')).toContainText('unpaid')
+  await expect(rowFor(page, 'Tomorrow Unpaid')).not.toHaveClass(/table-row-highlight/)
+  await expect(rowFor(page, 'Tomorrow Unpaid')).not.toContainText('unpaid')
 })
 
 test('does not highlight a paid sunset event starting today', async ({ page, world }) => {
