@@ -58,7 +58,7 @@ export function SunsetRow({ event, label, isNew, onAck, selectedKey, onSelect, u
   const daysUntilEvent = eventDay.diff(now.startOf('day'), 'day')
   const unpaid = attends && daysUntilEvent <= 0 && detail?.currentUserPayment?.status !== 'PAID'
   const passedCancellationDeadline = attends && now.isAfter(dayjs(cancellationDeadline(event)))
-  const showNonCancelLabel = passedCancellationDeadline && !cancellationAcked
+  const showNonCancelLabel = passedCancellationDeadline
 
   const myKey = eventKey('sunset', event.id)
   const isSelected = selectedKey === myKey
