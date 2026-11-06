@@ -172,18 +172,29 @@ test('does not show the non-cancel badge for an event the user does not particip
   await expect(rowFor(page, 'Not Attending Past')).not.toContainText('non-cancel')
 })
 
-test('hides the non-cancel badge after acknowledging', async ({ page, world }) => {
+test('hides the non-cancel badge after acknowledging the urgent cancellation', async ({ page, world }) => {
+  const FIXED_NOW = '2026-09-04T00:00:00Z'
   world.givenEvents([
-    { id: 'evt-1', title: 'Past Deadline', date: '2026-09-05T12:00:00Z', participants: ME },
+    { id: 'evt-1', title: 'Urgent Then Past', date: '2026-09-05T12:00:00Z', participants: ME },
   ])
-  await showEvents(page, 'Past Deadline')
+  await page.clock.install({ time: new Date(FIXED_NOW) })
+  await page.goto('/')
+  await fetchButton(page).click()
+  await expect(page.getByText('Urgent Then Past')).toBeVisible()
 
-  await expect(rowFor(page, 'Past Deadline')).toContainText('non-cancel')
+  await expect(rowFor(page, 'Urgent Then Past')).toContainText('cancel 24h')
+  await expect(rowFor(page, 'Urgent Then Past')).not.toContainText('non-cancel')
 
   await page.getByTestId('cancel-label').click()
   await page.getByTestId('cancel-ack-button').click()
 
-  await expect(page.getByText('non-cancel')).toHaveCount(0)
+  await page.clock.fastForward(24 * 3600_000)
+  await page.reload()
+  await fetchButton(page).click()
+  await expect(page.getByText('Urgent Then Past')).toBeVisible()
+
+  await expect(rowFor(page, 'Urgent Then Past')).not.toContainText('cancel 24h')
+  await expect(rowFor(page, 'Urgent Then Past')).not.toContainText('non-cancel')
 })
 
 test('shows the non-cancel badge with an explicit deadline that has passed', async ({ page, world }) => {
