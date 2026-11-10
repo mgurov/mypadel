@@ -83,7 +83,10 @@ export function usePullToRefresh(onRefresh: () => unknown) {
 
     const onTouchMove = (e: TouchEvent) => {
       if (!dragRef.current || e.touches.length !== 1) return
-      if (e.cancelable) e.preventDefault()
+      const dragged = e.touches[0].clientY - dragRef.current.startY
+      // Only block the browser's own scrolling/rubber-banding while the
+      // user is actually pulling down from the top; let normal scrolling through.
+      if (dragged > 0 && element.scrollTop <= 0 && e.cancelable) e.preventDefault()
       move(e.touches[0].clientY)
     }
 
@@ -96,7 +99,7 @@ export function usePullToRefresh(onRefresh: () => unknown) {
 
     const onMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return
-      if (e.clientY > dragRef.current.startY) e.preventDefault()
+      if (e.clientY > dragRef.current.startY && element.scrollTop <= 0) e.preventDefault()
       move(e.clientY)
     }
 
