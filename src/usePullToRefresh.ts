@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /** Pull distance (px) the user must drag before releasing triggers a refresh. */
 export const PULL_REFRESH_THRESHOLD = 64
@@ -10,13 +10,15 @@ const PULL_RESISTANCE = 0.6
 /**
  * Pull-to-refresh gesture for a scrollable element.
  *
- * Works with touch (drag down while the content is scrolled to the top) and
- * with the mouse (for desktop / tests). Touchmove is handled with a
- * non-passive native listener so the browser does not rubber-band the page
- * instead of reporting the gesture.
+ * The returned `containerRef` is a callback ref (dialogs mount their content
+ * in a later commit, so a plain ref object would still be empty when the
+ * effect runs). Works with touch (drag down while the content is scrolled to
+ * the top) and with the mouse. Touchmove is handled by a non-passive native
+ * listener so the browser does not rubber-band the page instead of reporting
+ * the gesture.
  */
 export function usePullToRefresh(onRefresh: () => unknown) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [element, setElement] = useState<HTMLDivElement | null>(null)
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const onRefreshRef = useRef(onRefresh)
@@ -25,9 +27,12 @@ export function usePullToRefresh(onRefresh: () => unknown) {
 
   onRefreshRef.current = onRefresh
 
+  const containerRef = useCallback((el: HTMLDivElement | null) => {
+    setElement(el)
+  }, [])
+
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
+    if (!element) return
 
     const reset = () => {
       dragRef.current = null
@@ -47,14 +52,14 @@ export function usePullToRefresh(onRefresh: () => unknown) {
     }
 
     const start = (y: number) => {
-      if (refreshingRef.current || el.scrollTop > 0) return
+      if (refreshingRef.current || element.scrollTop > 0) return
       dragRef.current = { startY: y, distance: 0 }
     }
 
     const move = (y: number) => {
       const drag = dragRef.current
       if (!drag) return
-      if (el.scrollTop > 0) {
+      if (element.scrollTop > 0) {
         reset()
         return
       }
@@ -95,24 +100,24 @@ export function usePullToRefresh(onRefresh: () => unknown) {
       move(e.clientY)
     }
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true })
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    el.addEventListener('touchend', end)
-    el.addEventListener('touchcancel', reset)
-    el.addEventListener('mousedown', onMouseDown)
+    element.addEventListener('touchstart', onTouchStart, { passive: true })
+    element.addEventListener('touchmove', onTouchMove, { passive: false })
+    element.addEventListener('touchend', end)
+    element.addEventListener('touchcancel', reset)
+    element.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', end)
 
     return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', end)
-      el.removeEventListener('touchcancel', reset)
-      el.removeEventListener('mousedown', onMouseDown)
+      element.removeEventListener('touchstart', onTouchStart)
+      element.removeEventListener('touchmove', onTouchMove)
+      element.removeEventListener('touchend', end)
+      element.removeEventListener('touchcancel', reset)
+      element.removeEventListener('mousedown', onMouseDown)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', end)
     }
-  }, [])
+  }, [element])
 
   return { containerRef, pullDistance, isRefreshing }
 }

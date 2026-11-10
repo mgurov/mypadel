@@ -50,6 +50,7 @@ mypadel/
 │   │   ├── EloHistoryRow.tsx      # Past-event row; fetches match table on click to reveal ELO delta
 │   │   └── ParticipationCell.tsx  # participants/max formatting
 │   ├── meetup.ts               # Meetup helpers (wolfgang/visible/rsvp/attendance)
+│   ├── usePullToRefresh.ts     # Pull-down-to-refresh gesture hook (used by the courts dialog)
 │   ├── App.css                 # Events table styles
 │   ├── index.css               # Global styles, CSS variables, dark mode
 │   └── assets/
