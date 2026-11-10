@@ -249,3 +249,47 @@ test('preselects 4 players per court for unknown format', async ({ page, world }
   await expect(dialog.getByTestId('court-size-4')).toHaveAttribute('aria-pressed', 'true')
   await expect(dialog.getByTestId('court-size-5')).toHaveAttribute('aria-pressed', 'false')
 })
+
+function withBobElo(elo: number) {
+  return participants.map((p) => (p.userId === 'u-bob' ? { ...p, user: { ...p.user, elo } } : p))
+}
+
+test('dragging the courts content down refreshes the event details', async ({ page, world }) => {
+  const dialog = await openCourts(page, world)
+  const content = dialog.getByTestId('courts-dialog-content')
+  const box = (await content.boundingBox())!
+
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: withBobElo(1900) }])
+
+  await page.mouse.move(box.x + 8, box.y + 8)
+  await page.mouse.down()
+  await page.mouse.move(box.x + 8, box.y + 200, { steps: 10 })
+
+  await expect(dialog.getByTestId('courts-refresh-indicator')).toContainText('Release to refresh')
+
+  await page.mouse.up()
+
+  await expect(dialog.getByTestId('court-player-p-bob').locator('.court-player-elo')).toHaveText('1900')
+})
+
+test('pulling the courts content down on touch refreshes the event details', async ({ page, world }) => {
+  const dialog = await openCourts(page, world)
+  const content = dialog.getByTestId('courts-dialog-content')
+
+  world.givenEvents([{ id: 'evt-1', title: 'Morning Padel', participants: withBobElo(1900) }])
+
+  await content.evaluate((el) => {
+    const touch = (y: number) => new Touch({ identifier: 1, target: el, clientX: 40, clientY: y })
+    el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch(20)], targetTouches: [touch(20)], changedTouches: [touch(20)] }))
+    el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [touch(200)], targetTouches: [touch(200)], changedTouches: [touch(200)] }))
+  })
+
+  await expect(dialog.getByTestId('courts-refresh-indicator')).toContainText('Release to refresh')
+
+  await content.evaluate((el) => {
+    const touch = (y: number) => new Touch({ identifier: 1, target: el, clientX: 40, clientY: y })
+    el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [], targetTouches: [], changedTouches: [touch(200)] }))
+  })
+
+  await expect(dialog.getByTestId('court-player-p-bob').locator('.court-player-elo')).toHaveText('1900')
+})

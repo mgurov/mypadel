@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
+import CircularProgress from '@mui/material/CircularProgress'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -11,6 +12,7 @@ import ToggleButton from '@mui/material/ToggleButton'
 import Typography from '@mui/material/Typography'
 import type { Participant } from '../api'
 import { useSunsetUser } from '../userContext'
+import { PULL_REFRESH_THRESHOLD, usePullToRefresh } from '../usePullToRefresh'
 import { CourtPlayer } from './CourtPlayer'
 
 const COURT_SIZES = [4, 5] as const
@@ -24,12 +26,19 @@ function eventFormatType(description: string | undefined): EventFormatType {
   return 'unknown'
 }
 
-export function CourtsDialog({ open, participants, waitlistCount, description, onClose }: { open: boolean; participants: Participant[]; waitlistCount: number | undefined; description: string | undefined; onClose: () => void }) {
+export function CourtsDialog({ open, participants, waitlistCount, description, onClose, onRefresh }: { open: boolean; participants: Participant[]; waitlistCount: number | undefined; description: string | undefined; onClose: () => void; onRefresh?: () => unknown }) {
   const { user } = useSunsetUser()
   const format = eventFormatType(description)
   const [courtSize, setCourtSize] = useState<number>(() => (format === 'king' ? 5 : 4))
   const [showFormatInfo, setShowFormatInfo] = useState(false)
   const formatAnchor = useRef<HTMLDivElement>(null)
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh(() => onRefresh?.())
+  const indicatorHeight = isRefreshing ? 32 : pullDistance
+  const pullHint = isRefreshing
+    ? 'Refreshing…'
+    : pullDistance >= PULL_REFRESH_THRESHOLD
+      ? 'Release to refresh'
+      : 'Pull down to refresh'
 
   const sorted = useMemo(
     () => [...participants].sort((a, b) => (b.user?.elo ?? 0) - (a.user?.elo ?? 0)),
@@ -75,7 +84,20 @@ export function CourtsDialog({ open, participants, waitlistCount, description, o
           </Popover>
         </div>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent ref={containerRef} data-testid="courts-dialog-content">
+        <div
+          className="courts-pull-indicator"
+          style={{ height: indicatorHeight }}
+          data-testid="courts-refresh-indicator"
+          aria-live="polite"
+        >
+          {indicatorHeight > 0 && (
+            <>
+              {isRefreshing ? <CircularProgress size={18} /> : <span className="courts-pull-arrow">&#8595;</span>}
+              <span>{pullHint}</span>
+            </>
+          )}
+        </div>
         <ToggleButtonGroup
           size="small"
           exclusive

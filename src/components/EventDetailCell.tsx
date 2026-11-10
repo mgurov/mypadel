@@ -22,7 +22,7 @@ export function EventDetailCell({ event, onSelect }: { event: Event; onSelect?: 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const { id: eventId } = event
 
-  const { data: detail, error, isFetching } = useQuery<EventDetail>({
+  const { data: detail, error, isFetching, refetch } = useQuery<EventDetail>({
     queryKey: ['eventDetail', eventId],
     queryFn: () => fetchEventDetail(eventId),
   })
@@ -118,7 +118,7 @@ export function EventDetailCell({ event, onSelect }: { event: Event; onSelect?: 
           )}
         </Menu>
       </div>
-      {courtsOpen && <CourtsDialog open participants={detail?.participants ?? []} waitlistCount={detail?.waitlistCount} description={event.description} onClose={() => setCourtsOpen(false)} />}
+      {courtsOpen && <CourtsDialog open participants={detail?.participants ?? []} waitlistCount={detail?.waitlistCount} description={event.description} onClose={() => setCourtsOpen(false)} onRefresh={() => refetch()} />}
       <Dialog open={jsonOpen} onClose={() => setJsonOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Event Details</DialogTitle>
         <DialogContent>
