@@ -12,7 +12,7 @@ Padel tennis event management SPA + Supabase Edge Functions backend proxy.
 - **Backend:** Supabase Edge Functions (Deno), proxying to `sunsetpadel.at` (Netlify)
 - **Linter:** Oxlint (not ESLint)
 - **Build:** `tsc -b && vite build`
-- **E2E tests:** Playwright (`@playwright/test`), Chromium only
+- **E2E tests:** Playwright (`@playwright/test`), Chromium only, iPhone 12 Pro device emulation, 3000ms timeout
 - **No state management library**
 
 ## Directory Structure
@@ -27,7 +27,7 @@ mypadel/
 ├── tsconfig.node.json          # Node tooling
 ├── .oxlintrc.json              # Oxlint rules (react + typescript plugins)
 ├── playwright.config.ts        # Playwright config, auto-starts vite dev server
-├── tests/app/                  # Playwright e2e tests (API mocked via ./setup/worldTest.ts)
+├── tests/app/                  # Playwright e2e tests (API mocked via ./setup/wordlyTest.ts)
 ├── public/
 │   ├── favicon.svg
 │   └── icons.svg
@@ -86,12 +86,15 @@ mypadel/
 
 ## NPM Scripts
 
-- `dev` — `vite` (no proxy; used by Playwright; should not be used by the agents)
+- `dev` — `vite` (no proxy; used by Playwright's `webServer`; should not be used by the agents)
+- `dev:proxy` — `MYPADEL_PROXY=1 vite` (enables the dev proxy plugin)
 - `build` — `tsc -b && vite build`
 - `lint` — `oxlint`
 - `preview` — `vite preview` (should not be used by the agents)
-- `test:e2e` — `playwright test`
-- `test:e2e:ui` — `playwright test --ui`
+- `test:app` — `playwright test`
+- `validate` — `npm run lint && npm run test:app`
+- `deploy` — `npm run build && netlify deploy --dir=./dist --alias=preview`
+- `deploy:prod` — `npm run build && netlify deploy --dir=./dist --prod`
 
 ## E2E Testing Conventions
 
